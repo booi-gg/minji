@@ -1,6 +1,6 @@
 import "fake-indexeddb/auto";
 import { beforeEach, expect, it } from "vite-plus/test";
-import { REVISIONS_PER_WORKSPACE } from "../shared/limits.ts";
+import { REVISIONS_PER_WORKSPACE, RUNS_PER_WORKSPACE } from "../shared/limits.ts";
 import {
   createWorkspace,
   type Revision,
@@ -10,13 +10,16 @@ import {
 import { openMinjiDatabase, type MinjiDatabase } from "./database.ts";
 import {
   addRevision,
+  addRun,
   deleteWorkspace,
   getBundle,
   getMeta,
+  getRuns,
   getWorkspace,
   listWorkspaces,
   saveDraft,
   saveNewWorkspace,
+  setLastRun,
   setMeta,
 } from "./workspaces.ts";
 
@@ -166,12 +169,44 @@ it("leaves tests alone when a draft has none", async () => {
 it("adds revisions, skipping duplicates of the newest and trimming old ones", async () => {
   const workspace = createWorkspace({});
   await saveNewWorkspace(db, { workspace, tests: [], revisions: [] });
-  expect(await addRevision(db, revision(workspace, 1))).toBe(true);
-  expect(await addRevision(db, { ...revision(workspace, 2), source: "v1" })).toBe(false);
+  const first = revision(workspace, 1);
+  expect(await addRevision(db, first)).toEqual({ added: true, id: first.id });
+  expect(await addRevision(db, { ...revision(workspace, 2), source: "v1" })).toEqual({
+    added: false,
+    id: first.id,
+  });
   for (let day = 2; day <= REVISIONS_PER_WORKSPACE + 3; day += 1) {
     await addRevision(db, revision(workspace, day));
   }
   const revisions = (await getBundle(db, workspace.id))?.revisions ?? [];
   expect(revisions).toHaveLength(REVISIONS_PER_WORKSPACE);
   expect(revisions[0]?.source).toBe(`v${REVISIONS_PER_WORKSPACE + 3}`);
+});
+
+it("stores runs, keeping the newest, and records the last run without touching updatedAt", async () => {
+  const workspace = createWorkspace({}, at("2026-10-01T00:00:00Z"));
+  await saveNewWorkspace(db, { workspace, tests: [], revisions: [] });
+  for (let day = 1; day <= RUNS_PER_WORKSPACE + 2; day += 1) {
+    await addRun(db, {
+      id: `run-${day}`,
+      workspaceId: workspace.id,
+      scope: "all",
+      startedAt: `2026-10-${String(day).padStart(2, "0")}T00:00:00.000Z`,
+      durationMs: 5,
+      revisionId: null,
+      outcome: "completed",
+      message: null,
+      results: [],
+    });
+  }
+  const runs = await getRuns(db, workspace.id);
+  expect(runs).toHaveLength(RUNS_PER_WORKSPACE);
+  expect(runs[0]?.id).toBe(`run-${RUNS_PER_WORKSPACE + 2}`);
+
+  await setLastRun(db, workspace.id, { passed: 2, total: 3, at: "2026-10-27T00:00:00.000Z" });
+  expect(await getWorkspace(db, workspace.id)).toMatchObject({
+    lastRun: { passed: 2, total: 3 },
+    updatedAt: workspace.updatedAt,
+    syncState: "local",
+  });
 });

@@ -32,6 +32,8 @@ import { newId } from "../shared/ids.ts";
 import { AUTOSAVE_DEBOUNCE_MS } from "../shared/limits.ts";
 import { useToast } from "../shared/toast.tsx";
 import { useMediaQuery } from "../shared/useMediaQuery.ts";
+import { ConsolePanel, ResultsPanel } from "../tests/ResultsPanel.tsx";
+import type { RunScope } from "../tests/results.ts";
 import { TestList } from "../tests/TestList.tsx";
 import { exportWorkspaces } from "../workspaces/actions.ts";
 import { scratchStub, type Revision, type TestCase, type Workspace } from "../workspaces/model.ts";
@@ -43,6 +45,7 @@ import { rememberLanguage, useEditorSettings } from "./settings.ts";
 import { ShortcutsDialog } from "./ShortcutsDialog.tsx";
 import { StatementPanel } from "./StatementPanel.tsx";
 import { Toolbar } from "./Toolbar.tsx";
+import { useTestRun } from "./useTestRun.ts";
 import { useWorkspaceLock } from "./useWorkspaceLock.ts";
 
 export const practiceLoader = async ({ params }: LoaderFunctionArgs) => {
@@ -95,9 +98,6 @@ const Tabs = <T extends string>({ label, tabs, selected, onSelect }: TabsProps<T
     ))}
   </div>
 );
-
-const ResultsPlaceholder = () => <p className="hint">No results yet.</p>;
-const ConsolePlaceholder = () => <p className="hint">No console output yet.</p>;
 
 const BOTTOM_TABS: { id: BottomTab; label: string }[] = [
   { id: "tests", label: "Tests" },
@@ -292,11 +292,11 @@ const Practice = ({ initial }: PracticeProps) => {
     edit({ language });
   };
 
-  /** Snapshot of the current code in History. Returns whether a revision was added. */
-  const snapshot = async (reason: Revision["reason"]): Promise<boolean> => {
+  /** Snapshot of the current code in History. */
+  const snapshot = async (reason: Revision["reason"]): Promise<{ added: boolean; id: string }> => {
     const { workspace: current } = latest.current;
     const db = await getDatabase();
-    const added = await addRevision(db, {
+    const result = await addRevision(db, {
       id: newId(),
       workspaceId: id,
       language: current.language,
@@ -306,7 +306,7 @@ const Practice = ({ initial }: PracticeProps) => {
       synced: false,
     });
     setRevisions(await getRevisions(db, id));
-    return added;
+    return result;
   };
 
   const saveRevision = async (): Promise<void> => {
@@ -315,12 +315,50 @@ const Practice = ({ initial }: PracticeProps) => {
       ? await editorRef.current?.format({ silent: true })
       : undefined;
     await autosaver.flush();
-    const added = await snapshot("save");
+    const { added } = await snapshot("save");
     if (failure !== undefined) {
       showToast({ message: failureText("Saved without formatting", failure) });
     } else {
       showToast({ message: added ? "Revision saved" : "No changes since the last revision." });
     }
+  };
+
+  const testRun = useTestRun({
+    // The editor's text is read directly, in case a keystroke hasn't re-rendered yet.
+    getState: () => ({
+      workspace: {
+        ...latest.current.workspace,
+        source: editorRef.current?.getValue() ?? latest.current.workspace.source,
+      },
+      tests: latest.current.tests,
+    }),
+    beforeRun: async () => {
+      await autosaver.flush();
+      if (readOnly) return null;
+      const { id: revisionId } = await snapshot("run");
+      return revisionId;
+    },
+    onLastRun: (lastRun) => setWorkspace((current) => ({ ...current, lastRun })),
+  });
+  const lastSingleTest = useRef<string | null>(null);
+
+  const startRun = (scope: RunScope): void => {
+    if (scope.kind === "single") lastSingleTest.current = scope.testId;
+    setBottomTab("results");
+    setPhoneTab("results");
+    void testRun.run(scope);
+  };
+
+  /** Runs the test row that has focus, or else the last test run on its own. */
+  const runFocusedTest = (): void => {
+    const row = document.activeElement?.closest<HTMLElement>("[data-test-id]");
+    const testId = row?.dataset.testId ?? lastSingleTest.current;
+    if (testId !== null && testId !== undefined) startRun({ kind: "single", testId });
+  };
+
+  const goToLine = (line: number): void => {
+    setPhoneTab("code");
+    editorRef.current?.revealLine(line);
   };
 
   const toggleStatement = (): void => {
@@ -357,8 +395,8 @@ const Practice = ({ initial }: PracticeProps) => {
 
   // Shortcuts that also work outside the editor. Monaco handles its own copies and
   // marks those events as handled.
-  const shortcuts = useRef({ saveRevision, toggleStatement });
-  shortcuts.current = { saveRevision, toggleStatement };
+  const shortcuts = useRef({ saveRevision, toggleStatement, startRun, runFocusedTest });
+  shortcuts.current = { saveRevision, toggleStatement, startRun, runFocusedTest };
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent): void => {
       if (event.defaultPrevented) return;
@@ -366,6 +404,10 @@ const Practice = ({ initial }: PracticeProps) => {
       if (mod && event.key.toLowerCase() === "s") {
         event.preventDefault();
         void shortcuts.current.saveRevision();
+      } else if (mod && event.key === "Enter") {
+        event.preventDefault();
+        if (event.shiftKey) shortcuts.current.runFocusedTest();
+        else shortcuts.current.startRun({ kind: "all" });
       } else if (mod && event.key === "\\") {
         event.preventDefault();
         shortcuts.current.toggleStatement();
@@ -399,7 +441,12 @@ const Practice = ({ initial }: PracticeProps) => {
         fontSize={settings.fontSize}
         theme={settings.resolvedTheme}
         onChange={(source) => edit({ source })}
-        commands={{ save: () => void saveRevision(), toggleStatement }}
+        commands={{
+          save: () => void saveRevision(),
+          toggleStatement,
+          runAll: () => startRun({ kind: "all" }),
+          runFocusedTest,
+        }}
       />
     </div>
   );
@@ -410,7 +457,18 @@ const Practice = ({ initial }: PracticeProps) => {
       tests={tests}
       params={workspace.params}
       readOnly={readOnly}
+      running={testRun.running}
       onChange={changeTests}
+      onRunTest={(testId) => startRun({ kind: "single", testId })}
+    />
+  );
+
+  const results = (
+    <ResultsPanel
+      view={testRun.view}
+      functionName={workspace.functionName}
+      timeoutMs={workspace.testTimeoutMs}
+      onGoToLine={goToLine}
     />
   );
 
@@ -425,13 +483,9 @@ const Practice = ({ initial }: PracticeProps) => {
         />
       </div>
       <div className="panel-body">
-        {bottomTab === "tests" ? (
-          testList
-        ) : bottomTab === "results" ? (
-          <ResultsPlaceholder />
-        ) : (
-          <ConsolePlaceholder />
-        )}
+        {bottomTab === "tests" ? testList : null}
+        {bottomTab === "results" ? results : null}
+        {bottomTab === "console" ? <ConsolePanel view={testRun.view} /> : null}
       </div>
     </section>
   );
@@ -446,6 +500,9 @@ const Practice = ({ initial }: PracticeProps) => {
         readOnly={readOnly}
         saveStatus={saveStatus}
         settings={settings}
+        running={testRun.running}
+        onRunAll={() => startRun({ kind: "all" })}
+        onStop={testRun.stop}
         onTitleChange={(title) => edit({ title })}
         onLanguageChange={changeLanguage}
         onFunctionNameChange={changeFunctionName}
@@ -477,11 +534,7 @@ const Practice = ({ initial }: PracticeProps) => {
             {phoneTab === "statement" ? statement : null}
             {phoneTab === "code" ? editor : null}
             {phoneTab === "tests" ? <div className="panel-body">{testList}</div> : null}
-            {phoneTab === "results" ? (
-              <div className="panel-body">
-                <ResultsPlaceholder />
-              </div>
-            ) : null}
+            {phoneTab === "results" ? <div className="panel-body">{results}</div> : null}
           </div>
         </div>
       ) : (

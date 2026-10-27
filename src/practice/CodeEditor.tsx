@@ -13,6 +13,8 @@ export interface CodeEditorHandle {
 export interface EditorCommands {
   save: () => void;
   toggleStatement: () => void;
+  runAll: () => void;
+  runFocusedTest: () => void;
 }
 
 interface CodeEditorProps {
@@ -76,6 +78,12 @@ export const CodeEditor = ({
     editorRef.current = editor;
     editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, () =>
       commandsRef.current.save(),
+    );
+    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () =>
+      commandsRef.current.runAll(),
+    );
+    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyCode.Enter, () =>
+      commandsRef.current.runFocusedTest(),
     );
     editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Backslash, () =>
       commandsRef.current.toggleStatement(),

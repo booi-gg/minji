@@ -127,7 +127,9 @@ Shown at the top of the **Results** tab and announced through an `aria-live="pol
 
 Never use "Accepted" or any wording that implies a hidden judge. Durations show as `12 ms` beside each row, with the tooltip "Local timing on this device, for comparison between your own runs only."
 
-**Run all** updates `workspace.lastRun` with `passed` and `total`, where `total` counts invalid tests. **Run one** never changes `lastRun`. Every run is stored as a `RunRecord`.
+**Run all** updates `workspace.lastRun` with `passed` and `total`, where `total` counts invalid tests, only when the run completes (not when stopped or crashed); this doesn't change `updatedAt`. **Run one** never changes `lastRun`. Every run that starts is stored as a `RunRecord`; runs rejected before starting (no tests, code over the limit) only show their message.
+
+Error details list the stack frames in the user's code as `at helper (line 16)`, each a link that moves the editor's cursor there. Harness frames are removed. Line numbers come from `src/runner/stack.ts`; Safari reports no locations for this code, so it shows function names only.
 
 ## Console tab
 

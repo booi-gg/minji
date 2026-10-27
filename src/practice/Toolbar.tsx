@@ -70,6 +70,9 @@ interface ToolbarProps {
   readOnly: boolean;
   saveStatus: SaveStatus;
   settings: EditorSettings;
+  running: boolean;
+  onRunAll: () => void;
+  onStop: () => void;
   onTitleChange: (title: string) => void;
   onLanguageChange: (language: Language) => void;
   onFunctionNameChange: (name: string) => void;
@@ -184,6 +187,9 @@ export const Toolbar = ({
   readOnly,
   saveStatus,
   settings,
+  running,
+  onRunAll,
+  onStop,
   onTitleChange,
   onLanguageChange,
   onFunctionNameChange,
@@ -237,6 +243,15 @@ export const Toolbar = ({
       />
       <div className="toolbar-spacer" />
       <div className="actions">
+        {running ? (
+          <button type="button" className="button button-danger" onClick={onStop}>
+            Stop
+          </button>
+        ) : (
+          <button type="button" className="button button-primary" onClick={onRunAll}>
+            Run all
+          </button>
+        )}
         <button type="button" className="button" onClick={onFormat} disabled={readOnly}>
           Format
         </button>

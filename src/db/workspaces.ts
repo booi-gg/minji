@@ -1,6 +1,6 @@
 // Workspace persistence. Every function takes the database so tests can use their own.
-import { REVISIONS_PER_WORKSPACE } from "../shared/limits.ts";
-import type { Revision, TestCase, Workspace } from "../workspaces/model.ts";
+import { REVISIONS_PER_WORKSPACE, RUNS_PER_WORKSPACE } from "../shared/limits.ts";
+import type { Revision, RunRecord, TestCase, Workspace } from "../workspaces/model.ts";
 import type { MinjiDatabase } from "./database.ts";
 
 export interface WorkspaceBundle {
@@ -110,9 +110,12 @@ export const saveDraft = async (
 
 /**
  * Adds a revision unless it matches the newest one, then trims to REVISIONS_PER_WORKSPACE.
- * Returns whether a revision was added.
+ * Returns whether it was added, and the id of the revision that now holds this code.
  */
-export const addRevision = async (db: MinjiDatabase, revision: Revision): Promise<boolean> => {
+export const addRevision = async (
+  db: MinjiDatabase,
+  revision: Revision,
+): Promise<{ added: boolean; id: string }> => {
   const tx = db.transaction("revisions", "readwrite");
   const index = tx.store.index("workspaceCreatedAt");
   const range = byWorkspace(revision.workspaceId, "", HIGHEST_STRING);
@@ -123,7 +126,7 @@ export const addRevision = async (db: MinjiDatabase, revision: Revision): Promis
     newest.value.language === revision.language;
   if (duplicate) {
     await tx.done;
-    return false;
+    return { added: false, id: newest.value.id };
   }
   await tx.store.add(revision);
   let cursor = await index.openCursor(range, "prev");
@@ -134,7 +137,47 @@ export const addRevision = async (db: MinjiDatabase, revision: Revision): Promis
     cursor = await cursor.continue();
   }
   await tx.done;
-  return true;
+  return { added: true, id: revision.id };
+};
+
+/** Stores a finished run and keeps only the newest RUNS_PER_WORKSPACE for the workspace. */
+export const addRun = async (db: MinjiDatabase, run: RunRecord): Promise<void> => {
+  const tx = db.transaction("runs", "readwrite");
+  await tx.store.put(run);
+  const index = tx.store.index("workspaceStartedAt");
+  let cursor = await index.openCursor(byWorkspace(run.workspaceId, "", HIGHEST_STRING), "prev");
+  let kept = 0;
+  while (cursor) {
+    kept += 1;
+    if (kept > RUNS_PER_WORKSPACE) await cursor.delete();
+    cursor = await cursor.continue();
+  }
+  await tx.done;
+};
+
+/** Runs, newest first. */
+export const getRuns = async (db: MinjiDatabase, workspaceId: string): Promise<RunRecord[]> => {
+  const runs = await db.getAllFromIndex(
+    "runs",
+    "workspaceStartedAt",
+    byWorkspace(workspaceId, "", HIGHEST_STRING),
+  );
+  return runs.reverse();
+};
+
+/**
+ * Records the pass count of a full run. Running isn't an edit, so updatedAt and the sync
+ * state are left alone.
+ */
+export const setLastRun = async (
+  db: MinjiDatabase,
+  id: string,
+  lastRun: NonNullable<Workspace["lastRun"]>,
+): Promise<void> => {
+  const tx = db.transaction("workspaces", "readwrite");
+  const workspace = await tx.store.get(id);
+  if (workspace !== undefined) await tx.store.put({ ...workspace, lastRun });
+  await tx.done;
 };
 
 /** A live workspace, or undefined when it doesn't exist or was deleted. */

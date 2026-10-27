@@ -139,8 +139,10 @@ interface TestRowProps {
   count: number;
   params: readonly string[];
   readOnly: boolean;
+  running: boolean;
   autoFocus: boolean;
   onChange: (test: TestCase) => void;
+  onRun: (testId: string) => void;
   onMove: (from: number, to: number) => void;
   onDuplicate: (index: number) => void;
   onDelete: (index: number) => void;
@@ -152,8 +154,10 @@ const TestRow = ({
   count,
   params,
   readOnly,
+  running,
   autoFocus,
   onChange,
+  onRun,
   onMove,
   onDuplicate,
   onDelete,
@@ -194,6 +198,7 @@ const TestRow = ({
   return (
     <li
       className="test-row"
+      data-test-id={test.id}
       aria-label={name}
       onKeyDown={onKeyDown}
       onDragOver={(event) => {
@@ -226,6 +231,15 @@ const TestRow = ({
           onChange={(event) => onChange({ ...test, label: event.target.value })}
         />
         {validation.valid ? null : <span className="badge badge-error">Invalid</span>}
+        <button
+          type="button"
+          className="button button-small"
+          aria-label={`Run ${name}`}
+          disabled={running}
+          onClick={() => onRun(test.id)}
+        >
+          Run
+        </button>
         {readOnly ? null : (
           <div className="row-actions">
             <button
@@ -315,14 +329,24 @@ interface TestListProps {
   tests: TestCase[];
   params: readonly string[];
   readOnly: boolean;
+  running: boolean;
   onChange: (tests: TestCase[]) => void;
+  onRunTest: (testId: string) => void;
 }
 
 const withPositions = (tests: TestCase[]): TestCase[] =>
   tests.map((test, position) => (test.position === position ? test : { ...test, position }));
 
 /** The Tests tab. See specs/test-cases.md, "Authoring". */
-export const TestList = ({ workspaceId, tests, params, readOnly, onChange }: TestListProps) => {
+export const TestList = ({
+  workspaceId,
+  tests,
+  params,
+  readOnly,
+  running,
+  onChange,
+  onRunTest,
+}: TestListProps) => {
   const showToast = useToast();
   const [focusId, setFocusId] = useState<string | null>(null);
   const latest = useRef(tests);
@@ -403,8 +427,10 @@ export const TestList = ({ workspaceId, tests, params, readOnly, onChange }: Tes
               count={tests.length}
               params={params}
               readOnly={readOnly}
+              running={running}
               autoFocus={test.id === focusId}
               onChange={replace}
+              onRun={onRunTest}
               onMove={move}
               onDuplicate={duplicate}
               onDelete={remove}

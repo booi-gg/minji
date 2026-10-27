@@ -103,7 +103,7 @@ Rules:
 
 ## Storage persistence
 
-After the first workspace is saved, call `navigator.storage.persist()` once and record `persistRequested` in `meta`. If it returns `false` and the user is signed out, show a dismissible banner on the home screen: "Your browser may clear these workspaces if you don't visit for a while. Export a backup or sign in to sync." Show it again at most once a week.
+After the first workspace is saved, call `navigator.storage.persist()` once, in the background, and record `persistRequested` in `meta`. Never wait for the answer: Firefox shows a permission prompt and the promise only settles when the user responds. If it returns `false` and the user is signed out, show a dismissible banner on the home screen: "Your browser may clear these workspaces if you don't visit for a while. Export a backup or sign in to sync." Show it again at most once a week.
 
 ## Multi-tab editing
 

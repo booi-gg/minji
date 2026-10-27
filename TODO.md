@@ -80,18 +80,19 @@ Specs: [practice-editor.md](specs/practice-editor.md), [test-cases.md](specs/tes
 
 Specs: [runner.md](specs/runner.md), [test-cases.md](specs/test-cases.md).
 
-- [ ] Move the chosen runner from the step 0 prototype into `src/runner/`, loaded lazily on the first run.
-- [ ] Page-side limit checks before a run (`rejected` outcome).
-- [ ] `src/tests/compare.ts` with the comparison rules and difference paths.
-- [ ] Map runner events to `TestResult` and `RunRecord`; store runs with trimming; update `lastRun` on Run all only.
-- [ ] Save a `run` revision before each run when the code changed.
-- [ ] Run all, Run one, `Mod+Enter`, `Mod+Shift+Enter`, Stop, disabled states while running.
-- [ ] Results tab: summary text, per-test badges and details, expected/actual with difference highlight, local timing tooltip, `aria-live` announcement.
-- [ ] Console tab: per test and grouped, truncation notice.
-- [ ] Compile-error and imports-unsupported messages, with "go to line".
-- [ ] Error stacks with harness frames removed and line numbers mapped to the user's source.
+- [x] Move the chosen runner from the step 0 prototype into `src/runner/`, loaded lazily on the first run.
+- [x] Page-side limit checks before a run (`rejected` outcome).
+- [x] `src/tests/compare.ts` with the comparison rules and difference paths.
+- [x] Map runner events to `TestResult` and `RunRecord`; store runs with trimming; update `lastRun` on Run all only.
+- [x] Save a `run` revision before each run when the code changed.
+- [x] Run all, Run one, `Mod+Enter`, `Mod+Shift+Enter`, Stop, disabled states while running.
+- [x] Results tab: summary text, per-test badges and details, expected/actual with difference highlight, local timing tooltip, `aria-live` announcement.
+- [x] Console tab: per test and grouped, truncation notice.
+- [x] Compile-error and imports-unsupported messages, with "go to line".
+- [x] Error stacks with harness frames removed and line numbers mapped to the user's source.
 - [x] Per-workspace test timeout setting (in the editor's More menu; used once tests run).
-- [ ] Re-run the step 0 fixtures through the real UI on desktop browsers and the phone; benchmark first-run download and startup.
+- [x] Check the gate through the real UI in Chromium, Firefox and WebKit: `vpx ./scripts/e2e-runs.ts <dev server URL>`.
+- [ ] Re-run the checks on a phone; benchmark first-run download and startup there.
 
 **Gate:** every fixture produces a terminal result, and each failure names the test and the reason.
 

@@ -1,7 +1,8 @@
 // Workspace data types and constructors. See specs/data-model.md.
 import { newId } from "../shared/ids.ts";
 import { DEFAULT_TEST_TIMEOUT_MS } from "../shared/limits.ts";
-import type { CompareTarget, Language, RawTestResult } from "../runner/types.ts";
+import type { CompareTarget, Language } from "../runner/types.ts";
+import type { RunOutcome, TestResult } from "../tests/results.ts";
 
 export type SyncState = "local" | "excluded" | "dirty" | "synced" | "conflict" | "too-large";
 
@@ -53,8 +54,10 @@ export interface RunRecord {
   startedAt: string;
   durationMs: number;
   revisionId: string | null;
-  outcome: string;
-  results: RawTestResult[];
+  outcome: RunOutcome;
+  /** Run-level message for compile errors, rejected runs and crashes. */
+  message: string | null;
+  results: TestResult[];
 }
 
 export const DEFAULT_FUNCTION_NAME = "solve";

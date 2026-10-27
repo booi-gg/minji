@@ -27,12 +27,21 @@ export const readLastLanguage = (): Language | undefined => {
 /**
  * Asks the browser not to evict our storage, once, after the first saved workspace.
  * Records the answer so the home screen can warn when it was refused.
+ *
+ * Firefox answers with a permission prompt, so callers must not wait for this: the
+ * promise only settles once the user responds.
  */
 export const requestPersistentStorage = async (db: MinjiDatabase): Promise<void> => {
   if ((await getMeta<boolean>(db, "persistRequested")) === true) return;
-  const granted = (await navigator.storage?.persist?.()) ?? false;
   await setMeta(db, "persistRequested", true);
+  const granted = (await navigator.storage?.persist?.()) ?? false;
   await setMeta(db, "persistGranted", granted);
+};
+
+const requestPersistentStorageInBackground = (db: MinjiDatabase): void => {
+  requestPersistentStorage(db).catch(() => {
+    // Not being able to ask is the same as being refused; the banner covers it.
+  });
 };
 
 export const isStoragePersistent = async (db: MinjiDatabase): Promise<boolean | undefined> => {
@@ -44,7 +53,7 @@ export const isStoragePersistent = async (db: MinjiDatabase): Promise<boolean | 
 export const createScratchWorkspace = async (db: MinjiDatabase): Promise<string> => {
   const workspace = createWorkspace({ language: readLastLanguage() });
   await saveNewWorkspace(db, { workspace, tests: [], revisions: [] });
-  await requestPersistentStorage(db);
+  requestPersistentStorageInBackground(db);
   return workspace.id;
 };
 
@@ -55,7 +64,7 @@ export const saveImportedWorkspaces = async (
   for (const bundle of bundles) {
     await saveNewWorkspace(db, bundle);
   }
-  if (bundles.length > 0) await requestPersistentStorage(db);
+  if (bundles.length > 0) requestPersistentStorageInBackground(db);
 };
 
 /** Downloads the given workspaces, or every workspace when `ids` is omitted. */
