@@ -31,3 +31,6 @@ dist-ssr
 
 # Vitest browser-mode failure screenshots
 .vitest/
+
+# Wrangler local runtime state (local D1, KV, cache)
+.wrangler/

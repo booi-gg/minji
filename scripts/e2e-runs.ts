@@ -61,12 +61,13 @@ const compileError = exportFile({
 
 const importWorkspace = async (page: Page, file: string): Promise<void> => {
   await page.goto(`${base}/new/import`);
+  await page.getByRole("tab", { name: "Upload file" }).click();
   await page.locator('input[type="file"]').setInputFiles({
     name: "workspace.json",
     mimeType: "application/json",
     buffer: Buffer.from(file),
   });
-  await page.getByRole("button", { name: "Import selected" }).click();
+  await page.getByRole("button", { name: "Save workspace" }).click();
   // Client-side navigation: wait for the URL, not a page load.
   await page.waitForURL(/\/w\//, { waitUntil: "commit" });
   await page.locator(".monaco-editor").waitFor();

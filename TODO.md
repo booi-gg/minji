@@ -100,16 +100,18 @@ Specs: [runner.md](specs/runner.md), [test-cases.md](specs/test-cases.md).
 
 Spec: [workspaces-and-import.md](specs/workspaces-and-import.md).
 
-- [ ] Collect 10 or more real pasted problems (plain text and Markdown, JS and TS starters, single and multiple arguments, in-place, strings with commas) into `src/import/fixtures/`.
-- [ ] Title and statement extraction.
-- [ ] Starter code extraction, language detection, function name and parameter parsing.
-- [ ] Example parsing: example boundaries, Input/Output fields, top-level comma split, `name = value`, JSON with the single-quote retry.
-- [ ] Argument ordering by params or by first example, with warnings and `paramsConfirmed`.
-- [ ] In-place detection.
-- [ ] Import screen: paste tab with starter code field, upload tab with drop zone and size limit.
-- [ ] Review screen: editable fields, param chips with remapping, order notice, warnings, test badges, save in one transaction, unsaved-draft prompt.
+- [x] Collect 10 or more real pasted problems (plain text and Markdown, JS and TS starters, single and multiple arguments, in-place, strings with commas) into `src/import/fixtures/`.
+- [x] Title and statement extraction.
+- [x] Starter code extraction, language detection, function name and parameter parsing.
+- [x] Example parsing: example boundaries, Input/Output fields, top-level comma split, `name = value`, JSON with the single-quote retry.
+- [x] Argument ordering by params or by first example, with warnings and `paramsConfirmed`.
+- [x] In-place detection.
+- [x] Import screen: paste tab with starter code field, upload tab with drop zone and size limit.
+- [x] Review screen: editable fields, param chips with remapping, order notice, warnings, test badges, save in one transaction, unsaved-draft prompt.
 
 **Gate:** paste a LeetCode-style statement with examples, review it, and run the extracted tests without fixing any arguments by hand.
+
+**Verified:** the import → review → save → run flow passed in Chromium, Firefox and WebKit with named arguments supplied in a different order from the function parameters.
 
 ## 5. Accounts and finish
 

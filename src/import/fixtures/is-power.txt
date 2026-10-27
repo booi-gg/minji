@@ -1,0 +1,11 @@
+Power of Three Check
+
+Return true when n is a power of three.
+
+Example 1:
+Input: 27
+Output: true
+
+Example 2:
+Input: 10
+Output: false

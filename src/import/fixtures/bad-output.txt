@@ -1,0 +1,5 @@
+Broken Example
+
+Example 1:
+Input: n = 3
+Output: [1,2,
