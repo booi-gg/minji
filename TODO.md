@@ -38,20 +38,20 @@ Spec: [runner.md](specs/runner.md).
 
 Specs: [data-model.md](specs/data-model.md), [workspaces-and-import.md](specs/workspaces-and-import.md), [practice-editor.md](specs/practice-editor.md) (routes), [sync-and-auth.md](specs/sync-and-auth.md) (Worker configuration).
 
-- [ ] Add React, React DOM, the React Vite plugin and React Router 7; replace `src/main.ts`, `src/counter.ts` and the starter styles with `src/main.tsx` and the route table. Confirm the plugin works under vite-plus.
-- [ ] Add theme tokens (light/dark, `data-theme` on `<html>`) and base layout styles.
-- [ ] Add `wrangler.jsonc` with Static Assets (`single-page-application`, `run_worker_first: ["/api/*"]`) and a `worker/index.ts` that answers `GET /api/health`.
-- [ ] Try `@cloudflare/vite-plugin` under vite-plus; fall back to `wrangler dev` plus `server.proxy` if it fails. Write down which in a README.
+- [x] Add React, React DOM, the React Vite plugin and React Router (8, data mode); replace `src/main.ts`, `src/counter.ts` and the starter styles with `src/main.tsx` and the route table. Confirm the plugin works under vite-plus.
+- [x] Add theme tokens (light/dark, `data-theme` on `<html>`) and base layout styles.
+- [x] Add `wrangler.jsonc` with Static Assets (`single-page-application`, `run_worker_first: ["/api/*"]`) and a `worker/index.ts` that answers `GET /api/health`.
+- [x] Try `@cloudflare/vite-plugin` under vite-plus; fall back to `wrangler dev` plus `server.proxy` if it fails. Write down which in a README.
 - [ ] Deploy to a staging Worker; check that `/w/anything` serves the app and `/api/health` reaches the Worker.
-- [ ] `src/shared/ids.ts`: id generation and identifier validation (with reserved words).
-- [ ] `src/db/`: open database `minji` v1 with all stores and indexes; typed helpers per store; the "tests update workspace" and trimming rules.
-- [ ] IndexedDB tests with the browser test project (or `fake-indexeddb` in Node).
-- [ ] Scratch creation with the defaults table and stub generation.
-- [ ] My workspaces screen: sorted list, row fields, empty state, delete with confirmation.
-- [ ] Practice route placeholder that loads the workspace and shows its fields read-only, plus the not-found state.
-- [ ] Export format: serialise one or all workspaces (valid JSON as values, invalid as strings); download as a file.
-- [ ] JSON import: version check, defaults, new ids, multi-workspace selection list.
-- [ ] `navigator.storage.persist()` after the first save, and the storage banner.
+- [x] `src/shared/ids.ts`: id generation and identifier validation (with reserved words).
+- [x] `src/db/`: open database `minji` v1 with all stores and indexes; typed helpers per store; the "tests update workspace" and trimming rules.
+- [x] IndexedDB tests with the browser test project (or `fake-indexeddb` in Node).
+- [x] Scratch creation with the defaults table and stub generation.
+- [x] My workspaces screen: sorted list, row fields, empty state, delete with confirmation.
+- [x] Practice route placeholder that loads the workspace and shows its fields read-only, plus the not-found state.
+- [x] Export format: serialise one or all workspaces (valid JSON as values, invalid as strings); download as a file.
+- [x] JSON import: version check, defaults, new ids, multi-workspace selection list.
+- [x] `navigator.storage.persist()` after the first save, and the storage banner.
 
 **Gate:** create a blank workspace, export it, import the file, and reopen both with the same content.
 

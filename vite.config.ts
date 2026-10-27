@@ -1,10 +1,16 @@
+import { cloudflare } from "@cloudflare/vite-plugin";
+import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite-plus";
 import { playwright } from "vite-plus/test/browser-playwright";
 
 // User-code samples for the runner. They are data, not project code.
 const runnerFixtures = "src/runner/fixtures/**";
 
+// The Cloudflare plugin runs the Worker in workerd; tests don't need it.
+const isTest = process.env.VITEST !== undefined;
+
 export default defineConfig({
+  plugins: isTest ? [react()] : [react(), cloudflare()],
   fmt: {
     // runner.html's CSP pins the exact bytes of its inline script.
     ignorePatterns: [runnerFixtures, "public/runner.html"],

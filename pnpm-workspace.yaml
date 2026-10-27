@@ -8,3 +8,8 @@ overrides:
 minimumReleaseAgeExclude:
   - vitest
   - "@vitest/*"
+
+# Native binaries for Wrangler and its local runtime.
+allowBuilds:
+  esbuild: true
+  workerd: true

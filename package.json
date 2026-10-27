@@ -5,19 +5,32 @@
   "type": "module",
   "scripts": {
     "dev": "vp dev",
-    "build": "tsc && vp build",
-    "preview": "vp preview"
+    "build": "tsc && tsc -p worker && vp build",
+    "preview": "vp preview",
+    "deploy:staging": "vp run build && wrangler deploy --env staging",
+    "deploy": "vp run build && wrangler deploy"
   },
   "dependencies": {
+    "idb": "^8.0.4",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "react-router": "^8.5.0",
     "sucrase": "^3.35.1"
   },
   "devDependencies": {
+    "@cloudflare/vite-plugin": "^1.65.0",
+    "@cloudflare/workers-types": "^5.20261026.1",
     "@types/node": "^24.19.2",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.1.2",
     "@vitest/browser-playwright": "5.0.5",
+    "fake-indexeddb": "^6.2.6",
     "playwright": "^1.64.1",
     "typescript": "~6.0.3",
     "vite": "catalog:",
-    "vite-plus": "catalog:"
+    "vite-plus": "catalog:",
+    "wrangler": "^4.152.0"
   },
   "devEngines": {
     "packageManager": {

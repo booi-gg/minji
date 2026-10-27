@@ -86,7 +86,7 @@ Database `minji`, version 1, opened through the `idb` package.
 | ------------ | ------------- | ---------------------------------------- |
 | `workspaces` | `id`          | `updatedAt`, `syncState`                 |
 | `test_cases` | `id`          | `workspaceId`, `[workspaceId, position]` |
-| `revisions`  | `id`          | `[workspaceId, createdAt]`, `synced`     |
+| `revisions`  | `id`          | `[workspaceId, createdAt]`               |
 | `runs`       | `id`          | `[workspaceId, startedAt]`               |
 | `conflicts`  | `workspaceId` | —                                        |
 | `meta`       | `key`         | —                                        |
@@ -144,7 +144,7 @@ Export and JSON import use one versioned format. Files are named `minji-<slug-or
 }
 ```
 
-- `args` and `expected` are written as JSON values when the raw text is valid, and as the raw string otherwise, so nothing is lost. On import, a string is taken as raw text and any other value is `JSON.stringify`-ed with two-space indentation.
+- `args` and `expected` are written as JSON values when the raw text is valid, and as the raw string otherwise, so nothing is lost. On import, a string is taken as raw text and any other value is written as compact JSON (`[[2,7,11,15],9]`). A value that is itself a JSON string is exported as its raw text (`"\"abc\""`) so it survives the round trip.
 - `compare` is optional on import and defaults to `{ "kind": "return" }`.
 - Only `title` and `source` are required on import. Other fields default as for a scratch workspace (see workspaces-and-import.md). `revisions` is optional.
 - Import always creates new ids and new workspaces with `syncState: 'local'`; it never overwrites an existing workspace.

@@ -2,7 +2,7 @@
 
 ## Routes
 
-React Router 7 in declarative mode (`BrowserRouter`). The practice route is loaded with `React.lazy`, so Monaco and the runner code stay out of the home-screen bundle.
+React Router 8 in data mode (`createBrowserRouter`, `src/app/router.tsx`), so routes can use loaders and the import screen can block navigation with an unsaved draft. The practice route is loaded with the route's `lazy` option, so Monaco and the runner code stay out of the home-screen bundle.
 
 | Path          | Screen                                   |
 | ------------- | ---------------------------------------- |
