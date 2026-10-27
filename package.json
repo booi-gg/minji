@@ -1,9 +1,8 @@
 {
   "name": "minji",
-  "private": true,
   "version": "0.0.0",
+  "private": true,
   "type": "module",
-  "packageManager": "pnpm@12.15.0",
   "scripts": {
     "dev": "vp dev",
     "build": "tsc && vp build",
@@ -20,5 +19,6 @@
       "version": "12.15.0",
       "onFail": "download"
     }
-  }
+  },
+  "packageManager": "pnpm@12.15.0"
 }
