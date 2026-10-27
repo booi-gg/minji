@@ -142,32 +142,34 @@ pre {
 
 /* ---- Layout ---------------------------------------------------------------------- */
 
-.app-header {
-  border-bottom: 1px solid var(--border);
-  background: var(--surface);
-}
-
-.app-header-inner,
 .page {
   max-width: var(--content-width);
   margin: 0 auto;
   padding-inline: var(--space-4);
 }
 
-.app-header-inner {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  min-height: 56px;
-  gap: var(--space-3);
+/* The app name sits in the bottom-right corner instead of a top bar, so screens start
+   with their own content. It stays small and quiet so it doesn't cover much. */
+.brand {
+  position: fixed;
+  right: var(--space-3);
+  bottom: var(--space-2);
+  z-index: 10;
+  padding: 2px var(--space-2);
+  border-radius: var(--radius-sm);
+  background: var(--bg);
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-decoration: none;
+  opacity: 0.7;
 }
 
-.brand {
+.brand:hover,
+.brand:focus-visible {
   color: var(--text);
-  font-weight: 700;
-  font-size: var(--text-lg);
-  letter-spacing: -0.02em;
-  text-decoration: none;
+  opacity: 1;
 }
 
 .page {
@@ -586,7 +588,7 @@ textarea[readonly] {
   flex: 1;
   flex-direction: column;
   min-height: 0;
-  height: calc(100dvh - 57px);
+  height: 100dvh;
 }
 
 .practice > .notice {

@@ -1,21 +1,18 @@
 import { Link, Outlet, isRouteErrorResponse, useRouteError } from "react-router";
 import { ToastProvider } from "../shared/toast.tsx";
 
-const Header = () => (
-  <header className="app-header">
-    <div className="app-header-inner">
-      <Link className="brand" to="/">
-        minji
-      </Link>
-    </div>
-  </header>
+// No top bar: the app name is a small link in the bottom-right corner.
+const Brand = () => (
+  <Link className="brand" to="/" aria-label="minji: all workspaces">
+    minji
+  </Link>
 );
 
 export const AppLayout = () => (
   <ToastProvider>
     <div className="app">
-      <Header />
       <Outlet />
+      <Brand />
     </div>
   </ToastProvider>
 );
@@ -38,7 +35,6 @@ export const ErrorPage = () => {
       : "Unknown error";
   return (
     <div className="app">
-      <Header />
       <main className="page">
         <h1>Something went wrong</h1>
         <p className="page-intro">{message}</p>
@@ -46,6 +42,7 @@ export const ErrorPage = () => {
           <Link to="/">Back to my workspaces</Link>
         </p>
       </main>
+      <Brand />
     </div>
   );
 };
