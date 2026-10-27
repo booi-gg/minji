@@ -135,7 +135,7 @@ Add unit tests with `vp test` from step 0 onward, starting with the deep-equalit
 
 ## Open decisions
 
-- **Editor:** keep Monaco and stay desktop-first, or switch to CodeMirror 6 if editing code on a phone is a goal. CodeMirror handles touch input well but needs a separate TypeScript language-service setup for diagnostics. Decide before step 2.
+- ~~**Editor:**~~ decided 2026-10-27: Monaco, desktop-first. On phones the code is read-only; tests can still be edited. Revisit CodeMirror 6 if editing code on a phone becomes a goal.
 - Confirm whether **Import problem** should also accept a URL. A URL importer needs a source-specific adapter and must handle sites that restrict automated access.
 - After the runner is proven, consider linked-list/tree test adapters, class-design problems, tags, folders, and more sign-in options.
 

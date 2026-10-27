@@ -59,20 +59,20 @@ Specs: [data-model.md](specs/data-model.md), [workspaces-and-import.md](specs/wo
 
 Specs: [practice-editor.md](specs/practice-editor.md), [test-cases.md](specs/test-cases.md).
 
-- [ ] Decide the editor (Monaco desktop-first, or CodeMirror 6) and record it in PLAN.md. The rest of this step assumes Monaco.
-- [ ] Practice layout with `react-resizable-panels`, persisted sizes, the three width breakpoints, and the statement panel toggle.
-- [ ] Monaco with the bundled loader, editor and TS workers only, model per language, compiler options, `runner-globals.d.ts`.
-- [ ] Toolbar: title, language switch, function name with validation and stub regeneration, format, font size, theme.
-- [ ] Prettier formatting (`src/practice/format.ts`): lazy-load `prettier/standalone` with the `babel` and `estree` plugins, `babel`/`babel-ts` parsers, replace Monaco's built-in formatter with a Prettier provider, syntax-error toasts. Unit tests for JS, TS and a syntax error.
-- [ ] Autosave with debounce, flush on hide/pagehide/navigation, retry and save status.
-- [ ] Statement rendering (`react-markdown`, `remark-gfm`, `remark-breaks`, no raw HTML, safe links and images) and the notes editor with preview.
-- [ ] Test case editor: rows, add, label/args/expected fields, compare select, large-input collapse.
-- [ ] Reorder (drag, menu, `Alt+↑/↓`), duplicate, delete with undo.
-- [ ] Test validation with the messages table.
-- [ ] Revisions: format then save on `Mod+S` (Format on save setting, on by default), History drawer, diff view, restore with undo.
-- [ ] Reset code with confirmation and revision.
-- [ ] Keyboard shortcuts on Monaco and `document`, and the `?` help dialog.
-- [ ] Web Lock per workspace, read-only second tab, **Take over**, `BroadcastChannel` change notices.
+- [x] Decide the editor and record it in PLAN.md: Monaco, desktop-first.
+- [x] Practice layout with `react-resizable-panels`, persisted sizes, the three width breakpoints, and the statement panel toggle.
+- [x] Monaco with the bundled loader, editor and TS workers only, model per language, compiler options, `runner-globals.d.ts`.
+- [x] Toolbar: title, language switch, function name with validation and stub regeneration, format, font size, theme.
+- [x] Prettier formatting (`src/practice/format.ts`): lazy-load `prettier/standalone` with the `babel` and `estree` plugins, `babel`/`babel-ts` parsers, replace Monaco's built-in formatter with a Prettier provider, syntax-error toasts. Unit tests for JS, TS and a syntax error.
+- [x] Autosave with debounce, flush on hide/pagehide/navigation, retry and save status.
+- [x] Statement rendering (`react-markdown`, `remark-gfm`, `remark-breaks`, no raw HTML, safe links and images) and the notes editor with preview.
+- [x] Test case editor: rows, add, label/args/expected fields, compare select, large-input collapse.
+- [x] Reorder (drag, up/down buttons, `Alt+↑/↓`), duplicate, delete with undo.
+- [x] Test validation with the messages table.
+- [x] Revisions: format then save on `Mod+S` (Format on save setting, on by default), History drawer, diff view, restore with undo.
+- [x] Reset code with confirmation and revision.
+- [x] Keyboard shortcuts on Monaco and `document`, and the `?` help dialog.
+- [x] Web Lock per workspace, read-only second tab, **Take over**, `BroadcastChannel` change notices.
 
 **Gate:** a user can edit code and test cases, refresh the page, and continue without losing work; a second tab opens read-only.
 
@@ -90,7 +90,7 @@ Specs: [runner.md](specs/runner.md), [test-cases.md](specs/test-cases.md).
 - [ ] Console tab: per test and grouped, truncation notice.
 - [ ] Compile-error and imports-unsupported messages, with "go to line".
 - [ ] Error stacks with harness frames removed and line numbers mapped to the user's source.
-- [ ] Per-workspace test timeout setting.
+- [x] Per-workspace test timeout setting (in the editor's More menu; used once tests run).
 - [ ] Re-run the step 0 fixtures through the real UI on desktop browsers and the phone; benchmark first-run download and startup.
 
 **Gate:** every fixture produces a terminal result, and each failure names the test and the reason.

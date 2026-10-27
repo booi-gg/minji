@@ -36,7 +36,7 @@ Left to right: back to workspaces, title (inline edit, placeholder "Untitled"), 
 
 ## Editor
 
-- Packages: `monaco-editor` and `@monaco-editor/react`, with `loader.config({ monaco })` so the bundled copy is used and nothing loads from a CDN.
+- Package: `monaco-editor`, bundled (nothing loads from a CDN) and wrapped by a small `CodeEditor` component (`src/practice/CodeEditor.tsx`) instead of `@monaco-editor/react`, so models, read-only state and commands stay under our control. One-time setup lives in `src/practice/monaco.ts`.
 - Workers: register only the editor worker and the TypeScript worker through Vite `?worker` imports in `self.MonacoEnvironment.getWorker`. JSON, CSS and HTML workers are not bundled.
 - Model URI is `file:///solution.ts` or `file:///solution.js`. Switching language creates a new model with the same text, keeps the view state (cursor, scroll), and disposes the old model.
 - TypeScript defaults: `target` ES2023, `lib: ['es2023']`, `strict: true`, `noEmit: true`, `allowNonTsExtensions: true`. JavaScript keeps Monaco's default of syntax-only diagnostics.

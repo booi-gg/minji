@@ -9,11 +9,13 @@ import {
 } from "../workspaces/model.ts";
 import { openMinjiDatabase, type MinjiDatabase } from "./database.ts";
 import {
+  addRevision,
   deleteWorkspace,
   getBundle,
   getMeta,
   getWorkspace,
   listWorkspaces,
+  saveDraft,
   saveNewWorkspace,
   setMeta,
 } from "./workspaces.ts";
@@ -124,4 +126,52 @@ it("stores meta values", async () => {
   expect(await getMeta(db, "persistRequested")).toBeUndefined();
   await setMeta(db, "persistRequested", true);
   expect(await getMeta<boolean>(db, "persistRequested")).toBe(true);
+});
+
+it("saves a draft, replacing the tests and marking synced workspaces dirty", async () => {
+  const workspace = { ...createWorkspace({ title: "A" }), syncState: "synced" as const };
+  await saveNewWorkspace(db, {
+    workspace,
+    tests: [testCase(workspace, 0), testCase(workspace, 1)],
+    revisions: [],
+  });
+  const [first, second] = (await getBundle(db, workspace.id))?.tests ?? [];
+  if (first === undefined || second === undefined) throw new Error("missing tests");
+
+  const saved = await saveDraft(
+    db,
+    workspace.id,
+    { title: "B", source: "x" },
+    [second, { ...first, label: "moved" }],
+    at("2026-10-27T12:00:00Z"),
+  );
+
+  expect(saved).toMatchObject({ title: "B", source: "x", syncState: "dirty" });
+  const bundle = await getBundle(db, workspace.id);
+  expect(bundle?.workspace.updatedAt).toBe("2026-10-27T12:00:00.000Z");
+  expect(bundle?.tests.map((entry) => [entry.id, entry.position, entry.label])).toEqual([
+    [second.id, 0, ""],
+    [first.id, 1, "moved"],
+  ]);
+});
+
+it("leaves tests alone when a draft has none", async () => {
+  const workspace = createWorkspace({});
+  await saveNewWorkspace(db, { workspace, tests: [testCase(workspace, 0)], revisions: [] });
+  await saveDraft(db, workspace.id, { notes: "n" });
+  expect((await getBundle(db, workspace.id))?.tests).toHaveLength(1);
+  expect(await saveDraft(db, "missing", { notes: "n" })).toBeUndefined();
+});
+
+it("adds revisions, skipping duplicates of the newest and trimming old ones", async () => {
+  const workspace = createWorkspace({});
+  await saveNewWorkspace(db, { workspace, tests: [], revisions: [] });
+  expect(await addRevision(db, revision(workspace, 1))).toBe(true);
+  expect(await addRevision(db, { ...revision(workspace, 2), source: "v1" })).toBe(false);
+  for (let day = 2; day <= REVISIONS_PER_WORKSPACE + 3; day += 1) {
+    await addRevision(db, revision(workspace, day));
+  }
+  const revisions = (await getBundle(db, workspace.id))?.revisions ?? [];
+  expect(revisions).toHaveLength(REVISIONS_PER_WORKSPACE);
+  expect(revisions[0]?.source).toBe(`v${REVISIONS_PER_WORKSPACE + 3}`);
 });

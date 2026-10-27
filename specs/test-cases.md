@@ -11,7 +11,7 @@ The **Tests** tab lists a workspace's cases in `position` order. Each row has:
 | Expected  | Monospace textarea holding `expectedText`.                                                                                                                           |
 | Compare   | Select: **Return value** (default) or **Argument N after the call** (one entry per argument, labelled with the parameter name when known).                           |
 | Run       | Runs only this case.                                                                                                                                                 |
-| Menu      | Move up, Move down, Duplicate, Delete.                                                                                                                               |
+| Actions   | ↑ and ↓ (move), Duplicate and Delete, shown inline on the row.                                                                                                       |
 
 - **Add test** appends a row with `argsText: '[]'`, `expectedText: ''`, and focuses Arguments. It is disabled at `MAX_TESTS_PER_WORKSPACE`.
 - Reorder by dragging the row handle, with the menu, or with `Alt+↑` / `Alt+↓` while focus is in the row. Positions are rewritten densely in one transaction.
@@ -21,7 +21,7 @@ The **Tests** tab lists a workspace's cases in `position` order. Each row has:
 
 ## Validation
 
-Validation runs on blur and 300 ms after typing stops. Messages appear under the field; the row gets an "Invalid" badge.
+Validation runs 300 ms after typing stops. Messages appear under the field, except that an empty field is only flagged after it has been left once; the row gets an "Invalid" badge. A new test focuses Arguments with its `[]` selected, so typing replaces it.
 
 | Check                                       | Message                                                                          |
 | ------------------------------------------- | -------------------------------------------------------------------------------- |

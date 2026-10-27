@@ -48,6 +48,95 @@ export const saveNewWorkspace = async (
   ]);
 };
 
+/** Workspace fields the editor can change. */
+export type WorkspaceEdit = Partial<
+  Pick<
+    Workspace,
+    | "title"
+    | "statement"
+    | "notes"
+    | "language"
+    | "functionName"
+    | "params"
+    | "source"
+    | "starterSource"
+    | "testTimeoutMs"
+  >
+>;
+
+/** Applies a user edit: bumps updatedAt and marks a synced workspace dirty. */
+const touch = (workspace: Workspace, edit: WorkspaceEdit, now: Date): Workspace => ({
+  ...workspace,
+  ...edit,
+  updatedAt: now.toISOString(),
+  syncState: workspace.syncState === "synced" ? "dirty" : workspace.syncState,
+});
+
+/**
+ * Saves an editor draft in one transaction: workspace fields, and the full test list when
+ * `tests` is given (tests are replaced, so reorders and deletes need no bookkeeping).
+ * Returns the stored workspace, or undefined when it no longer exists.
+ */
+export const saveDraft = async (
+  db: MinjiDatabase,
+  id: string,
+  edit: WorkspaceEdit,
+  tests?: TestCase[],
+  now: Date = new Date(),
+): Promise<Workspace | undefined> => {
+  const tx = db.transaction(["workspaces", "test_cases"], "readwrite");
+  const workspaces = tx.objectStore("workspaces");
+  const current = await workspaces.get(id);
+  if (current === undefined || current.deletedAt !== null) {
+    await tx.done;
+    return undefined;
+  }
+  const updated = touch(current, edit, now);
+  const writes: Promise<unknown>[] = [workspaces.put(updated)];
+  if (tests !== undefined) {
+    const store = tx.objectStore("test_cases");
+    writes.push(
+      (async () => {
+        await deleteEach(store.index("workspaceId").openCursor(id));
+        await Promise.all(
+          tests.map((test, position) => store.put({ ...test, workspaceId: id, position })),
+        );
+      })(),
+    );
+  }
+  await Promise.all([...writes, tx.done]);
+  return updated;
+};
+
+/**
+ * Adds a revision unless it matches the newest one, then trims to REVISIONS_PER_WORKSPACE.
+ * Returns whether a revision was added.
+ */
+export const addRevision = async (db: MinjiDatabase, revision: Revision): Promise<boolean> => {
+  const tx = db.transaction("revisions", "readwrite");
+  const index = tx.store.index("workspaceCreatedAt");
+  const range = byWorkspace(revision.workspaceId, "", HIGHEST_STRING);
+  const newest = await index.openCursor(range, "prev");
+  const duplicate =
+    newest !== null &&
+    newest.value.source === revision.source &&
+    newest.value.language === revision.language;
+  if (duplicate) {
+    await tx.done;
+    return false;
+  }
+  await tx.store.add(revision);
+  let cursor = await index.openCursor(range, "prev");
+  let kept = 0;
+  while (cursor) {
+    kept += 1;
+    if (kept > REVISIONS_PER_WORKSPACE) await cursor.delete();
+    cursor = await cursor.continue();
+  }
+  await tx.done;
+  return true;
+};
+
 /** A live workspace, or undefined when it doesn't exist or was deleted. */
 export const getWorkspace = async (
   db: MinjiDatabase,
