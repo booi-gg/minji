@@ -6,31 +6,33 @@ Every code task includes its unit tests (`*.test.ts`, importing from `vite-plus/
 
 ## Setup
 
-- [ ] Initialise git and make a first commit of the starter.
-- [ ] Run `vp install`, `vp check`, `vp test` and `vp build` on the untouched starter to confirm the toolchain works.
-- [ ] Add `test` config to `vite.config.ts` (`include: ['src/**/*.test.ts', 'worker/**/*.test.ts']`).
-- [ ] Set up Vitest browser mode with `vite-plus/test/browser-playwright` for tests that need Workers, WASM or IndexedDB, as a separate project from the Node tests.
-- [ ] Add `src/shared/limits.ts` with every constant from specs/README.md.
+- [x] Initialise git and make a first commit of the starter.
+- [x] Run `vp install`, `vp check`, `vp test` and `vp build` on the untouched starter to confirm the toolchain works.
+- [x] Add `test` config to `vite.config.ts` (`include: ['src/**/*.test.ts', 'worker/**/*.test.ts']`).
+- [x] Set up Vitest browser mode with `vite-plus/test/browser-playwright` for tests that need Workers, WASM or IndexedDB, as a separate project from the Node tests.
+- [x] Add `src/shared/limits.ts` with every constant from specs/README.md.
 
 ## 0. Browser runner proof
 
 Spec: [runner.md](specs/runner.md).
 
-- [ ] Add `src/runner/types.ts`: `RunRequest`, `RunnerTest`, `RunnerEvent`, `RawTestResult`, `ConsoleEntry`, `Runner`, `Encoded`, `CompareTarget`.
-- [ ] Write the value encoder (`src/runner/encode.ts`) as a self-contained function that can run inside either runtime: tags, non-serializable detection with path and type, cycle detection, `MAX_RESULT_BYTES` cut-off.
-- [ ] Write the console shim with per-test and per-run byte caps.
-- [ ] Write the sucrase step: transforms per language, `compile-error` with line and column.
-- [ ] Write the harness script: `exports` / `module` / throwing `require`, function lookup, args parsing in-runtime, timing, capture of return value or argument N.
-- [ ] Add the fixtures listed under "Step 0 benchmark set".
-- [ ] **Candidate A:** QuickJS runner in a module Worker: runtime per run, context per test, memory/stack limits, interrupt deadline, handle disposal.
-- [ ] **Candidate B:** native runner: `public/runner.html`, `_headers` CSP, sandboxed iframe, `postMessage` validation, one blob Worker per test, per-test terminate.
-- [ ] Page-side watchdog and `stop()` for both candidates.
-- [ ] Run the fixture suite against both candidates in Vitest browser mode (Chromium, Firefox, WebKit).
-- [ ] Build a throwaway page with a textarea and a Run button to check editor responsiveness during `infinite-loop.js`, and to benchmark on a mid-range Android phone.
-- [ ] Verify candidate B's isolation by hand: from user code, `indexedDB.open`, `fetch('/api/me')`, `document.cookie` and `parent.document` all fail, in Chrome, Firefox and Safari.
-- [ ] Record the numbers and the decision in `specs/runner-decision.md`; implement `createRunner.ts` for the winner and delete the other candidate.
+- [x] Add `src/runner/types.ts`: `RunRequest`, `RunnerTest`, `RunnerEvent`, `RawTestResult`, `ConsoleEntry`, `Runner`, `Encoded`, `CompareTarget`.
+- [x] Write the value encoder (inside the harness, `src/runner/guest.js`) as self-contained code that can run inside either runtime: tags, non-serializable detection with path and type, cycle detection, `MAX_RESULT_BYTES` cut-off.
+- [x] Write the console shim with per-test and per-run byte caps.
+- [x] Write the sucrase step: transforms per language, `compile-error` with line and column.
+- [x] Write the harness script: `exports` / `module` / throwing `require`, function lookup, args parsing in-runtime, timing, capture of return value or argument N.
+- [x] Add the fixtures listed under "Step 0 benchmark set".
+- [x] **Candidate A:** QuickJS runner in a module Worker: runtime per run, context per test, memory/stack limits, interrupt deadline, handle disposal. (Built, measured, then removed.)
+- [x] **Candidate B:** native runner: `public/runner.html`, `<meta>` CSP pinned by hash, sandboxed iframe, `postMessage` validation, one blob Worker per test, per-test terminate.
+- [x] Page-side watchdog and `stop()` for both candidates.
+- [x] Run the fixture suite against both candidates in Vitest browser mode (Chromium, Firefox, WebKit).
+- [x] Build a throwaway page with a textarea and a Run button to check editor responsiveness during `infinite-loop.js` (`src/runner/bench/`). Responsiveness is also asserted in the browser suite.
+- [ ] Benchmark on a mid-range Android phone with the bench page (`vp dev --host`, then `/src/runner/bench/`) and add the numbers to `specs/runner-decision.md`.
+- [x] Verify candidate B's isolation: from user code, `indexedDB.open`, sync XHR to the app, `importScripts`, `document` and `localStorage` all fail, in Chromium, Firefox and WebKit (automated in the browser suite).
+- [ ] Verify that async `fetch` from user code is blocked once the harness supports async results.
+- [x] Record the numbers and the decision in `specs/runner-decision.md`; implement `createRunner.ts` for the winner and delete the other candidate.
 
-**Gate:** the chosen runner passes every fixture, `merge-sort-1e6` finishes under 2 s on the phone, and the page stays responsive during a hung run.
+**Gate:** the chosen runner passes every fixture, `merge-sort-1e6` finishes under 2 s on the phone, and the page stays responsive during a hung run. Desktop parts pass; the phone check is open.
 
 ## 1. Workspace shell
 
@@ -61,12 +63,13 @@ Specs: [practice-editor.md](specs/practice-editor.md), [test-cases.md](specs/tes
 - [ ] Practice layout with `react-resizable-panels`, persisted sizes, the three width breakpoints, and the statement panel toggle.
 - [ ] Monaco with the bundled loader, editor and TS workers only, model per language, compiler options, `runner-globals.d.ts`.
 - [ ] Toolbar: title, language switch, function name with validation and stub regeneration, format, font size, theme.
+- [ ] Prettier formatting (`src/practice/format.ts`): lazy-load `prettier/standalone` with the `babel` and `estree` plugins, `babel`/`babel-ts` parsers, replace Monaco's built-in formatter with a Prettier provider, syntax-error toasts. Unit tests for JS, TS and a syntax error.
 - [ ] Autosave with debounce, flush on hide/pagehide/navigation, retry and save status.
 - [ ] Statement rendering (`react-markdown`, `remark-gfm`, `remark-breaks`, no raw HTML, safe links and images) and the notes editor with preview.
 - [ ] Test case editor: rows, add, label/args/expected fields, compare select, large-input collapse.
 - [ ] Reorder (drag, menu, `Alt+↑/↓`), duplicate, delete with undo.
 - [ ] Test validation with the messages table.
-- [ ] Revisions: save on `Mod+S`, History drawer, diff view, restore with undo.
+- [ ] Revisions: format then save on `Mod+S` (Format on save setting, on by default), History drawer, diff view, restore with undo.
 - [ ] Reset code with confirmation and revision.
 - [ ] Keyboard shortcuts on Monaco and `document`, and the `?` help dialog.
 - [ ] Web Lock per workspace, read-only second tab, **Take over**, `BroadcastChannel` change notices.

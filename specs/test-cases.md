@@ -90,20 +90,20 @@ interface TestResult {
 
 The page maps each `RawTestResult` from the runner: `returned` becomes `passed` or `failed` by comparison, `threw` becomes `error`, and the other kinds keep their name.
 
-| Status             | Row badge      | Detail text                                                                                                                                    |
-| ------------------ | -------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
-| `passed`           | Passed         | —                                                                                                                                              |
-| `failed`           | Failed         | `Expected` / `Actual` blocks, pretty-printed, with the differing path highlighted: `First difference at [2]`.                                  |
-| `error`            | Error          | `<name>: <message>` and the stack with harness frames removed and line numbers mapped to the user's source when possible.                      |
-| `timeout`          | Timed out      | `Stopped after 2 s. Look for an infinite loop or a slower-than-expected algorithm.`                                                            |
-| `non-serializable` | Can't compare  | `The function returned a <type> at <path>, which can't be compared as JSON. Return arrays, plain objects, strings, numbers, booleans or null.` |
-| `missing-function` | No function    | `No function named "<name>" was found. Check the function name in the toolbar.`                                                                |
-| `stack-overflow`   | Stack overflow | `Maximum call stack size exceeded. Check your recursion's base case.`                                                                          |
-| `memory-limit`     | Out of memory  | `The run used more memory than allowed.`                                                                                                       |
-| `output-too-large` | Too large      | `The return value is larger than the 8 MB limit.`                                                                                              |
-| `invalid-test`     | Invalid test   | The validation message.                                                                                                                        |
-| `stopped`          | Stopped        | `The run was stopped.`                                                                                                                         |
-| `crashed`          | Runner crashed | `The runner stopped responding and was restarted.`                                                                                             |
+| Status             | Row badge      | Detail text                                                                                                                                      |
+| ------------------ | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `passed`           | Passed         | —                                                                                                                                                |
+| `failed`           | Failed         | `Expected` / `Actual` blocks, pretty-printed, with the differing path highlighted: `First difference at [2]`.                                    |
+| `error`            | Error          | `<name>: <message>` and the stack with harness frames removed and line numbers mapped to the user's source when possible.                        |
+| `timeout`          | Timed out      | `Stopped after 2 s. Look for an infinite loop or a slower-than-expected algorithm.`                                                              |
+| `non-serializable` | Can't compare  | `The function returned a <type> at <path>, which can't be compared as JSON. Return arrays, plain objects, strings, numbers, booleans or null.`   |
+| `missing-function` | No function    | `No function named "<name>" was found. Check the function name in the toolbar.`                                                                  |
+| `stack-overflow`   | Stack overflow | `Maximum call stack size exceeded. Browsers allow only a few thousand nested calls here, so check the base case or switch to an explicit stack.` |
+| `memory-limit`     | Out of memory  | `The test ran out of memory.`                                                                                                                    |
+| `output-too-large` | Too large      | `The return value is larger than the 8 MB limit.`                                                                                                |
+| `invalid-test`     | Invalid test   | The validation message.                                                                                                                          |
+| `stopped`          | Stopped        | `The run was stopped.`                                                                                                                           |
+| `crashed`          | Runner crashed | `The runner stopped responding and was restarted.`                                                                                               |
 
 Run-level outcomes replace the per-test list with one message:
 

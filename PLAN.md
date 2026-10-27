@@ -12,7 +12,7 @@ The editor is desktop-first. On a phone the app should let the user read a works
 
 1. **New workspace:** choose **Start from scratch** or **Import problem**. Scratch opens a blank editor with an optional title, a notes panel, and a configurable function name. The notes panel collapses and stays hidden while empty. Import creates the same workspace with the supplied statement, examples, starter code, and tests where available.
 2. **Import formats:** paste problem text, or upload a Markdown or JSON file. Parse fields where possible and show a review screen before saving; any unrecognized text remains in the statement so nothing is silently lost. Pasted examples often use named arguments (`nums = [2,7,11,15], target = 9`); map them to positional arguments using the parameter order of the starter function, and ask on the review screen when the order is unclear. The JSON format is the same versioned schema used for export. A problem URL importer is a separate integration decision because sites expose different data and access rules.
-3. **Practice editor:** a resizable statement/editor/test layout, Monaco editor, JavaScript/TypeScript mode, syntax highlighting, autocomplete, TypeScript diagnostics, format command, light/dark theme, font-size control, keyboard shortcuts, and autosave. Include **Run tests**, **Reset code**, and a console/results panel. **Reset code** restores the workspace's starter source: the imported starter code, or for scratch workspaces a stub generated from the function name. Prompt before resetting unsaved work.
+3. **Practice editor:** a resizable statement/editor/test layout, Monaco editor, JavaScript/TypeScript mode, syntax highlighting, autocomplete, TypeScript diagnostics, Prettier formatting with format on save, light/dark theme, font-size control, keyboard shortcuts, and autosave. Include **Run tests**, **Reset code**, and a console/results panel. **Reset code** restores the workspace's starter source: the imported starter code, or for scratch workspaces a stub generated from the function name. Prompt before resetting unsaved work.
 4. **Tests:** users add, edit, delete, and reorder cases. Each case supplies an array of JSON arguments and an expected JSON result; optional labels make edge cases easy to find. For in-place problems such as `moveZeroes` or `sortColors`, a case can instead compare argument N after the call. Run all or one test. Show pass/fail, actual versus expected, runtime, and bounded console/error output. Persist tests with the workspace.
 5. **History:** save code revision snapshots on each run and on explicit save, keeping the most recent 20 per workspace, plus recent test runs and a simple pass count for each workspace. Optional GitHub sign-in syncs workspaces, tests, and revisions across devices; run results stay on the device.
 6. **Backup:** export one or all workspaces as JSON, and import that file again. Local-only users depend on this, because browsers can clear IndexedDB (see **Local storage**).
@@ -23,22 +23,22 @@ The initial runner supports functions over JSON-compatible values: primitives, a
 
 ```mermaid
 flowchart LR
-  Browser[Browser: Vite + React + Monaco] --> Runner[Isolated runner: TS strip + JS runtime chosen in step 0]
+  Browser[Browser: Vite + React + Monaco] --> Runner[Sandboxed iframe: one native Worker per test]
   Runner -->|test results| Browser
   Browser --> Local[(IndexedDB: local workspaces and runs)]
   Browser -->|optional sync| App[Cloudflare Worker: assets and sync API]
   App --> D1[(D1: accounts and synced workspaces)]
 ```
 
-| Part                   | Choice                                                                                                                            | Reason                                                                                                                                                                                                                                                                                                      |
-| ---------------------- | --------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Frontend               | Evolve the existing Vite+ TypeScript starter into React with Monaco                                                               | Gives a familiar coding editor and keeps the current project toolchain. Lazy-load Monaco on the practice route. Monaco does not support mobile browsers, which is why the editor is desktop-first.                                                                                                          |
-| Hosting and API        | Cloudflare Worker with Static Assets and `/api/*` routes                                                                          | One deployment serves the UI and persistence endpoints.                                                                                                                                                                                                                                                     |
-| Local data             | IndexedDB                                                                                                                         | Edits and tests work without a server request. Keep recent run results here.                                                                                                                                                                                                                                |
-| Cloud sync             | D1 behind a Worker                                                                                                                | Sync workspaces, tests, and revisions at save checkpoints for signed-in users.                                                                                                                                                                                                                              |
-| TypeScript compilation | `sucrase` type stripping inside the runner                                                                                        | Solutions only need types removed, and sucrase is far smaller than the roughly 10 MB `esbuild-wasm` binary. Monaco supplies editor diagnostics. Fall back to `esbuild-wasm` only if sucrase misses syntax people actually write.                                                                            |
-| Execution              | Decided in step 0: QuickJS WebAssembly in a dedicated Web Worker, or a native Web Worker inside an opaque-origin sandboxed iframe | QuickJS gives a separate runtime with no browser, storage, or network APIs, but it has no JIT and may be too slow for large DSA inputs. The native option runs at V8 speed, isolates storage and cookies through the opaque origin and a strict CSP, and is stopped the same way with `Worker.terminate()`. |
-| Auth                   | Optional GitHub OAuth with secure HTTP-only session cookie                                                                        | Allows cross-device sync while scratch work stays available without sign-in.                                                                                                                                                                                                                                |
+| Part                   | Choice                                                                                                     | Reason                                                                                                                                                                                                                                                                                        |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Frontend               | Evolve the existing Vite+ TypeScript starter into React with Monaco                                        | Gives a familiar coding editor and keeps the current project toolchain. Lazy-load Monaco on the practice route. Monaco does not support mobile browsers, which is why the editor is desktop-first.                                                                                            |
+| Hosting and API        | Cloudflare Worker with Static Assets and `/api/*` routes                                                   | One deployment serves the UI and persistence endpoints.                                                                                                                                                                                                                                       |
+| Local data             | IndexedDB                                                                                                  | Edits and tests work without a server request. Keep recent run results here.                                                                                                                                                                                                                  |
+| Cloud sync             | D1 behind a Worker                                                                                         | Sync workspaces, tests, and revisions at save checkpoints for signed-in users.                                                                                                                                                                                                                |
+| TypeScript compilation | `sucrase` type stripping on the page                                                                       | Solutions only need types removed, and sucrase is far smaller than the roughly 10 MB `esbuild-wasm` binary. Monaco supplies editor diagnostics. Fall back to `esbuild-wasm` only if sucrase misses syntax people actually write.                                                              |
+| Execution              | A native Web Worker per test inside an opaque-origin sandboxed iframe with a strict CSP (chosen in step 0) | Runs at full engine speed, isolates storage and cookies through the opaque origin, blocks the network through CSP, and stops hung code with `Worker.terminate()`. QuickJS WebAssembly was 10–20× slower and crashed on recursion deeper than about 1 000 calls; see specs/runner-decision.md. |
+| Auth                   | Optional GitHub OAuth with secure HTTP-only session cookie                                                 | Allows cross-device sync while scratch work stays available without sign-in.                                                                                                                                                                                                                  |
 
 Running tests makes **no Cloudflare execution request**. Static asset requests are free, and D1 has a free allowance for light sync usage; the initial deployment can target Workers Free. This design targets code that uses the supplied function contract and standard JavaScript values. Node.js packages, filesystem access, and shell commands are outside that contract. A later service-worker cache can make the app available offline as well.
 
@@ -48,7 +48,7 @@ Configure Static Assets with `not_found_handling = "single-page-application"` so
 
 ## Run contract
 
-The practice page sends current source, language, function name, and selected tests to the runner. TypeScript is stripped to JavaScript inside the runner, targeting the language level the chosen runtime supports. The runner starts a fresh runtime for each run, with memory, stack, and execution-deadline limits where the runtime allows them. It invokes the named function with each case's arguments, captures bounded console output, and returns serialized actual values. The page compares those values with expected values and stores the result in IndexedDB. A parent-thread watchdog calls `Worker.terminate()` if the runner stops responding, then starts a new one for the next run.
+The practice page sends current source, language, function name, and selected tests to the runner. TypeScript is stripped to JavaScript on the page. The runner starts a fresh Worker for each test and terminates it at the test's deadline. It invokes the named function with each case's arguments, captures bounded console output, and returns serialized actual values. The page compares those values with expected values and stores the result in IndexedDB. A parent-thread watchdog calls `Worker.terminate()` if the runner stops responding, then starts a new one for the next run.
 
 **Finding the function:** run the source as a classic script and look the function up as a global binding, which covers `function twoSum`, `var twoSum = function…` (the LeetCode JavaScript starter), and `const`/`let` declarations. If the source uses `export`, transform it to CommonJS and read the function from `exports`. An `import` statement gets a clear "imports are not supported" result.
 
@@ -56,13 +56,13 @@ The practice page sends current source, language, function name, and selected te
 
 **Timeouts:** each test has its own deadline (default 2 seconds), and the whole run has a total cap. The watchdog fires at the total cap plus a grace period, which also covers work the runtime cannot interrupt, such as a long native `sort`.
 
-Keep expected results and comparison rules outside the runner; pass only test inputs into it. Use deep equality for JSON values in the MVP, with an option for unordered arrays or numeric tolerance per case later. A thrown error, timeout, non-serializable return value, invalid JSON test, or missing function receives a distinct, actionable result. Cap source size, test count, output size, and runtime memory to protect the browser tab. Use a fresh global scope for each test (a new QuickJS context, or a new Worker per test in the native runner, since re-running code in the same Worker keeps its globals) so one case cannot change the next case's globals.
+Keep expected results and comparison rules outside the runner; pass only test inputs into it. Use deep equality for JSON values in the MVP, with an option for unordered arrays or numeric tolerance per case later. A thrown error, timeout, non-serializable return value, invalid JSON test, or missing function receives a distinct, actionable result. Cap source size, test count, output size, and runtime memory to protect the browser tab. Use a new Worker for each test, since re-running code in the same Worker keeps its globals, so one case cannot change the next case's globals.
 
 Tests are user-authored and visible. A green run means the solution passed the selected tests, not that it passed an unseen platform judge. The UI should use **Passed all 8 tests**, not **Accepted**.
 
 Show elapsed time as local diagnostic information only. It varies by device and runtime and does not represent a LeetCode runtime ranking. Render imported statements as safe text/Markdown without executing embedded HTML.
 
-Configure Monaco's TypeScript `lib` without DOM types, plus a small `console` declaration, so autocomplete does not suggest APIs the runner lacks. Use Monaco's built-in TypeScript formatter for the format command.
+Configure Monaco's TypeScript `lib` without DOM types, plus a small `console` declaration, so autocomplete does not suggest APIs the runner lacks. Format with Prettier, loaded on first use; `Mod+S` formats and saves a revision, while autosave and runs never reformat code.
 
 ## Data and sync
 
@@ -94,6 +94,8 @@ Add unit tests with `vp test` from step 0 onward, starting with the deep-equalit
 
 **Gate:** pick the runner. Common snippets behave correctly, large-input solutions finish well inside the default deadline, and the editor remains responsive during a hung run.
 
+**Status (2026-10-27):** native runner chosen and passing in Chromium, Firefox and WebKit; the mid-range phone measurement is still to do. See specs/runner-decision.md.
+
 ### 1. Workspace shell
 
 - Add React routes for **My workspaces**, **New workspace**, and **Practice**.
@@ -104,7 +106,7 @@ Add unit tests with `vp test` from step 0 onward, starting with the deep-equalit
 
 ### 2. Editor and tests
 
-- Add Monaco, layout controls, JS/TS switching, format, diagnostics, autosave, reset, and keyboard shortcuts.
+- Add Monaco, layout controls, JS/TS switching, Prettier formatting with format on save, diagnostics, autosave, reset, and keyboard shortcuts.
 - Add a test case editor with JSON validation, the in-place argument option, and individual/all selection.
 - Add the per-workspace Web Lock for multiple tabs.
 
@@ -144,7 +146,6 @@ Add unit tests with `vp test` from step 0 onward, starting with the deep-equalit
 - [Cloudflare Vite plugin](https://developers.cloudflare.com/workers/vite-plugin/)
 - [Workers Static Assets billing](https://developers.cloudflare.com/workers/static-assets/billing-and-limitations/)
 - [D1 pricing](https://developers.cloudflare.com/d1/platform/pricing/)
-- [QuickJS WebAssembly project and runtime limits](https://github.com/justjake/quickjs-emscripten)
 - [Sucrase](https://github.com/alangpierce/sucrase)
 - [esbuild browser WebAssembly API](https://esbuild.github.io/api/#in-the-browser)
 - [Web Worker termination](https://developer.mozilla.org/en-US/docs/Web/API/Worker/terminate)

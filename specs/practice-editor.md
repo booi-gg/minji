@@ -28,7 +28,7 @@ The statement panel collapses with a button or `Mod+\`. Resize handles are keybo
 
 ## Toolbar
 
-Left to right: back to workspaces, title (inline edit, placeholder "Untitled"), language select (JavaScript / TypeScript), function name field, **Run all**, **Stop** (only while running), **Reset code**, **Format**, **History**, overflow menu (Export workspace, Test timeout, Font size, Theme, Keyboard shortcuts), save status.
+Left to right: back to workspaces, title (inline edit, placeholder "Untitled"), language select (JavaScript / TypeScript), function name field, **Run all**, **Stop** (only while running), **Reset code**, **Format**, **History**, overflow menu (Export workspace, Test timeout, Format on save, Font size, Theme, Keyboard shortcuts), save status.
 
 - Function name edits are validated as in data-model.md. If the source still equals `starterSource`, both are regenerated with the new name. Otherwise only the field changes, and the toolbar shows "No function named <name> in your code" when a quick regex check for `function <name>`, `<name> =` or `<name>(` fails.
 - Save status shows `Saved`, `Saving…`, or `Couldn't save — Retry`.
@@ -42,21 +42,33 @@ Left to right: back to workspaces, title (inline edit, placeholder "Untitled"), 
 - TypeScript defaults: `target` ES2023, `lib: ['es2023']`, `strict: true`, `noEmit: true`, `allowNonTsExtensions: true`. JavaScript keeps Monaco's default of syntax-only diagnostics.
 - Add one extra lib, `runner-globals.d.ts`, declaring `console` with `log`, `info`, `warn`, `error` and `debug`. DOM types are not loaded, so `document` or `fetch` show as errors.
 - Options: `fontSize` from settings, `minimap` off, `tabSize: 2`, `automaticLayout: true`, `fixedOverflowWidgets: true`, `scrollBeyondLastLine: false`.
-- **Format** runs Monaco's `editor.action.formatDocument` (TypeScript's formatter); no Prettier.
+- **Format** uses Prettier; see Formatting below.
 
 ## Keyboard shortcuts
 
 `Mod` is `⌘` on macOS and `Ctrl` elsewhere. Shortcuts are registered both as Monaco commands and on `document`, so they work whether or not the editor has focus. The ones marked "outside text fields" are ignored while typing in an input.
 
-| Shortcut                  | Action                                                       |
-| ------------------------- | ------------------------------------------------------------ |
-| `Mod+Enter`               | Run all                                                      |
-| `Mod+Shift+Enter`         | Run the test row that has focus, or the last single-run test |
-| `Mod+S`                   | Save a revision (prevents the browser's save dialog)         |
-| `Shift+Alt+F`             | Format                                                       |
-| `Mod+\`                   | Toggle the statement panel                                   |
-| `Alt+↑` / `Alt+↓`         | Move the focused test row                                    |
-| `?` (outside text fields) | Show the shortcut list                                       |
+| Shortcut                  | Action                                                                                           |
+| ------------------------- | ------------------------------------------------------------------------------------------------ |
+| `Mod+Enter`               | Run all                                                                                          |
+| `Mod+Shift+Enter`         | Run the test row that has focus, or the last single-run test                                     |
+| `Mod+S`                   | Format (when **Format on save** is on), then save a revision; prevents the browser's save dialog |
+| `Shift+Alt+F`             | Format with Prettier                                                                             |
+| `Mod+\`                   | Toggle the statement panel                                                                       |
+| `Alt+↑` / `Alt+↓`         | Move the focused test row                                                                        |
+| `?` (outside text fields) | Show the shortcut list                                                                           |
+
+## Formatting
+
+The app formats code with Prettier, so the result is the same consistent style everywhere: wrapped long lines, normalised quotes, semicolons and spacing.
+
+- **Loading:** `src/practice/format.ts` dynamically imports `prettier/standalone` with the `babel` and `estree` plugins the first time code is formatted, so the download doesn't slow the first page load. JavaScript uses the `babel` parser and TypeScript the `babel-ts` parser, which avoids loading Prettier's much larger `typescript` plugin.
+- **Style:** Prettier defaults (80-character lines, double quotes, semicolons, trailing commas), with `tabWidth: 2` to match the editor. No formatting options in the MVP.
+- **Wiring:** turn off Monaco's built-in TypeScript and JavaScript formatting (`documentFormattingEdits`, `documentRangeFormattingEdits` and `onTypeFormattingEdits` set to `false` in the mode configuration) and register Prettier as the document formatting provider for both languages. **Format**, `Shift+Alt+F` and the context menu's **Format Document** then all use Prettier. Monaco reduces the provider's whole-document edit to minimal edits, so the cursor and scroll position stay put.
+- **Format on save:** `Mod+S` formats first, then saves the revision. The setting is on by default and lives in the overflow menu. Formatting is one undo step, so `Mod+Z` brings back the unformatted code.
+- **When it doesn't run:** autosave never formats (it fires while typing and would move the cursor or rewrite half-typed code), and **Run** never formats (a run shouldn't change your code).
+- **Syntax errors:** Prettier can't format code that doesn't parse. **Format** shows the toast "Couldn't format: syntax error on line 4." and leaves the code unchanged. `Mod+S` still saves the revision and shows "Saved without formatting: syntax error on line 4."
+- **Read-only editor** (second tab, phone layout): formatting is disabled.
 
 ## Autosave
 
@@ -93,6 +105,7 @@ Stored per device in `localStorage`:
 | `minji:theme`        | `system`, `light`, `dark`  | `system`     |
 | `minji:fontSize`     | 12–24                      | 14           |
 | `minji:lastLanguage` | `javascript`, `typescript` | `typescript` |
+| `minji:formatOnSave` | `true`, `false`            | `true`       |
 
 The theme sets `data-theme` on `<html>` and the Monaco theme (`vs` or `vs-dark`). The test timeout is per workspace (`testTimeoutMs`) and syncs with it.
 

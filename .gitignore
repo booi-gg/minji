@@ -28,3 +28,6 @@ dist-ssr
 
 # Package manager state
 .yarn/
+
+# Vitest browser-mode failure screenshots
+.vitest/

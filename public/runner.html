@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; script-src 'unsafe-eval' 'sha256-acUomK8OZ0d/kT2vNmyyuyKy9DU8KqQV8i+pOvl/Xzg='; worker-src blob:; connect-src 'none'"
+    />
+    <title>minji runner</title>
+  </head>
+  <body>
+    <script>
+      // Candidate B host. Loaded in <iframe sandbox="allow-scripts">, so this document has an
+      // opaque origin: no access to the app's storage or cookies. Each test runs in a fresh
+      // blob Worker that is terminated at the test's deadline. See specs/runner.md.
+      (function () {
+        "use strict";
+        var STARTUP_TIMEOUT_MS = 10000;
+        var current = null;
+
+        function send(message) {
+          parent.postMessage(message, "*");
+        }
+
+        function isRunMessage(message) {
+          return (
+            message !== null &&
+            typeof message === "object" &&
+            message.type === "run" &&
+            typeof message.runId === "string" &&
+            typeof message.workerSource === "string" &&
+            typeof message.body === "string" &&
+            typeof message.testTimeoutMs === "number" &&
+            Array.isArray(message.tests)
+          );
+        }
+
+        function runAll(message) {
+          var url = URL.createObjectURL(new Blob([message.workerSource], { type: "text/javascript" }));
+          var run = { runId: message.runId, worker: null };
+          current = run;
+          var index = 0;
+
+          function next() {
+            if (current !== run) return;
+            if (index >= message.tests.length) {
+              URL.revokeObjectURL(url);
+              current = null;
+              send({ type: "run-complete", runId: run.runId });
+              return;
+            }
+            var test = message.tests[index];
+            index += 1;
+            var worker = new Worker(url);
+            run.worker = worker;
+            var started = false;
+            var done = false;
+            var timer = setTimeout(function () {
+              finish({ outcome: "error", message: "The test worker did not start." });
+            }, STARTUP_TIMEOUT_MS);
+
+            function finish(payload) {
+              if (done) return;
+              done = true;
+              clearTimeout(timer);
+              worker.terminate();
+              payload.type = "test-output";
+              payload.runId = run.runId;
+              payload.testId = test.id;
+              send(payload);
+              next();
+            }
+
+            worker.onmessage = function (event) {
+              var data = event.data;
+              if (data === null || typeof data !== "object") return;
+              if (data.__minji === "start" && !started) {
+                started = true;
+                clearTimeout(timer);
+                timer = setTimeout(function () {
+                  finish({ outcome: "timeout" });
+                }, message.testTimeoutMs);
+              } else if (data.__minji === "output" && typeof data.text === "string") {
+                finish({ outcome: "output", text: data.text });
+              } else if (data.__minji === "syntax-error") {
+                finish({ outcome: "syntax-error", message: String(data.message) });
+              }
+            };
+            worker.onerror = function (event) {
+              event.preventDefault();
+              finish({ outcome: "error", message: String(event.message || "Worker error") });
+            };
+            worker.postMessage({ argsJson: test.argsJson, config: test.config, body: message.body });
+          }
+
+          send({ type: "started", runId: run.runId });
+          next();
+        }
+
+        addEventListener("message", function (event) {
+          if (event.source !== parent) return;
+          var message = event.data;
+          if (isRunMessage(message) && current === null) runAll(message);
+        });
+
+        send({ type: "ready" });
+      })();
+    </script>
+  </body>
+</html>
