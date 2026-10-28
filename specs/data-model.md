@@ -20,6 +20,7 @@ interface Workspace {
   title: string; // '' shows as "Untitled"
   statement: string; // Markdown, rendered without raw HTML
   notes: string; // Markdown, user-owned
+  difficulty?: "easy" | "medium" | "hard" | "super-hard"; // unset until chosen
   language: Language;
   functionName: string; // valid JS identifier, see "Validation"
   params: string[]; // parameter names, used for test labels and the scratch stub
@@ -132,6 +133,7 @@ Export and JSON import use one versioned format. Files are named `minji-<slug-or
       "title": "Two Sum",
       "statement": "Given an array…",
       "notes": "",
+      "difficulty": "easy",
       "language": "typescript",
       "functionName": "twoSum",
       "params": ["nums", "target"],
@@ -150,6 +152,7 @@ Export and JSON import use one versioned format. Files are named `minji-<slug-or
 
 - `args` and `expected` are written as JSON values when the raw text is valid, and as the raw string otherwise, so nothing is lost. On import, a string is taken as raw text and any other value is written as compact JSON (`[[2,7,11,15],9]`). A value that is itself a JSON string is exported as its raw text (`"\"abc\""`) so it survives the round trip.
 - `compare` is optional on import and defaults to `{ "kind": "return" }`.
+- `difficulty` is optional; any value other than `easy`, `medium`, `hard` or `super-hard` is dropped on import, and the sync server rejects it.
 - Only `title` and `source` are required on import. Other fields default as for a scratch workspace (see workspaces-and-import.md). `revisions` is optional.
 - Import always creates new ids and new workspaces with `syncState: 'local'`; it never overwrites an existing workspace.
 - Ids, sync fields, runs and `lastRun` are not exported.

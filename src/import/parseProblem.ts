@@ -4,6 +4,7 @@
 import type { Language, TestKind } from "../runner/types.ts";
 import { isValidIdentifier } from "../shared/ids.ts";
 import { DEFAULT_FUNCTION_NAME, scratchStub } from "../workspaces/model.ts";
+import type { Difficulty } from "../workspaces/organization.ts";
 
 export interface DraftArg {
   /** Parameter name from `name = value`, or null for a bare value. */
@@ -32,6 +33,8 @@ export interface ImportDraft {
   paramsConfirmed: boolean;
   starterSource: string;
   tests: DraftTest[];
+  /** From a line that is just "Easy"/"Medium"/"Hard" (as LeetCode pages copy), or "Difficulty: …". */
+  difficulty?: Difficulty;
   suggestInPlace: boolean;
   warnings: string[];
 }
@@ -284,6 +287,14 @@ const parseClassInput = (input: string): { className: string; text: string } | u
 // ---- Draft -----------------------------------------------------------------------
 
 const IN_PLACE = /in[- ]place|do not return anything|modify .* in place/i;
+const DIFFICULTY_LINE =
+  /^\s*(?:[-*]\s*)?(?:\**\s*difficulty\s*\**\s*:\s*\**\s*)?(easy|medium|hard|super[- ]hard)\s*\**\s*$/im;
+
+const findDifficulty = (text: string): Difficulty | undefined => {
+  const match = DIFFICULTY_LINE.exec(text)?.[1]?.toLowerCase();
+  if (match === undefined) return undefined;
+  return match.startsWith("super") ? "super-hard" : (match as Difficulty);
+};
 
 const tidyStatement = (lines: string[]): string =>
   lines
@@ -378,6 +389,7 @@ export const parseProblem = ({
         ? `class ${functionName} {\n  constructor() {\n    \n  }\n}\n`
         : scratchStub(functionName, params)),
     tests,
+    difficulty: findDifficulty(text),
     suggestInPlace: IN_PLACE.test(text),
     warnings,
   };

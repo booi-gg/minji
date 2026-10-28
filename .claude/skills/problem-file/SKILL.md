@@ -26,6 +26,8 @@ Inputs and outputs are JSON: strings in double quotes, `true`/`false`/`null`, ar
 ````markdown
 # Valid Palindrome
 
+**Difficulty:** Easy
+
 Given a string `s`, return `true` if it reads the same forward and backward…
 
 ```typescript
@@ -45,6 +47,7 @@ Output: true
 ````
 
 - The first `#` heading is the title.
+- A `**Difficulty:** Easy` line sets the difficulty: `Easy`, `Medium`, `Hard` or `Super hard`. Include it when the user names a difficulty or the problem's level is well known.
 - The first code fence tagged `typescript`/`ts` or `javascript`/`js` is the starter code: its tag sets the language and its signature sets the function name and parameter order.
 - `Input:` and `Output:` sit on consecutive lines; a blank line ends a field. Put any explanation after `Output:`.
 
@@ -70,7 +73,7 @@ Constraints:
 1 <= s.length <= 10^5
 ```
 
-The first line is the title (a leading `125. ` is dropped). Plain text has no starter code, so Import names the function `solve` and guesses the parameters from the examples. Tell the user to paste the signature into the **Starter code** box to set them.
+The first line is the title (a leading `125. ` is dropped). A line that is only `Easy`, `Medium`, `Hard` or `Super hard` sets the difficulty. Plain text has no starter code, so Import names the function `solve` and guesses the parameters from the examples. Tell the user to paste the signature into the **Starter code** box to set them.
 
 ## JSON template
 
@@ -84,6 +87,7 @@ The first line is the title (a leading `125. ` is dropped). Plain text has no st
       "title": "Valid Palindrome",
       "statement": "Given a string `s`, return `true` if…",
       "notes": "",
+      "difficulty": "easy",
       "language": "typescript",
       "functionName": "isPalindrome",
       "params": ["s"],
@@ -95,6 +99,7 @@ The first line is the title (a leading `125. ` is dropped). Plain text has no st
 }
 ```
 
+- `difficulty` is `easy`, `medium`, `hard` or `super-hard`, or left out.
 - `args` is the array of all arguments in parameter order: `[[2, 7, 11, 15], 9]` for `(nums, target)`.
 - A string in `args` or `expected` is raw editor text, not a value. An answer that is itself a string is written with its quotes escaped: `"expected": "\"abc\""`. A string `args` value is how to make a deliberately broken case: `"args": "[1,"`.
 - For in-place problems add `"compare": { "kind": "argument", "index": 0 }` to each test to compare the first argument after the call.

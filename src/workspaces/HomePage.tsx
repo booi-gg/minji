@@ -11,7 +11,8 @@ import { useSync } from "../sync/SyncProvider.tsx";
 import { copyToAccount, startSyncingWorkspace } from "../sync/store.ts";
 import { createScratchWorkspace, exportWorkspaces, isStoragePersistent } from "./actions.ts";
 import { displayTitle, type Workspace } from "./model.ts";
-import { normalizeFolder, parseTags } from "./organization.ts";
+import { DifficultySelect } from "./DifficultySelect.tsx";
+import { DIFFICULTY_LABELS, normalizeFolder, parseTags, type Difficulty } from "./organization.ts";
 import { StorageBanner } from "./StorageBanner.tsx";
 import { useToast } from "../shared/toast.tsx";
 
@@ -68,6 +69,11 @@ const WorkspaceRow = ({
         </Link>
         <div className="workspace-meta">
           <span className="badge">{LANGUAGE_LABELS[workspace.language]}</span>
+          {workspace.difficulty === undefined ? null : (
+            <span className={`badge difficulty difficulty-${workspace.difficulty}`}>
+              {DIFFICULTY_LABELS[workspace.difficulty]}
+            </span>
+          )}
           <span>{lastRunText(workspace)}</span>
           {workspace.folder ? <span className="badge">Folder: {workspace.folder}</span> : null}
           {workspace.tags?.map((tag) => (
@@ -162,6 +168,7 @@ export const HomePage = () => {
     workspace: Workspace;
     folder: string;
     tags: string;
+    difficulty: Difficulty | undefined;
   } | null>(null);
   const [folderFilter, setFolderFilter] = useState("all");
   const [tagFilter, setTagFilter] = useState("all");
@@ -231,17 +238,18 @@ export const HomePage = () => {
 
   const saveOrganization = async (): Promise<void> => {
     if (organizing === null) return;
-    const { workspace, folder, tags: tagText } = organizing;
+    const { workspace, folder, tags: tagText, difficulty } = organizing;
     try {
       await saveDraft(await getDatabase(), workspace.id, {
         folder: normalizeFolder(folder),
         tags: parseTags(tagText),
+        difficulty,
       });
       postChannelMessage({ type: "changed", id: workspace.id });
       setOrganizing(null);
       await revalidator.revalidate();
     } catch {
-      showToast({ message: "Couldn't save this problem's folder and tags." });
+      showToast({ message: "Couldn't save this problem's difficulty, folder and tags." });
     }
   };
 
@@ -331,6 +339,7 @@ export const HomePage = () => {
                     workspace: target,
                     folder: target.folder ?? "",
                     tags: (target.tags ?? []).join(", "),
+                    difficulty: target.difficulty,
                   })
                 }
               />
@@ -346,6 +355,20 @@ export const HomePage = () => {
         onConfirm={() => void saveOrganization()}
         onCancel={() => setOrganizing(null)}
       >
+        <div className="field">
+          <label className="field-label" htmlFor="workspace-difficulty">
+            Difficulty
+          </label>
+          <DifficultySelect
+            id="workspace-difficulty"
+            value={organizing?.difficulty}
+            onChange={(next) =>
+              setOrganizing((current) =>
+                current === null ? null : { ...current, difficulty: next },
+              )
+            }
+          />
+        </div>
         <div className="field">
           <label className="field-label" htmlFor="workspace-folder">
             Folder

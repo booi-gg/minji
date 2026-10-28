@@ -584,6 +584,7 @@ const Practice = ({ initial, sidebarOpen, onToggleSidebar }: PracticeProps) => {
         onStop={testRun.stop}
         onTitleChange={(title) => edit({ title })}
         onLanguageChange={changeLanguage}
+        onDifficultyChange={(difficulty) => edit({ difficulty })}
         onFunctionNameChange={changeFunctionName}
         onTimeoutChange={(testTimeoutMs) => edit({ testTimeoutMs })}
         onRetrySave={() => void autosaver.flush()}

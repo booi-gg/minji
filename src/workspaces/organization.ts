@@ -1,3 +1,16 @@
+export const DIFFICULTIES = ["easy", "medium", "hard", "super-hard"] as const;
+export type Difficulty = (typeof DIFFICULTIES)[number];
+
+export const DIFFICULTY_LABELS: Record<Difficulty, string> = {
+  easy: "Easy",
+  medium: "Medium",
+  hard: "Hard",
+  "super-hard": "Super hard",
+};
+
+export const isDifficulty = (value: unknown): value is Difficulty =>
+  typeof value === "string" && (DIFFICULTIES as readonly string[]).includes(value);
+
 export const MAX_FOLDER_LENGTH = 60;
 export const MAX_TAG_LENGTH = 30;
 export const MAX_TAGS = 20;

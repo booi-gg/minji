@@ -56,6 +56,7 @@ export type WorkspaceEdit = Partial<
     | "statement"
     | "notes"
     | "folder"
+    | "difficulty"
     | "tags"
     | "language"
     | "functionName"

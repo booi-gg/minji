@@ -10,6 +10,7 @@ import type {
 import { isValidIdentifier, newId } from "../shared/ids.ts";
 import { MAX_TEST_TIMEOUT_MS, MIN_TEST_TIMEOUT_MS } from "../shared/limits.ts";
 import { createWorkspace, type Revision, type TestCase } from "../workspaces/model.ts";
+import { isDifficulty, type Difficulty } from "../workspaces/organization.ts";
 
 export const EXPORT_FORMAT = "minji.workspaces";
 export const EXPORT_VERSION = 1;
@@ -39,6 +40,7 @@ export interface ExportedWorkspace {
   notes: string;
   folder?: string;
   tags?: string[];
+  difficulty?: Difficulty;
   language: Language;
   functionName: string;
   params: string[];
@@ -77,6 +79,7 @@ export const toExportFile = (bundles: WorkspaceBundle[], now: Date = new Date())
     notes: workspace.notes,
     folder: workspace.folder,
     tags: workspace.tags,
+    difficulty: workspace.difficulty,
     language: workspace.language,
     functionName: workspace.functionName,
     params: workspace.params,
@@ -218,6 +221,7 @@ const workspaceOf = (value: unknown): ExportedWorkspace | string => {
     tags: Array.isArray(value.tags)
       ? value.tags.filter((tag): tag is string => typeof tag === "string")
       : [],
+    difficulty: isDifficulty(value.difficulty) ? value.difficulty : undefined,
     language: languageOf(value.language),
     functionName,
     params,
@@ -265,6 +269,7 @@ export const toBundle = (imported: ExportedWorkspace, now: Date = new Date()): W
       notes: imported.notes,
       folder: imported.folder,
       tags: imported.tags,
+      difficulty: imported.difficulty,
       language: imported.language,
       functionName: imported.functionName,
       params: imported.params,

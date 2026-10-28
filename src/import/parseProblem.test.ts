@@ -29,6 +29,22 @@ const markdown = (source: string): ImportDraft =>
 const testRows = (draft: ImportDraft) =>
   draft.tests.map((test) => [argsTextFor(test, draft.params), test.expectedText]);
 
+describe("difficulty", () => {
+  it("reads LeetCode's bare difficulty line", () => {
+    expect(text(pairSum).difficulty).toBe("easy");
+  });
+  it("reads a labelled difficulty line in Markdown", () => {
+    expect(markdown("# Hard One\n\n**Difficulty:** Super hard\n\nSolve it.").difficulty).toBe(
+      "super-hard",
+    );
+  });
+  it("leaves difficulty unset when the text doesn't state one", () => {
+    expect(
+      text("Sum\nThis is a hard problem.\nExample 1:\nInput: 1\nOutput: 1").difficulty,
+    ).toBeUndefined();
+  });
+});
+
 describe("pasted text", () => {
   it("imports class-design examples as method sequences", () => {
     const draft = text(

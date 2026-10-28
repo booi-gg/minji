@@ -77,7 +77,7 @@ Expected values that JSON cannot express directly can use `{"$minji":"undefined"
 
 ## Offline work and organization
 
-Production builds register a service worker that caches the app and editor for offline use. Problems and edits remain in IndexedDB, and account changes sync when the connection returns. The footer shows connection status, pending problems, conflicts that need attention, and the last completed sync. On the home screen, use **Organize** to assign a folder and tags, then filter the list by either. Folder and tag values are included in JSON export and account sync. GitHub is the only sign-in provider.
+Production builds register a service worker that caches the app and editor for offline use. Problems and edits remain in IndexedDB, and account changes sync when the connection returns. The footer shows connection status, pending problems, conflicts that need attention, and the last completed sync. On the home screen, use **Organize** to set a difficulty (Easy, Medium, Hard, Super hard), folder and tags, then filter the list by folder or tag. The problem page's toolbar also sets the difficulty, and its sidebar sorts by difficulty and filters by tag. All three are included in JSON export and account sync. GitHub is the only sign-in provider.
 
 ## Account setup and deployment
 

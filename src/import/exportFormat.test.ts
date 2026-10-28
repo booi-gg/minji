@@ -111,6 +111,7 @@ describe("import", () => {
     const original = sampleBundle();
     original.workspace.folder = "Arrays";
     original.workspace.tags = ["easy", "two pointers"];
+    original.workspace.difficulty = "hard";
     const parsed = parseExportFile(JSON.stringify(toExportFile([original], NOW)));
     if (!parsed.ok) throw new Error(parsed.message);
     const [imported] = parsed.workspaces;
@@ -126,6 +127,7 @@ describe("import", () => {
       ownerId: null,
       folder: "Arrays",
       tags: ["easy", "two pointers"],
+      difficulty: "hard",
     });
     expect(bundle.tests.map((test) => [test.argsText, test.expectedText])).toEqual([
       ["[[2,7,11,15],9]", "[0,1]"],
@@ -175,6 +177,24 @@ describe("import", () => {
         { index: 2, reason: "not an object" },
       ],
     });
+  });
+
+  it("drops an unknown difficulty", () => {
+    const parsed = parseExportFile(
+      JSON.stringify({
+        format: "minji.workspaces",
+        version: 1,
+        workspaces: [
+          { title: "a", source: "s", difficulty: "super-hard" },
+          { title: "b", source: "s", difficulty: "impossible" },
+        ],
+      }),
+    );
+    if (!parsed.ok) throw new Error(parsed.message);
+    expect(parsed.workspaces.map((workspace) => workspace.difficulty)).toEqual([
+      "super-hard",
+      undefined,
+    ]);
   });
 
   it("cleans unsafe or out-of-range fields", () => {

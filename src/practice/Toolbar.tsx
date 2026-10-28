@@ -18,7 +18,9 @@ import type { ThemeSetting } from "../app/theme.ts";
 import type { Language } from "../runner/types.ts";
 import { isValidIdentifier } from "../shared/ids.ts";
 import { MAX_TEST_TIMEOUT_MS, MIN_TEST_TIMEOUT_MS } from "../shared/limits.ts";
+import { DifficultySelect } from "../workspaces/DifficultySelect.tsx";
 import type { Workspace } from "../workspaces/model.ts";
+import type { Difficulty } from "../workspaces/organization.ts";
 import type { SaveStatus } from "./autosave.ts";
 import { MAX_FONT_SIZE, MIN_FONT_SIZE, type EditorSettings } from "./settings.ts";
 
@@ -100,6 +102,7 @@ interface ToolbarProps {
   onStop: () => void;
   onTitleChange: (title: string) => void;
   onLanguageChange: (language: Language) => void;
+  onDifficultyChange: (difficulty: Difficulty | undefined) => void;
   onFunctionNameChange: (name: string) => void;
   onTimeoutChange: (ms: number) => void;
   onRetrySave: () => void;
@@ -231,6 +234,7 @@ export const Toolbar = ({
   onStop,
   onTitleChange,
   onLanguageChange,
+  onDifficultyChange,
   onFunctionNameChange,
   onTimeoutChange,
   onRetrySave,
@@ -242,6 +246,7 @@ export const Toolbar = ({
 }: ToolbarProps) => {
   const titleId = useId();
   const languageId = useId();
+  const difficultyId = useId();
   const unchanged = workspace.source === workspace.starterSource;
   const SaveIcon = STATUS_ICON[saveStatus];
 
@@ -291,6 +296,17 @@ export const Toolbar = ({
           <option value="typescript">TypeScript</option>
           <option value="javascript">JavaScript</option>
         </select>
+      </div>
+      <div className="toolbar-field">
+        <label htmlFor={difficultyId} className="toolbar-label">
+          Difficulty
+        </label>
+        <DifficultySelect
+          id={difficultyId}
+          value={workspace.difficulty}
+          disabled={readOnly}
+          onChange={onDifficultyChange}
+        />
       </div>
       <div className="toolbar-spacer" />
       <div className="actions">

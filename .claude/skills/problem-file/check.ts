@@ -13,6 +13,7 @@ interface Summary {
   functionName: string;
   params: readonly string[];
   paramsConfirmed: boolean;
+  difficulty?: string | undefined;
   warnings: string[];
   tests: { label: string; argsText: string; expectedText: string; problem?: string }[];
 }
@@ -52,6 +53,7 @@ const fromJson = (text: string): Summary[] => {
       functionName: workspace.functionName,
       params: workspace.params,
       paramsConfirmed: true,
+      difficulty: workspace.difficulty,
       warnings: [],
       tests: tests.map((test) => ({
         label: test.label,
@@ -76,7 +78,7 @@ let failed = false;
 for (const summary of summaries) {
   const confirmed = summary.paramsConfirmed ? "" : " (guessed from examples)";
   process.stdout.write(
-    `\n${summary.title || "(no title)"} · ${summary.language} · ${summary.functionName}(${summary.params.join(", ")})${confirmed}\n`,
+    `\n${summary.title || "(no title)"} · ${summary.difficulty ?? "no difficulty"} · ${summary.language} · ${summary.functionName}(${summary.params.join(", ")})${confirmed}\n`,
   );
   for (const warning of summary.warnings) {
     failed = true;

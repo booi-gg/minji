@@ -7,7 +7,12 @@ import {
   MIN_TEST_TIMEOUT_MS,
 } from "../src/shared/limits.ts";
 import { isCompareTarget, type RevisionDto, type WorkspaceDoc } from "../src/sync/protocol.ts";
-import { MAX_FOLDER_LENGTH, MAX_TAG_LENGTH, MAX_TAGS } from "../src/workspaces/organization.ts";
+import {
+  MAX_FOLDER_LENGTH,
+  MAX_TAG_LENGTH,
+  MAX_TAGS,
+  isDifficulty,
+} from "../src/workspaces/organization.ts";
 
 const textBytes = (text: string): number => new TextEncoder().encode(text).length;
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -31,6 +36,7 @@ export const isWorkspaceDoc = (value: unknown): value is WorkspaceDoc => {
     (!isText(value.folder) || value.folder.length > MAX_FOLDER_LENGTH)
   )
     return false;
+  if (value.difficulty !== undefined && !isDifficulty(value.difficulty)) return false;
   if (
     value.tags !== undefined &&
     (!Array.isArray(value.tags) ||

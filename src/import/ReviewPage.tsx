@@ -13,7 +13,9 @@ import { ConfirmDialog } from "../shared/ConfirmDialog.tsx";
 import { isValidIdentifier, newId } from "../shared/ids.ts";
 import { validateTest } from "../tests/validate.ts";
 import { saveImportedWorkspaces } from "../workspaces/actions.ts";
+import { DifficultySelect } from "../workspaces/DifficultySelect.tsx";
 import { createWorkspace } from "../workspaces/model.ts";
+import type { Difficulty } from "../workspaces/organization.ts";
 import { Markdown } from "../practice/Markdown.tsx";
 import { toBundle, type ExportedWorkspace } from "./exportFormat.ts";
 import { argsTextFor, type DraftArg, type ImportDraft, type DraftTest } from "./parseProblem.ts";
@@ -41,6 +43,7 @@ interface ReviewState {
   notes: string;
   folder: string;
   tags: string[];
+  difficulty: Difficulty | undefined;
   language: Language;
   functionName: string;
   params: string[];
@@ -72,6 +75,7 @@ const createReview = (entry: ReviewEntry): ReviewState => {
       notes: "",
       folder: "",
       tags: [],
+      difficulty: draft.difficulty,
       source: draft.starterSource,
       tests: draft.tests.map((test) => fromProblemTest(test, draft.params)),
       inPlace: false,
@@ -86,6 +90,7 @@ const createReview = (entry: ReviewEntry): ReviewState => {
     notes: workspace.notes,
     folder: workspace.folder ?? "",
     tags: workspace.tags ?? [],
+    difficulty: workspace.difficulty,
     language: workspace.language,
     functionName: workspace.functionName,
     params: workspace.params,
@@ -208,6 +213,7 @@ export const ReviewPage = ({ entry, onBack }: { entry: ReviewEntry; onBack: () =
               notes: state.notes,
               folder: state.folder,
               tags: state.tags,
+              difficulty: state.difficulty,
               language: state.language,
               functionName: state.functionName,
               params: state.params,
@@ -221,6 +227,7 @@ export const ReviewPage = ({ entry, onBack }: { entry: ReviewEntry; onBack: () =
               notes: state.notes,
               folder: state.folder,
               tags: state.tags,
+              difficulty: state.difficulty,
               language: state.language,
               functionName: state.functionName,
               params: state.params,
@@ -298,6 +305,13 @@ export const ReviewPage = ({ entry, onBack }: { entry: ReviewEntry; onBack: () =
               <option value="typescript">TypeScript</option>
               <option value="javascript">JavaScript</option>
             </select>
+          </label>
+          <label className="field">
+            <span className="field-label">Difficulty</span>
+            <DifficultySelect
+              value={state.difficulty}
+              onChange={(difficulty) => update({ difficulty })}
+            />
           </label>
           <label className="field">
             <span className="field-label">Function name</span>

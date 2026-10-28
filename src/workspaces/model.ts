@@ -9,7 +9,7 @@ import type {
   TestKind,
 } from "../runner/types.ts";
 import type { RunOutcome, TestResult } from "../tests/results.ts";
-import { normalizeFolder, normalizeTags } from "./organization.ts";
+import { normalizeFolder, normalizeTags, type Difficulty } from "./organization.ts";
 
 export type SyncState = "local" | "excluded" | "dirty" | "synced" | "conflict" | "too-large";
 
@@ -21,6 +21,8 @@ export interface Workspace {
   notes: string;
   folder?: string;
   tags?: string[];
+  /** Unset until the user picks one. */
+  difficulty?: Difficulty;
   language: Language;
   functionName: string;
   params: string[];
@@ -90,6 +92,7 @@ export interface WorkspaceFields {
   notes?: string;
   folder?: string;
   tags?: string[];
+  difficulty?: Difficulty;
   language?: Language;
   functionName?: string;
   params?: string[];
@@ -111,6 +114,7 @@ export const createWorkspace = (fields: WorkspaceFields, now: Date = new Date())
     notes: fields.notes ?? "",
     folder: normalizeFolder(fields.folder ?? ""),
     tags: normalizeTags(fields.tags ?? []),
+    difficulty: fields.difficulty,
     language: fields.language ?? DEFAULT_LANGUAGE,
     functionName,
     params,

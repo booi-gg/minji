@@ -7,11 +7,11 @@ The UI calls workspaces **problems**; see the glossary in README.md.
 - Header: heading "problems", **New problem**, icon-only **Import** and **Export all**, and the account control (sign in, or avatar menu with Sign out).
 - Rows are sorted by `updatedAt`, newest first, excluding tombstoned workspaces. Each row shows:
   - title, or "Untitled";
-  - language;
+  - language, and difficulty when set (Easy green, Medium amber, Hard red, Super hard violet);
   - last run: `5/8 passed`, or `Not run yet`;
   - updated time, relative ("3 h ago"), with the exact time in a tooltip;
   - sync badge, only while signed in: `Synced`, `Syncing`, `Conflict`, `Local only`, or `Too large to sync`.
-- Row actions: open (click the row), and icon-only **Organize**, **Export**, **Delete**.
+- Row actions: open (click the row), and icon-only **Organize** (difficulty, folder, tags), **Export**, **Delete**.
 - **Delete** asks "Delete "<title>"?" with the detail "This also removes it from your other devices." when the workspace is synced, and "This can't be undone." otherwise.
 - Empty state: "No problems yet." with **Start from scratch** and **Import problem** buttons.
 - The storage banner from data-model.md appears above the list when it applies.
@@ -58,6 +58,7 @@ interface ImportDraft {
   paramsConfirmed: boolean; // false when order was guessed from the examples
   starterSource: string;
   tests: DraftTest[];
+  difficulty?: Difficulty; // see "Difficulty" below
   suggestInPlace: boolean;
   warnings: string[];
 }
@@ -98,6 +99,10 @@ Sources, in order: the **Starter code** textarea; else the first fenced code blo
 5. **Output** is parsed the same way into `expectedText`.
 6. Argument order: with confirmed `params`, arguments are ordered by them, and unknown names produce the warning `Example 2 has an argument "k" that isn't a parameter.` Without, the order of the names in the first example becomes `params`, and `paramsConfirmed` is `false`.
 
+### Difficulty
+
+The first line that is only `Easy`, `Medium`, `Hard` or `Super hard` (as a LeetCode page copies), optionally written `Difficulty: …` with bold or a list marker, sets `difficulty`. Otherwise it stays unset.
+
 ### In-place hint
 
 `suggestInPlace` is `true` when the statement matches `/in[- ]place|do not return anything|modify .* in place/i`. The review screen then offers: "This looks like an in-place problem. Compare argument 1 (nums) after the call?" Accepting sets `compare: { kind: 'argument', index: 0 }` on every imported test.
@@ -111,7 +116,7 @@ The export format from data-model.md.
 
 ## Review screen
 
-Editable fields: title, language, function name, params, statement (rendered, with **Edit raw**), starter code (monospace textarea), and tests (label, arguments, expected, with Valid / Invalid badges).
+Editable fields: title, language, difficulty, function name, params, statement (rendered, with **Edit raw**), starter code (monospace textarea), and tests (label, arguments, expected, with Valid / Invalid badges).
 
 - **Params** show as chips with **Move left** / **Move right** buttons. Reordering remaps every draft test's named arguments. When `paramsConfirmed` is `false`, a notice reads "Check the parameter order; it was guessed from the examples." and stays until the user reorders or ticks **Order is correct**.
 - Warnings are listed at the top.
