@@ -355,7 +355,11 @@ export const Toolbar = ({
         />
       </div>
       {readOnly ? null : (
-        <span className="save-status" data-status={saveStatus} data-tooltip={STATUS_TEXT[saveStatus]}>
+        <span
+          className="save-status"
+          data-status={saveStatus}
+          data-tooltip={STATUS_TEXT[saveStatus]}
+        >
           <SaveIcon size={16} aria-hidden="true" />
           <span className="visually-hidden" role="status">
             {STATUS_TEXT[saveStatus]}

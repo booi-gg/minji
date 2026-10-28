@@ -112,9 +112,7 @@ export const ProblemSidebar = ({ activeId }: ProblemSidebarProps) => {
       : problems.filter((problem) => problem.title.toLowerCase().includes(deferredQuery));
 
   useEffect(() => {
-    listRef.current
-      ?.querySelector('[aria-current="page"]')
-      ?.scrollIntoView({ block: "nearest" });
+    listRef.current?.querySelector('[aria-current="page"]')?.scrollIntoView({ block: "nearest" });
   }, [activeId, loaded]);
 
   return (
@@ -123,7 +121,12 @@ export const ProblemSidebar = ({ activeId }: ProblemSidebarProps) => {
         <Link className="sidebar-heading" to="/" aria-label="All problems">
           Problems
         </Link>
-        <Link className="button button-quiet icon-button" to="/new" aria-label="New problem" data-tooltip="New problem">
+        <Link
+          className="button button-quiet icon-button"
+          to="/new"
+          aria-label="New problem"
+          data-tooltip="New problem"
+        >
           <Plus size={16} aria-hidden="true" />
         </Link>
       </div>

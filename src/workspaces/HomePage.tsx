@@ -253,7 +253,12 @@ export const HomePage = () => {
           <Link className="button button-primary" to="/new">
             New problem
           </Link>
-          <Link className="button icon-button" to="/new/import" aria-label="Import" data-tooltip="Import">
+          <Link
+            className="button icon-button"
+            to="/new/import"
+            aria-label="Import"
+            data-tooltip="Import"
+          >
             <Upload size={16} aria-hidden="true" />
           </Link>
           <button

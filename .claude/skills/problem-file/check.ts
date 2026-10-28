@@ -31,7 +31,12 @@ const fromText = (text: string, format: "markdown" | "text"): Summary => {
         draft.params,
         draft.functionName,
       );
-      return { label: test.label, argsText, expectedText: test.expectedText, problem: problemOf(validation) };
+      return {
+        label: test.label,
+        argsText,
+        expectedText: test.expectedText,
+        problem: problemOf(validation),
+      };
     }),
   };
 };
@@ -89,5 +94,7 @@ for (const summary of summaries) {
     );
   }
 }
-process.stdout.write(failed ? "\nNot clean: fix the lines marked ! or ✗.\n" : "\nClean: imports as shown.\n");
+process.stdout.write(
+  failed ? "\nNot clean: fix the lines marked ! or ✗.\n" : "\nClean: imports as shown.\n",
+);
 process.exitCode = failed ? 1 : 0;

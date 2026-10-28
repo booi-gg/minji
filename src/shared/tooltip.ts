@@ -34,8 +34,7 @@ const place = (element: HTMLElement): void => {
   );
   // Below the element, or above it when there's no room underneath.
   const below = anchor.bottom + GAP_PX;
-  const top =
-    below + height > window.innerHeight - EDGE_PX ? anchor.top - GAP_PX - height : below;
+  const top = below + height > window.innerHeight - EDGE_PX ? anchor.top - GAP_PX - height : below;
   node.style.transform = `translate(${Math.round(left)}px, ${Math.round(top)}px)`;
 };
 
