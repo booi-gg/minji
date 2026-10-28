@@ -243,7 +243,7 @@ export const HomePage = () => {
   return (
     <main className="page">
       <div className="page-heading">
-        <h1>My workspaces</h1>
+        <h1>workspaces</h1>
         <div className="actions">
           <Link className="button button-primary" to="/new">
             New workspace

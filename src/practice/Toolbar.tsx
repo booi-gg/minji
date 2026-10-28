@@ -1,4 +1,16 @@
 import { useEffect, useId, useState } from "react";
+import {
+  Check,
+  CircleAlert,
+  Ellipsis,
+  History,
+  LoaderCircle,
+  Paintbrush,
+  Play,
+  RotateCcw,
+  Square,
+  type LucideIcon,
+} from "lucide-react";
 import { Link } from "react-router";
 import type { ThemeSetting } from "../app/theme.ts";
 import type { Language } from "../runner/types.ts";
@@ -67,6 +79,12 @@ const STATUS_TEXT: Record<SaveStatus, string> = {
   failed: "Couldn't save",
 };
 
+const STATUS_ICON: Record<SaveStatus, LucideIcon> = {
+  saved: Check,
+  saving: LoaderCircle,
+  failed: CircleAlert,
+};
+
 interface ToolbarProps {
   workspace: Workspace;
   readOnly: boolean;
@@ -109,7 +127,9 @@ const MoreMenu = ({
   const formatId = useId();
   return (
     <details className="menu">
-      <summary className="button button-quiet">More</summary>
+      <summary className="button button-quiet icon-button" aria-label="More" title="More">
+        <Ellipsis size={16} aria-hidden="true" />
+      </summary>
       <div className="menu-panel">
         <button type="button" className="menu-item" onClick={onExport}>
           Export workspace
@@ -206,6 +226,7 @@ export const Toolbar = ({
   const titleId = useId();
   const languageId = useId();
   const unchanged = workspace.source === workspace.starterSource;
+  const SaveIcon = STATUS_ICON[saveStatus];
 
   return (
     <div className="toolbar">
@@ -246,22 +267,54 @@ export const Toolbar = ({
       <div className="toolbar-spacer" />
       <div className="actions">
         {running ? (
-          <button type="button" className="button button-danger" onClick={onStop}>
-            Stop
+          <button
+            type="button"
+            className="button button-danger icon-button"
+            aria-label="Stop running tests"
+            title="Stop running tests"
+            onClick={onStop}
+          >
+            <Square size={16} aria-hidden="true" />
           </button>
         ) : (
-          <button type="button" className="button button-primary" onClick={onRunAll}>
-            Run all
+          <button
+            type="button"
+            className="button button-primary icon-button"
+            aria-label="Run all tests"
+            title="Run all tests"
+            onClick={onRunAll}
+          >
+            <Play size={16} aria-hidden="true" />
           </button>
         )}
-        <button type="button" className="button" onClick={onFormat} disabled={readOnly}>
-          Format
+        <button
+          type="button"
+          className="button icon-button"
+          aria-label="Format code"
+          title="Format code"
+          onClick={onFormat}
+          disabled={readOnly}
+        >
+          <Paintbrush size={16} aria-hidden="true" />
         </button>
-        <button type="button" className="button" onClick={onReset} disabled={readOnly || unchanged}>
-          Reset code
+        <button
+          type="button"
+          className="button icon-button"
+          aria-label="Reset code"
+          title="Reset code"
+          onClick={onReset}
+          disabled={readOnly || unchanged}
+        >
+          <RotateCcw size={16} aria-hidden="true" />
         </button>
-        <button type="button" className="button" onClick={onHistory}>
-          History
+        <button
+          type="button"
+          className="button icon-button"
+          aria-label="History"
+          title="History"
+          onClick={onHistory}
+        >
+          <History size={16} aria-hidden="true" />
         </button>
         <MoreMenu
           workspace={workspace}
@@ -273,15 +326,20 @@ export const Toolbar = ({
         />
       </div>
       {readOnly ? null : (
-        <span className="save-status" data-status={saveStatus}>
-          {STATUS_TEXT[saveStatus]}
+        <span className="save-status" data-status={saveStatus} title={STATUS_TEXT[saveStatus]}>
+          <SaveIcon size={16} aria-hidden="true" />
+          <span className="visually-hidden" role="status">
+            {STATUS_TEXT[saveStatus]}
+          </span>
           {saveStatus === "failed" ? (
             <button
               type="button"
-              className="button button-quiet button-small"
+              className="button button-quiet icon-button"
+              aria-label="Retry save"
+              title="Retry save"
               onClick={onRetrySave}
             >
-              Retry
+              <RotateCcw size={16} aria-hidden="true" />
             </button>
           ) : null}
         </span>

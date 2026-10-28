@@ -303,6 +303,11 @@ pre {
     border-color 120ms ease;
 }
 
+.icon-button {
+  width: 36px;
+  padding: 0;
+}
+
 .button:hover {
   background: var(--surface-sunken);
 }
@@ -848,7 +853,7 @@ textarea[readonly] {
   display: inline-flex;
   align-items: center;
   gap: var(--space-1);
-  min-width: 7ch;
+  min-width: 0;
   color: var(--text-muted);
   font-size: var(--text-xs);
 }
