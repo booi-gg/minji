@@ -28,11 +28,20 @@ The statement panel collapses with a button or `Mod+\`. Resize handles are keybo
 
 ## Toolbar
 
-Left to right: back to problems, title (inline edit, placeholder "Untitled"), language select (JavaScript / TypeScript), icon-only **Run all**, **Stop** (only while running), **Reset code**, **Format**, **History**, **More**, and save status. Each icon action has an accessible name and hover title. More contains Entry point, Export problem, Test timeout, Format on save, Font size, Theme, and Keyboard shortcuts.
+Left to right: **Show/Hide problem list** (on phones, back to problems instead), title (inline edit, placeholder "Untitled"), language select (JavaScript / TypeScript), icon-only **Run all**, **Stop** (only while running), **Reset code**, **Format**, **History**, **More**, and save status. Each icon action has an accessible name and hover title. More contains Entry point, Export problem, Test timeout, Format on save, Font size, Theme, and Keyboard shortcuts.
 
 - A known entry point remains selected while its declaration exists. When the source has exactly one detectable function or class and the stored name is absent, the entry point and parameter names follow the code. More exposes a manual Entry point field for ambiguous source. Function name edits are validated as in data-model.md. Changing the name of an untouched generated scratch stub regenerates that stub; imported starter code is preserved.
 - Save status uses an icon with a screen-reader message and hover title for `Saved`, `Saving…`, or `Couldn't save`; a failed save adds an icon-only Retry action.
 - While a run is in progress, **Run all** and every row's **Run** are disabled and show a spinner.
+
+## Sidebar
+
+From 768 px up, a 240 px **Problems** sidebar sits left of the toolbar and panels. The toolbar toggle shows or hides it, and the choice is kept in `localStorage` (`minji:sidebar`). It is hidden on phones.
+
+- Header: **Problems** (links to `/`) and **+** (New problem).
+- **Search** filters by title as you type.
+- One row per problem in `updatedAt` order: a dot (green when the last run passed every test, orange when some failed, grey when not run) and the title. The open problem is highlighted and scrolled into view.
+- It stays mounted while switching problems, so the list and scroll position are kept. It reads the list once, then on a `changed` channel message re-reads only that problem and updates its row in place; `sync-complete` reloads the list. Rows hold only id, title and last run, and use `content-visibility: auto` so off-screen rows cost nothing to render.
 
 ## Editor
 

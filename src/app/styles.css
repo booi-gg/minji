@@ -783,6 +783,143 @@ textarea[readonly] {
 
 /* ---- Practice -------------------------------------------------------------------- */
 
+.practice-shell {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  height: 100dvh;
+}
+
+.practice-shell > .practice {
+  flex: 1;
+  min-width: 0;
+  height: auto;
+}
+
+/* ---- Problem sidebar ------------------------------------------------------------- */
+
+.sidebar {
+  display: flex;
+  flex: 0 0 240px;
+  flex-direction: column;
+  min-height: 0;
+  border-right: 1px solid var(--border);
+  background: var(--bg);
+}
+
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  /* Matches the practice toolbar, so both bottom borders line up. */
+  min-height: 53px;
+  padding: 0 var(--space-2) 0 var(--space-4);
+  border-bottom: 1px solid var(--border);
+}
+
+.sidebar-heading {
+  color: var(--text);
+  font-size: var(--text-sm);
+  font-weight: 650;
+  text-decoration: none;
+}
+
+.sidebar-heading:hover {
+  color: var(--accent);
+}
+
+.sidebar-search {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: var(--space-3) var(--space-3) var(--space-2);
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-sm);
+  background: var(--surface-sunken);
+  color: var(--text-muted);
+}
+
+.sidebar-search:focus-within {
+  outline: 2px solid var(--focus);
+  outline-offset: -2px;
+}
+
+.sidebar-search input {
+  flex: 1;
+  min-width: 0;
+  min-height: 30px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  outline: none;
+}
+
+.sidebar-list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  margin: 0;
+  padding: 0 var(--space-2) var(--space-3);
+  list-style: none;
+  overscroll-behavior: contain;
+}
+
+/* Off-screen rows skip layout and paint, so long lists stay cheap to scroll. */
+.sidebar-row {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 32px;
+}
+
+.sidebar-link {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 32px;
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+  text-decoration: none;
+}
+
+.sidebar-link:hover {
+  background: var(--surface-sunken);
+  color: var(--text);
+}
+
+.sidebar-link-active,
+.sidebar-link-active:hover {
+  background: var(--accent-soft);
+  color: var(--text);
+  font-weight: 550;
+}
+
+.sidebar-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sidebar-empty {
+  padding: 0 var(--space-4);
+}
+
+.run-dot {
+  flex: none;
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--border-strong);
+}
+
+.run-dot-solved {
+  background: var(--success);
+}
+
+.run-dot-attempted {
+  background: var(--accent);
+}
+
 .practice {
   display: flex;
   flex: 1;

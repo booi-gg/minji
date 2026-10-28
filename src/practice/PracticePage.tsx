@@ -47,6 +47,7 @@ import { ConflictDialog } from "./ConflictDialog.tsx";
 import { HistoryDialog } from "./HistoryDialog.tsx";
 import { onFormatFailure, type FormatFailure } from "./monaco.ts";
 import { rememberLanguage, useEditorSettings } from "./settings.ts";
+import { ProblemSidebar } from "./ProblemSidebar.tsx";
 import { ShortcutsDialog } from "./ShortcutsDialog.tsx";
 import { StatementPanel } from "./StatementPanel.tsx";
 import { Toolbar } from "./Toolbar.tsx";
@@ -179,9 +180,12 @@ const DesktopLayout = ({
 
 interface PracticeProps {
   initial: WorkspaceBundle;
+  /** `null` where there's no room for the sidebar (phones). */
+  sidebarOpen: boolean | null;
+  onToggleSidebar: () => void;
 }
 
-const Practice = ({ initial }: PracticeProps) => {
+const Practice = ({ initial, sidebarOpen, onToggleSidebar }: PracticeProps) => {
   const id = initial.workspace.id;
   const navigate = useNavigate();
   const { account, sync } = useSync();
@@ -564,6 +568,8 @@ const Practice = ({ initial }: PracticeProps) => {
       </h1>
       <Toolbar
         workspace={workspace}
+        sidebarOpen={sidebarOpen}
+        onToggleSidebar={onToggleSidebar}
         readOnly={readOnly}
         saveStatus={saveStatus}
         settings={settings}
@@ -665,9 +671,32 @@ const Practice = ({ initial }: PracticeProps) => {
   );
 };
 
+const SIDEBAR_KEY = "minji:sidebar";
+
+const readSidebarOpen = (): boolean => {
+  try {
+    return localStorage.getItem(SIDEBAR_KEY) !== "closed";
+  } catch {
+    return true;
+  }
+};
+
 /** The practice screen. See specs/practice-editor.md. */
 export const PracticePage = () => {
   const { bundle } = useLoaderData<typeof practiceLoader>();
+  const isPhone = useMediaQuery("(max-width: 767px)");
+  const [sidebarOpen, setSidebarOpen] = useState(readSidebarOpen);
+
+  const toggleSidebar = (): void => {
+    setSidebarOpen((open) => {
+      try {
+        localStorage.setItem(SIDEBAR_KEY, open ? "closed" : "open");
+      } catch {
+        // Storage can be unavailable; the toggle still works for this visit.
+      }
+      return !open;
+    });
+  };
 
   if (bundle === null) {
     return (
@@ -681,5 +710,16 @@ export const PracticePage = () => {
     );
   }
 
-  return <Practice key={bundle.workspace.id} initial={bundle} />;
+  // The sidebar sits outside the keyed Practice, so switching problems keeps its list and scroll.
+  return (
+    <div className="practice-shell">
+      {sidebarOpen && !isPhone ? <ProblemSidebar activeId={bundle.workspace.id} /> : null}
+      <Practice
+        key={bundle.workspace.id}
+        initial={bundle}
+        sidebarOpen={isPhone ? null : sidebarOpen}
+        onToggleSidebar={toggleSidebar}
+      />
+    </div>
+  );
 };

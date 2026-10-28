@@ -6,6 +6,8 @@ import {
   History,
   LoaderCircle,
   Paintbrush,
+  PanelLeftClose,
+  PanelLeftOpen,
   Play,
   RotateCcw,
   Square,
@@ -87,6 +89,9 @@ const STATUS_ICON: Record<SaveStatus, LucideIcon> = {
 
 interface ToolbarProps {
   workspace: Workspace;
+  /** `null` hides the toggle. */
+  sidebarOpen: boolean | null;
+  onToggleSidebar: () => void;
   readOnly: boolean;
   saveStatus: SaveStatus;
   settings: EditorSettings;
@@ -216,6 +221,8 @@ const MoreMenu = ({
 /** See specs/practice-editor.md, "Toolbar". */
 export const Toolbar = ({
   workspace,
+  sidebarOpen,
+  onToggleSidebar,
   readOnly,
   saveStatus,
   settings,
@@ -240,9 +247,26 @@ export const Toolbar = ({
 
   return (
     <div className="toolbar">
-      <Link className="button button-quiet" to="/" aria-label="All problems">
-        ←
-      </Link>
+      {sidebarOpen === null ? (
+        <Link className="button button-quiet" to="/" aria-label="All problems">
+          ←
+        </Link>
+      ) : (
+        <button
+          type="button"
+          className="button button-quiet icon-button"
+          aria-label={sidebarOpen ? "Hide problem list" : "Show problem list"}
+          aria-expanded={sidebarOpen}
+          title={sidebarOpen ? "Hide problem list" : "Show problem list"}
+          onClick={onToggleSidebar}
+        >
+          {sidebarOpen ? (
+            <PanelLeftClose size={16} aria-hidden="true" />
+          ) : (
+            <PanelLeftOpen size={16} aria-hidden="true" />
+          )}
+        </button>
+      )}
       <label htmlFor={titleId} className="visually-hidden">
         Title
       </label>

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { getDatabase } from "../db/database.ts";
 import { addRun, setLastRun } from "../db/workspaces.ts";
 import type { Runner, RunnerEvent } from "../runner/types.ts";
+import { postChannelMessage } from "../shared/channel.ts";
 import { newId } from "../shared/ids.ts";
 import {
   compileErrorMessage,
@@ -179,6 +180,7 @@ export const useTestRun = ({ getState, beforeRun, onLastRun }: UseTestRunOptions
           at: new Date().toISOString(),
         };
         await setLastRun(db, workspace.id, lastRun);
+        postChannelMessage({ type: "changed", id: workspace.id });
         options.current.onLastRun(lastRun);
       }
     } finally {
