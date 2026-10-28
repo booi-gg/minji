@@ -2,6 +2,24 @@
   "name": "minji",
   "version": "0.0.0",
   "private": true,
+  "description": "A private, LeetCode-style practice space for your own coding problems, in JavaScript and TypeScript, hosted on Cloudflare.",
+  "keywords": [
+    "algorithms",
+    "cloudflare-workers",
+    "coding-practice",
+    "data-structures",
+    "javascript",
+    "leetcode",
+    "offline-first",
+    "typescript"
+  ],
+  "homepage": "https://github.com/booi-gg/minji#readme",
+  "bugs": "https://github.com/booi-gg/minji/issues",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/booi-gg/minji.git"
+  },
   "type": "module",
   "scripts": {
     "dev": "vp dev",

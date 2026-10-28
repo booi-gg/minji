@@ -1,0 +1,4 @@
+# Copy to .dev.vars (git-ignored) for GitHub sign-in on http://localhost:8000.
+# Use a separate OAuth app whose callback is http://localhost:8000/api/auth/github/callback.
+GITHUB_CLIENT_ID="<local OAuth app client ID>"
+GITHUB_CLIENT_SECRET="<local OAuth app client secret>"

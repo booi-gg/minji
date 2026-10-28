@@ -1,0 +1,32 @@
+name: Bug report
+description: Something in minji doesn't work as expected.
+labels: [bug]
+body:
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What you did, what you expected, and what happened instead.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: If it involves a problem or test case, attach an exported JSON file or paste the problem.
+      placeholder: |
+        1. Open a problem
+        2. ...
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Browser and where you run minji
+      placeholder: Chrome 140 on macOS, self-hosted on Cloudflare
+  - type: textarea
+    id: console
+    attributes:
+      label: Console errors
+      description: Anything shown in the browser's developer console.
+      render: text

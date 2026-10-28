@@ -1,107 +1,98 @@
 # minji
 
-Personal space for practising data structures and algorithms problems in JavaScript and TypeScript. See [PLAN.md](PLAN.md), the [specs](specs/README.md) and the [checklist](TODO.md).
+**Your own LeetCode-style practice space, for your own problems.**
 
-## Development
+minji is a small, open-source web app for practising coding problems you collect yourself: interview questions, puzzles from a book, exercises from a course, or problems you make up. Paste a problem, write a JavaScript or TypeScript solution, add test cases, and run them in the browser. Your problems stay private to you, work offline, and sync across devices when you sign in.
+
+It's for people who want a personal problem set rather than a public catalog: nothing to browse, no leaderboards, nothing shared unless you export it.
+
+> **Built entirely with AI.** Every line of code, test and spec in this repository was written by AI coding agents, steered and reviewed by a human. The specs in [`specs/`](specs/README.md) and the plans in [`docs/planning/`](docs/planning/) are the contracts it was built from. See [How it was built](#how-it-was-built).
+
+## Features
+
+- **Bring your own problems.** Paste a problem copied from a web page, upload Markdown or text, or import a JSON export. The importer finds the title, starter code, function name, parameters, difficulty and example test cases, then lets you review them before saving.
+- **A familiar editor.** Monaco (the editor from VS Code) with TypeScript checking, Prettier formatting and the JetBrains Mono font. The layout follows LeetCode: statement on the left, code on top, **Testcase** and **Test Result** below.
+- **Real test cases.** One field per argument, any JSON value, in-place comparisons (an argument after the call), linked list and binary tree adapters, class method sequences, unordered and numeric-tolerance comparison. Results show input, stdout, output and expected value per case.
+- **Safe, local execution.** Your code runs in your browser, inside a sandboxed iframe and a Web Worker with a strict Content Security Policy and a watchdog for infinite loops. No code is sent to a server to run.
+- **Organize.** Set a difficulty (Easy, Medium, Hard, Super hard) and tags; the problem sidebar searches, sorts by difficulty and filters by tag.
+- **Offline first.** Problems live in IndexedDB and a service worker caches the app. History keeps earlier versions of your code, with a side-by-side diff.
+- **Optional sync.** Sign in with GitHub to sync problems across devices, with conflict handling when two devices edit the same problem.
+- **Cheap to host.** One Cloudflare Worker plus a D1 database, comfortably inside the free plan for personal use.
+
+**Solution languages:** JavaScript and TypeScript. **Hosting:** Cloudflare Workers and D1.
+
+## Quick start
+
+You need [Vite+](https://viteplus.dev/guide/) (the `vp` command), which manages Node.js and pnpm for this project.
 
 ```bash
+git clone https://github.com/booi-gg/minji.git
+cd minji
 vp install
 vp dev
 ```
 
-`vp dev` serves the app at `http://localhost:8000` and runs the Cloudflare Worker together with it: `@cloudflare/vite-plugin` serves `/api/*` from a local workerd runtime, so no separate `wrangler dev` is needed.
+Open `http://localhost:8000`. Everything except sign-in works without further setup; to add sign-in locally, see [Local development with sign-in](docs/self-hosting.md#local-development-with-sign-in).
 
-| Command                                               | What it does                                                            |
-| ----------------------------------------------------- | ----------------------------------------------------------------------- |
-| `vp check`                                            | Format check, lint and type check                                       |
-| `vp check --fix`                                      | Format and apply lint fixes                                             |
-| `vp test`                                             | Unit tests (Node) and runner tests (Chromium, Firefox, WebKit)          |
-| `vp test --project unit`                              | Unit tests only                                                         |
-| `vp run build`                                        | Type-check, build, and generate the offline service worker              |
-| `vp run deploy:staging`                               | Build and deploy to the `minji-staging` Worker (needs `wrangler login`) |
-| `vpx ./scripts/e2e-accounts.ts http://localhost:8000` | Account, sync and conflict UI check against a shared test API           |
-| `vpx ./scripts/e2e-offline.ts http://localhost:4173`  | Offline check against `vp preview` after a production build             |
+To run your own copy online, follow [Self-hosting on Cloudflare](docs/self-hosting.md).
 
-Runner tests need Playwright's browsers once: `node_modules/.bin/playwright install chromium firefox webkit`.
+## Using minji
+
+- **Add a problem:** **New problem**, then start from scratch or **Import** (paste text, or upload `.md`, `.txt` or `.json`). The import rules are in [specs/workspaces-and-import.md](specs/workspaces-and-import.md).
+- **Write tests:** [Writing test cases](docs/writing-tests.md) covers function calls, in-place changes, linked lists and trees, class method sequences and comparison options.
+- **Run:** **Run all** (Mod+Enter) runs every valid case; Mod+Shift+Enter runs the selected one.
+- **Keep your work:** problems save automatically. **History** shows earlier versions; **Export** downloads a JSON file you can import anywhere.
+
+## Development
+
+| Command                  | What it does                                                       |
+| ------------------------ | ------------------------------------------------------------------ |
+| `vp dev`                 | App and local Worker at `http://localhost:8000`                    |
+| `vp check`               | Format check, lint and type check (`vp check --fix` applies fixes) |
+| `vp test`                | Unit tests (Node) and runner tests (Chromium, Firefox, WebKit)     |
+| `vp test --project unit` | Unit tests only                                                    |
+| `vp run build`           | Type-check, build, and generate the offline service worker         |
+| `vp run deploy`          | Build and deploy to Cloudflare (needs `vpx wrangler login`)        |
+
+Runner tests need Playwright's browsers once: `node_modules/.bin/playwright install chromium firefox webkit`. End-to-end scripts live in [`scripts/`](scripts/); each documents its usage at the top.
 
 After editing the inline script in `public/runner.html`, update its CSP hash with `vpx ./scripts/update-runner-csp.ts`.
 
-## Test cases
+### Project layout
 
-Open a problem, set the **Function name** in the toolbar to the function or class in your code, and open the **Testcase** tab. Select **+** to add a case, then fill in one JSON field per argument (labeled `name =`) and **Expected =**. Strings need double quotes. Hover a case and select **×** to delete it; **Options** holds its name and advanced settings. **Run all** runs every valid case (Mod+Shift+Enter runs the selected one); invalid cases show an error and are skipped. **Test Result** shows each case's input, stdout, output and expected value.
-
-### Function calls and returned values
-
-Leave **Test type** on **Function call** and **Compare** on **Return value**. For `twoSum(nums, target)`, use:
-
-| Field     | Value             |
-| --------- | ----------------- |
-| Arguments | `[[2,7,11,15],9]` |
-| Expected  | `[0,1]`           |
-
-The outer Arguments array contains two values: the `nums` array and the `target` number. For `answer()` returning `42`, enter Arguments `[]` and Expected `42`. Expected can also be a JSON string, boolean, `null`, array, or object. Object key order does not matter; array order does by default.
-
-### Functions that change an argument
-
-For a function such as `reverse(nums)` that changes the input array and returns nothing, enter Arguments `[[1,2,3]]`, Expected `[3,2,1]`, and set **Compare** to **Argument 1 (nums) after the call**. Choose the argument the solution changes; **Return value** would compare its `undefined` return instead.
-
-### Linked lists and binary trees
-
-Node adapters are available on **Function call** cases. Enter ordinary JSON arrays, then choose an adapter for each argument that the solution expects as nodes. Choose a **Result adapter** when the returned value or compared argument is also a node. The runner supplies `ListNode` and `TreeNode` constructors to solution code.
-
-| Function shape                         | Arguments   | Expected         | Adapter settings                                     |
-| -------------------------------------- | ----------- | ---------------- | ---------------------------------------------------- |
-| `append(head)` returns a linked list   | `[[1,2,3]]` | `[1,2,3,4]`      | Argument 1: **Linked list**; Result: **Linked list** |
-| `addRight(root)` returns a binary tree | `[[1,2,3]]` | `[1,2,3,null,7]` | Argument 1: **Binary tree**; Result: **Binary tree** |
-
-Lists use values from head to tail. Trees use level order with `null` for missing children, so `[1,null,3]` means the root has no left child and a right child with value `3`. Use `[]` for an empty list or tree. For an in-place node change, select the changed argument under **Compare** and still set its **Result adapter** so the result is converted back to an array.
-
-### Class method sequences
-
-Set the toolbar **Function name** to the class name and choose **Class method sequence** as the test type. For `class Counter` with `constructor(start)`, `add(amount)`, and `get()`, enter:
-
-| Field     | Value                                                       |
-| --------- | ----------------------------------------------------------- |
-| Arguments | `[["Counter","add","get","add","get"],[[2],[3],[],[4],[]]]` |
-| Expected  | `[null,null,5,null,9]`                                      |
-
-The first array lists the constructor and method names. The second array gives each call's arguments in the same order. The constructor's result is always `null`; methods that return `undefined` also appear as `null`. Each test case creates a fresh instance. Class cases compare the whole result sequence and do not use node adapters.
-
-### Comparison options for each case
-
-- **Ignore outer array order** accepts a permutation of the Expected array, including duplicate values. Nested arrays still compare in order. For example, Expected `[1,1,2]` accepts `[2,1,1]` but not `[2,2,1]`.
-- **Numeric tolerance (absolute)** accepts numeric differences up to the entered amount, including numbers inside arrays and objects. For example, Expected `3.14` accepts `3.141` with tolerance `0.01`. Leave it blank for exact comparison.
-- Both options can be used together. They apply only to the case where you set them.
-
-Expected values that JSON cannot express directly can use `{"$minji":"undefined"}`, `{"$minji":"NaN"}`, `{"$minji":"Infinity"}`, `{"$minji":"-Infinity"}`, or `{"$minji":"-0"}`. For example, use `{"$minji":"undefined"}` when a function intentionally returns `undefined`. Arguments remain ordinary JSON. See [test case rules](specs/test-cases.md) for validation, comparison, and result details.
-
-## Offline work and organization
-
-Production builds register a service worker that caches the app and editor for offline use. Problems and edits remain in IndexedDB, and account changes sync when the connection returns. The footer shows connection status, pending problems, conflicts that need attention, and the last completed sync. On the home screen, use **Organize** to set a difficulty (Easy, Medium, Hard, Super hard), folder and tags, then filter the list by folder or tag. The problem page's toolbar also sets the difficulty, and its sidebar sorts by difficulty and filters by tag. All three are included in JSON export and account sync. GitHub is the only sign-in provider.
-
-## Account setup and deployment
-
-The D1 databases `minji` and `minji-staging` already exist, and migration `0001_init.sql` has been applied to both. Each Worker needs its own GitHub OAuth app:
-
-| Environment | Homepage URL                                    | Authorization callback URL                                               |
-| ----------- | ----------------------------------------------- | ------------------------------------------------------------------------ |
-| Staging     | `https://minji-staging.booboosable.workers.dev` | `https://minji-staging.booboosable.workers.dev/api/auth/github/callback` |
-| Production  | `https://minji.booboosable.workers.dev`         | `https://minji.booboosable.workers.dev/api/auth/github/callback`         |
-
-Create the apps in GitHub **Settings → Developer settings → OAuth apps**. Put each client ID in its corresponding `GITHUB_CLIENT_ID` value in `wrangler.jsonc`. Set each client secret through Wrangler so it never enters the repository:
-
-```bash
-wrangler secret put GITHUB_CLIENT_SECRET --env staging
-wrangler secret put GITHUB_CLIENT_SECRET
+```
+src/
+  app/         routes, layout, styles, theme
+  practice/    the problem page: editor, toolbar, sidebar, autosave, history
+  tests/       test case editing, validation, comparison, results
+  runner/      sandboxed code runner (iframe + Web Worker), TypeScript stripping
+  import/      paste and Markdown parser, JSON export format, review screen
+  workspaces/  home list, problem model, difficulty and tags
+  sync/        sign-in and the sync engine
+  db/          IndexedDB schema and queries
+worker/        Cloudflare Worker: GitHub OAuth, sync API, D1 migrations
+public/        runner.html (the sandboxed runner), service worker, headers
+specs/         behaviour contracts for every part of the app
+docs/          guides, and the planning notes the app was built from
 ```
 
-Then run `vp run deploy:staging`. Check `/api/health`, `/w/anything`, sign-in and a sync round trip on staging before `vp run deploy`. The local Playwright check uses a test API and does not need GitHub credentials.
+In the code, a problem is called a **workspace** (`Workspace`, `/w/:id`, the `minji.workspaces` export format); the UI calls it a problem.
 
-For GitHub sign-in on the local dev server, the OAuth app used locally must allow the callback `http://localhost:8000/api/auth/github/callback`. You can create a separate OAuth app with homepage `http://localhost:8000` for this. Put the credentials for that app in an ignored `.dev.vars` file at the project root, then start `vp dev`:
+## How it was built
 
-```dotenv
-GITHUB_CLIENT_ID="<local OAuth app client ID>"
-GITHUB_CLIENT_SECRET="<local OAuth app client secret>"
-```
+minji was built end to end by AI coding agents, with a human deciding what to build and reviewing the result. The process lives in the repository:
 
-Copy the **Client ID** from the OAuth app settings, not a value under **Client secrets**. If a client secret was committed or shared in a URL, revoke it in GitHub and generate a new one.
+1. [`docs/planning/PLAN.md`](docs/planning/PLAN.md) sets the product target and the order of work.
+2. [`specs/`](specs/README.md) turns the plan into exact contracts: data model, runner, test cases, editor, import, sync.
+3. [`docs/planning/TODO.md`](docs/planning/TODO.md) is the step-by-step checklist; each step has a gate (checks and tests) that passes before the next begins.
+4. [`AGENTS.md`](AGENTS.md) holds the instructions every agent session reads, and [`.claude/skills/`](.claude/skills/) holds project skills, such as one that writes importable problem files.
+
+When you change behaviour, change the matching spec in the same pull request; the specs are the source of truth.
+
+## Contributing
+
+Contributions are welcome, written by hand or with an AI agent. Read [CONTRIBUTING.md](CONTRIBUTING.md) for setup, checks and conventions. To report a vulnerability, follow [SECURITY.md](SECURITY.md) instead of opening a public issue.
+
+## License
+
+[MIT](LICENSE)

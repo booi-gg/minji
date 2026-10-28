@@ -1,6 +1,6 @@
 # TODO
 
-Step-by-step checklist for [PLAN.md](PLAN.md). Each step ends with its gate; don't start the next step until the gate passes. Specs are in [specs/](specs/README.md).
+Step-by-step checklist for [PLAN.md](PLAN.md). Each step ends with its gate; don't start the next step until the gate passes. Specs are in [specs/](../../specs/README.md).
 
 Every code task includes its unit tests (`*.test.ts`, importing from `vite-plus/test`). Run `vp check` and `vp test` before ticking a box.
 
@@ -14,7 +14,7 @@ Every code task includes its unit tests (`*.test.ts`, importing from `vite-plus/
 
 ## 0. Browser runner proof
 
-Spec: [runner.md](specs/runner.md).
+Spec: [runner.md](../../specs/runner.md).
 
 - [x] Add `src/runner/types.ts`: `RunRequest`, `RunnerTest`, `RunnerEvent`, `RawTestResult`, `ConsoleEntry`, `Runner`, `Encoded`, `CompareTarget`.
 - [x] Write the value encoder (inside the harness, `src/runner/guest.js`) as self-contained code that can run inside either runtime: tags, non-serializable detection with path and type, cycle detection, `MAX_RESULT_BYTES` cut-off.
@@ -36,7 +36,7 @@ Spec: [runner.md](specs/runner.md).
 
 ## 1. Workspace shell
 
-Specs: [data-model.md](specs/data-model.md), [workspaces-and-import.md](specs/workspaces-and-import.md), [practice-editor.md](specs/practice-editor.md) (routes), [sync-and-auth.md](specs/sync-and-auth.md) (Worker configuration).
+Specs: [data-model.md](../../specs/data-model.md), [workspaces-and-import.md](../../specs/workspaces-and-import.md), [practice-editor.md](../../specs/practice-editor.md) (routes), [sync-and-auth.md](../../specs/sync-and-auth.md) (Worker configuration).
 
 - [x] Add React, React DOM, the React Vite plugin and React Router (8, data mode); replace `src/main.ts`, `src/counter.ts` and the starter styles with `src/main.tsx` and the route table. Confirm the plugin works under vite-plus.
 - [x] Add theme tokens (light/dark, `data-theme` on `<html>`) and base layout styles.
@@ -57,7 +57,7 @@ Specs: [data-model.md](specs/data-model.md), [workspaces-and-import.md](specs/wo
 
 ## 2. Editor and tests
 
-Specs: [practice-editor.md](specs/practice-editor.md), [test-cases.md](specs/test-cases.md).
+Specs: [practice-editor.md](../../specs/practice-editor.md), [test-cases.md](../../specs/test-cases.md).
 
 - [x] Decide the editor and record it in PLAN.md: Monaco, desktop-first.
 - [x] Practice layout with `react-resizable-panels`, persisted sizes, the three width breakpoints, and the statement panel toggle.
@@ -78,7 +78,7 @@ Specs: [practice-editor.md](specs/practice-editor.md), [test-cases.md](specs/tes
 
 ## 3. Browser runner
 
-Specs: [runner.md](specs/runner.md), [test-cases.md](specs/test-cases.md).
+Specs: [runner.md](../../specs/runner.md), [test-cases.md](../../specs/test-cases.md).
 
 - [x] Move the chosen runner from the step 0 prototype into `src/runner/`, loaded lazily on the first run.
 - [x] Page-side limit checks before a run (`rejected` outcome).
@@ -98,7 +98,7 @@ Specs: [runner.md](specs/runner.md), [test-cases.md](specs/test-cases.md).
 
 ## 4. Problem import
 
-Spec: [workspaces-and-import.md](specs/workspaces-and-import.md).
+Spec: [workspaces-and-import.md](../../specs/workspaces-and-import.md).
 
 - [x] Collect 10 or more real pasted problems (plain text and Markdown, JS and TS starters, single and multiple arguments, in-place, strings with commas) into `src/import/fixtures/`.
 - [x] Title and statement extraction.
@@ -115,7 +115,7 @@ Spec: [workspaces-and-import.md](specs/workspaces-and-import.md).
 
 ## 5. Accounts and finish
 
-Spec: [sync-and-auth.md](specs/sync-and-auth.md).
+Spec: [sync-and-auth.md](../../specs/sync-and-auth.md).
 
 - [x] D1 databases for staging and production; `0001_init.sql` migration applied to both.
 - [x] Sign in to the intended Cloudflare account with `wrangler login`; run `wrangler whoami` and `wrangler d1 list` to confirm access to the two D1 databases already bound in `wrangler.jsonc`.
@@ -142,7 +142,7 @@ Spec: [sync-and-auth.md](specs/sync-and-auth.md).
 
 **Gate:** sign in on a second device and resume the workspace, tests and saved revisions; editing the same workspace on both devices shows the conflict prompt instead of overwriting.
 
-**Progress:** local API and UI checks pass, including a two-context sync and conflict test with a shared test API. Real GitHub sign-in, a physical second device, manual screen-reader review, and staging/production deployment remain open. The exact OAuth app URLs and secret commands are in [README.md](README.md).
+**Progress:** local API and UI checks pass, including a two-context sync and conflict test with a shared test API. Real GitHub sign-in, a physical second device, manual screen-reader review, and staging/production deployment remain open. The OAuth app URLs and secret commands are in [self-hosting.md](../self-hosting.md).
 
 ## Later
 

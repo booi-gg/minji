@@ -1,6 +1,6 @@
 # Cloud DSA snippet practice workspace
 
-Detailed contracts are in [specs/](specs/README.md); the step-by-step checklist is [TODO.md](TODO.md).
+Detailed contracts are in [specs/](../../specs/README.md); the step-by-step checklist is [TODO.md](TODO.md).
 
 ## Product target
 

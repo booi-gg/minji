@@ -1,6 +1,6 @@
 # Specs
 
-These specs turn [PLAN.md](../PLAN.md) into buildable contracts. The plan says what to build and in which order; the specs say exactly how each part behaves. [TODO.md](../TODO.md) is the step-by-step checklist.
+These specs turn [PLAN.md](../docs/planning/PLAN.md) into buildable contracts. The plan says what to build and in which order; the specs say exactly how each part behaves. [TODO.md](../docs/planning/TODO.md) is the step-by-step checklist.
 
 | Spec                                                 | Covers                                                                                                                | First needed in |
 | ---------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- | --------------- |

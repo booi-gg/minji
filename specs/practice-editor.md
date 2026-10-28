@@ -18,11 +18,11 @@ A missing or deleted workspace id on `/w/:id` shows "This workspace doesn't exis
 
 Panels use `react-resizable-panels`. Sizes and collapsed state persist in `localStorage` under `minji:layout:v1`.
 
-| Width       | Layout                                                                                                                                                         |
-| ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| ≥ 1024 px   | Left: **Statement / Notes** tabs (30 %). Right: editor on top (60 %) and a bottom panel with **Testcase / Test Result** tabs (40 %).                           |
-| 768–1023 px | Same, with the statement panel collapsed by default.                                                                                                           |
-| < 768 px    | Full-width tabs: **Statement**, **Code**, **Tests**, **Results**. Code is read-only until the editor decision in PLAN.md is made; tests can be edited and run. |
+| Width       | Layout                                                                                                                                                                                     |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| ≥ 1024 px   | Left: **Statement / Notes** tabs (30 %). Right: editor on top (60 %) and a bottom panel with **Testcase / Test Result** tabs (40 %).                                                       |
+| 768–1023 px | Same, with the statement panel collapsed by default.                                                                                                                                       |
+| < 768 px    | Full-width tabs: **Statement**, **Code**, **Tests**, **Results**. Code is read-only until the editor decision in [PLAN.md](../docs/planning/PLAN.md) is made; tests can be edited and run. |
 
 The statement panel collapses with a button or `Mod+\`. Resize handles are keyboard-operable (arrow keys) and labelled.
 
