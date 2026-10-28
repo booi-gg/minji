@@ -47,7 +47,7 @@
 
 - `GITHUB_CLIENT_SECRET` is set with `wrangler secret put` per environment, never committed. Each environment has its own GitHub OAuth app, because the callback URL differs.
 - Local development uses `@cloudflare/vite-plugin` inside `vite.config.ts`, which serves the assets and the Worker from `vp dev` with a local D1. If the plugin doesn't work under vite-plus, run `wrangler dev` beside `vp dev` and proxy `/api` to it with `server.proxy`. Record which in the README.
-- `public/_headers` sets, for every page, `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, and `X-Frame-Options: DENY` except on `/runner.html`, which carries its own CSP in a `<meta>` tag (runner.md).
+- `public/_headers` sets, for every page, `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, and `X-Frame-Options: DENY` except on `/runner.html` and `/runner` (Cloudflare redirects the first to the second), which carries its own CSP in a `<meta>` tag (runner.md).
 
 ## D1 schema
 

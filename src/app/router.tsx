@@ -11,6 +11,8 @@ export const router = createBrowserRouter([
     path: "/",
     Component: AppLayout,
     ErrorBoundary: ErrorPage,
+    // Loaders read IndexedDB before the first render; nothing to show for that instant.
+    HydrateFallback: () => null,
     children: [
       { index: true, Component: HomePage, loader: homeLoader },
       { path: "new", Component: NewWorkspacePage },

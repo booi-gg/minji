@@ -3,7 +3,12 @@
   Referrer-Policy: strict-origin-when-cross-origin
   X-Frame-Options: DENY
 
+# Cloudflare serves runner.html at /runner (it redirects /runner.html there), and the app
+# embeds it in an iframe, so both paths must allow framing.
 /runner.html
+  ! X-Frame-Options
+
+/runner
   ! X-Frame-Options
 
 /sw.js

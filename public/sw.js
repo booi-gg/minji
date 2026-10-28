@@ -54,7 +54,8 @@ self.addEventListener("fetch", (event) => {
         const runner = await caches.match("/runner", { ignoreVary: true });
         if (runner !== undefined) return runner;
       }
-      const response = await fetch(request);
+      // A failed request still fails, but without an uncaught rejection in the worker.
+      const response = await fetch(request).catch(() => Response.error());
       if (response.ok && response.type === "basic") {
         const cache = await caches.open(CACHE_NAME);
         event.waitUntil(cache.put(request, response.clone()));
