@@ -28,9 +28,52 @@ After editing the inline script in `public/runner.html`, update its CSP hash wit
 
 ## Test cases
 
-Each test can call a function or run a class method sequence. For a class named `Counter`, enter arguments such as `[["Counter","add","get"],[[],[3],[]]]` and expected results `[null,null,3]`. The first `null` is the constructor result; methods that return nothing also produce `null`.
+Open a workspace, set the **Function name** in the toolbar to the function or class in your code, and open the **Tests** tab. Select **Add test**, optionally name the case, then fill in **Arguments** and **Expected**. Both fields use JSON: strings need double quotes, and the Arguments field is always an array with one entry per function parameter. Use `[]` for a function with no arguments. Select **Run** on a row to run one case or **Run all** to run every valid case; invalid cases show an error and are skipped.
 
-For function tests, choose **Linked list** or **Binary tree** on each argument that needs a node object, then choose the result adapter if the return value (or captured argument) is a node. Enter list values as `[1,2,3]` and trees in level order, such as `[1,null,3]`; an empty structure is `[]`. Each case also has **Ignore outer array order** and an absolute **Numeric tolerance** setting. These settings are saved with the workspace and included in JSON export and sync.
+### Function calls and returned values
+
+Leave **Test type** on **Function call** and **Compare** on **Return value**. For `twoSum(nums, target)`, use:
+
+| Field     | Value             |
+| --------- | ----------------- |
+| Arguments | `[[2,7,11,15],9]` |
+| Expected  | `[0,1]`           |
+
+The outer Arguments array contains two values: the `nums` array and the `target` number. For `answer()` returning `42`, enter Arguments `[]` and Expected `42`. Expected can also be a JSON string, boolean, `null`, array, or object. Object key order does not matter; array order does by default.
+
+### Functions that change an argument
+
+For a function such as `reverse(nums)` that changes the input array and returns nothing, enter Arguments `[[1,2,3]]`, Expected `[3,2,1]`, and set **Compare** to **Argument 1 (nums) after the call**. Choose the argument the solution changes; **Return value** would compare its `undefined` return instead.
+
+### Linked lists and binary trees
+
+Node adapters are available on **Function call** cases. Enter ordinary JSON arrays, then choose an adapter for each argument that the solution expects as nodes. Choose a **Result adapter** when the returned value or compared argument is also a node. The runner supplies `ListNode` and `TreeNode` constructors to solution code.
+
+| Function shape                         | Arguments   | Expected         | Adapter settings                                     |
+| -------------------------------------- | ----------- | ---------------- | ---------------------------------------------------- |
+| `append(head)` returns a linked list   | `[[1,2,3]]` | `[1,2,3,4]`      | Argument 1: **Linked list**; Result: **Linked list** |
+| `addRight(root)` returns a binary tree | `[[1,2,3]]` | `[1,2,3,null,7]` | Argument 1: **Binary tree**; Result: **Binary tree** |
+
+Lists use values from head to tail. Trees use level order with `null` for missing children, so `[1,null,3]` means the root has no left child and a right child with value `3`. Use `[]` for an empty list or tree. For an in-place node change, select the changed argument under **Compare** and still set its **Result adapter** so the result is converted back to an array.
+
+### Class method sequences
+
+Set the toolbar **Function name** to the class name and choose **Class method sequence** as the test type. For `class Counter` with `constructor(start)`, `add(amount)`, and `get()`, enter:
+
+| Field     | Value                                                       |
+| --------- | ----------------------------------------------------------- |
+| Arguments | `[["Counter","add","get","add","get"],[[2],[3],[],[4],[]]]` |
+| Expected  | `[null,null,5,null,9]`                                      |
+
+The first array lists the constructor and method names. The second array gives each call's arguments in the same order. The constructor's result is always `null`; methods that return `undefined` also appear as `null`. Each test case creates a fresh instance. Class cases compare the whole result sequence and do not use node adapters.
+
+### Comparison options for each case
+
+- **Ignore outer array order** accepts a permutation of the Expected array, including duplicate values. Nested arrays still compare in order. For example, Expected `[1,1,2]` accepts `[2,1,1]` but not `[2,2,1]`.
+- **Numeric tolerance (absolute)** accepts numeric differences up to the entered amount, including numbers inside arrays and objects. For example, Expected `3.14` accepts `3.141` with tolerance `0.01`. Leave it blank for exact comparison.
+- Both options can be used together. They apply only to the case where you set them.
+
+Expected values that JSON cannot express directly can use `{"$minji":"undefined"}`, `{"$minji":"NaN"}`, `{"$minji":"Infinity"}`, `{"$minji":"-Infinity"}`, or `{"$minji":"-0"}`. For example, use `{"$minji":"undefined"}` when a function intentionally returns `undefined`. Arguments remain ordinary JSON. See [test case rules](specs/test-cases.md) for validation, comparison, and result details.
 
 ## Offline work and organization
 
