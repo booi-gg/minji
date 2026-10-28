@@ -28,10 +28,10 @@ The statement panel collapses with a button or `Mod+\`. Resize handles are keybo
 
 ## Toolbar
 
-Left to right: back to workspaces, title (inline edit, placeholder "Untitled"), language select (JavaScript / TypeScript), function name field, **Run all**, **Stop** (only while running), **Reset code**, **Format**, **History**, overflow menu (Export workspace, Test timeout, Format on save, Font size, Theme, Keyboard shortcuts), save status.
+Left to right: back to workspaces, title (inline edit, placeholder "Untitled"), language select (JavaScript / TypeScript), icon-only **Run all**, **Stop** (only while running), **Reset code**, **Format**, **History**, **More**, and save status. Each icon action has an accessible name and hover title. More contains Entry point, Export workspace, Test timeout, Format on save, Font size, Theme, and Keyboard shortcuts.
 
-- Function name edits are validated as in data-model.md. If the source still equals `starterSource`, both are regenerated with the new name. Otherwise only the field changes, and the toolbar shows "No function named <name> in your code" when a quick regex check for `function <name>`, `<name> =` or `<name>(` fails.
-- Save status shows `Saved`, `Saving…`, or `Couldn't save — Retry`.
+- A known entry point remains selected while its declaration exists. When the source has exactly one detectable function or class and the stored name is absent, the entry point and parameter names follow the code. More exposes a manual Entry point field for ambiguous source. Function name edits are validated as in data-model.md. Changing the name of an untouched generated scratch stub regenerates that stub; imported starter code is preserved.
+- Save status uses an icon with a screen-reader message and hover title for `Saved`, `Saving…`, or `Couldn't save`; a failed save adds an icon-only Retry action.
 - While a run is in progress, **Run all** and every row's **Run** are disabled and show a spinner.
 
 ## Editor

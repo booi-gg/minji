@@ -36,7 +36,7 @@ The main building blocks already exist: Monaco in `CodeEditor`, two resizable pa
 
 ### Code pane and toolbar
 
-- Give the editor a small **Code** header with the JavaScript/TypeScript selector and function or class name. Keep Monaco's syntax tools, diagnostics, formatting, and shortcuts.
+- Give the editor a small **Code** header with the JavaScript/TypeScript selector. Infer the function or class entry point from the starter code or a single unambiguous declaration. Keep a manual **Entry point** override in More for workspaces with multiple callables. Keep Monaco's syntax tools, diagnostics, formatting, and shortcuts.
 - Keep the primary action **Run all** because it runs the user's visible tests. Show **Stop** while running. Put formatting, reset, history, and other settings in the toolbar without letting them crowd the code.
 - Use icon-only toolbar actions from the installed `lucide-react` package: `Play` for Run all, `Square` for Stop, `Paintbrush` for Format, `RotateCcw` for Reset code and Retry, `History` for History, and `Ellipsis` for More. Give each action an accessible name and hover title. Saved/Saving/Failed also use icons with a screen-reader status message.
 - Keep the save state visible near the editor. A failed save exposes Retry.

@@ -840,6 +840,15 @@ textarea[readonly] {
   font-family: var(--font-mono) !important;
 }
 
+.entry-point-field {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.entry-point-field .function-input {
+  width: 100%;
+}
+
 .toolbar-note {
   color: var(--text-muted);
   font-size: var(--text-xs);

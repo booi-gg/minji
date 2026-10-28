@@ -112,7 +112,7 @@ const ResultDetail = ({ result, functionName, timeoutMs, onGoToLine }: DetailPro
     case "missing-function":
       return (
         <p className="result-detail">
-          No function named "{functionName}" was found. Check the function name in the toolbar.
+          No function named "{functionName}" was found. Check the entry point in More.
         </p>
       );
     case "stack-overflow":

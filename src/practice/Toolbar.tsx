@@ -47,9 +47,9 @@ const FunctionNameField = ({ name, source, readOnly, onChange }: FunctionNameFie
       : `No function or class named ${draft} in your code`;
 
   return (
-    <div className="toolbar-field">
+    <div className="entry-point-field">
       <label htmlFor={id} className="toolbar-label">
-        Function or class
+        Entry point
       </label>
       <input
         id={id}
@@ -109,6 +109,7 @@ interface MoreMenuProps {
   workspace: Workspace;
   readOnly: boolean;
   settings: EditorSettings;
+  onFunctionNameChange: (name: string) => void;
   onTimeoutChange: (ms: number) => void;
   onExport: () => void;
   onShortcuts: () => void;
@@ -118,6 +119,7 @@ const MoreMenu = ({
   workspace,
   readOnly,
   settings,
+  onFunctionNameChange,
   onTimeoutChange,
   onExport,
   onShortcuts,
@@ -131,6 +133,14 @@ const MoreMenu = ({
         <Ellipsis size={16} aria-hidden="true" />
       </summary>
       <div className="menu-panel">
+        <div className="menu-field">
+          <FunctionNameField
+            name={workspace.functionName}
+            source={workspace.source}
+            readOnly={readOnly}
+            onChange={onFunctionNameChange}
+          />
+        </div>
         <button type="button" className="menu-item" onClick={onExport}>
           Export workspace
         </button>
@@ -258,12 +268,6 @@ export const Toolbar = ({
           <option value="javascript">JavaScript</option>
         </select>
       </div>
-      <FunctionNameField
-        name={workspace.functionName}
-        source={workspace.source}
-        readOnly={readOnly}
-        onChange={onFunctionNameChange}
-      />
       <div className="toolbar-spacer" />
       <div className="actions">
         {running ? (
@@ -320,6 +324,7 @@ export const Toolbar = ({
           workspace={workspace}
           readOnly={readOnly}
           settings={settings}
+          onFunctionNameChange={onFunctionNameChange}
           onTimeoutChange={onTimeoutChange}
           onExport={onExport}
           onShortcuts={onShortcuts}

@@ -41,6 +41,7 @@ import { exportWorkspaces } from "../workspaces/actions.ts";
 import { scratchStub, type Revision, type TestCase, type Workspace } from "../workspaces/model.ts";
 import { createAutosaver, type SaveStatus } from "./autosave.ts";
 import { CodeEditor, type CodeEditorHandle } from "./CodeEditor.tsx";
+import { entryPointFromSource } from "./entryPoint.ts";
 import { ConflictDialog } from "./ConflictDialog.tsx";
 import { HistoryDialog } from "./HistoryDialog.tsx";
 import { onFormatFailure, type FormatFailure } from "./monaco.ts";
@@ -296,12 +297,25 @@ const Practice = ({ initial }: PracticeProps) => {
 
   const changeFunctionName = (name: string): void => {
     const current = latest.current.workspace;
-    if (current.source === current.starterSource) {
+    const generatedStub = scratchStub(current.functionName, current.params);
+    if (current.source === current.starterSource && current.starterSource === generatedStub) {
       const stub = scratchStub(name, current.params);
       edit({ functionName: name, source: stub, starterSource: stub });
     } else {
       edit({ functionName: name });
     }
+  };
+
+  const sourceEdit = (source: string): WorkspaceEdit => {
+    const current = latest.current.workspace;
+    const entryPoint = entryPointFromSource(source, current.functionName);
+    if (entryPoint === undefined) return { source };
+    const paramsChanged =
+      entryPoint.params.length !== current.params.length ||
+      entryPoint.params.some((param, index) => param !== current.params[index]);
+    return entryPoint.name === current.functionName && !paramsChanged
+      ? { source }
+      : { source, functionName: entryPoint.name, params: entryPoint.params };
   };
 
   const changeLanguage = (language: Language): void => {
@@ -346,7 +360,7 @@ const Practice = ({ initial }: PracticeProps) => {
     getState: () => ({
       workspace: {
         ...latest.current.workspace,
-        source: editorRef.current?.getValue() ?? latest.current.workspace.source,
+        ...sourceEdit(editorRef.current?.getValue() ?? latest.current.workspace.source),
       },
       tests: latest.current.tests,
     }),
@@ -393,7 +407,7 @@ const Practice = ({ initial }: PracticeProps) => {
       language: latest.current.workspace.language,
     };
     await snapshot("save");
-    edit({ source: revision.source, language: revision.language });
+    edit({ ...sourceEdit(revision.source), language: revision.language });
     setDialog(null);
     showToast({
       message: "Revision restored.",
@@ -404,7 +418,7 @@ const Practice = ({ initial }: PracticeProps) => {
   const reset = async (): Promise<void> => {
     setDialog(null);
     await snapshot("save");
-    edit({ source: latest.current.workspace.starterSource });
+    edit(sourceEdit(latest.current.workspace.starterSource));
   };
 
   const exportCurrent = async (): Promise<void> => {
@@ -483,7 +497,7 @@ const Practice = ({ initial }: PracticeProps) => {
         readOnly={readOnly || isPhone}
         fontSize={settings.fontSize}
         theme={settings.resolvedTheme}
-        onChange={(source) => edit({ source })}
+        onChange={(source) => edit(sourceEdit(source))}
         commands={{
           save: () => void saveRevision(),
           toggleStatement,

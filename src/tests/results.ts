@@ -84,7 +84,7 @@ export const prepareRun = (
     };
   }
   if (!isValidIdentifier(workspace.functionName)) {
-    return { kind: "rejected", message: "Set a valid function name in the toolbar first." };
+    return { kind: "rejected", message: "Set a valid entry point in More first." };
   }
   const selected = scope.kind === "all" ? tests : tests.filter((test) => test.id === scope.testId);
   if (selected.length === 0) return { kind: "rejected", message: "Add a test to run." };
