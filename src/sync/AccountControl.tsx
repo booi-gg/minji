@@ -11,7 +11,13 @@ export const AccountControl = () => {
   if (account === null)
     return (
       <a className="button" href="/api/auth/github/login">
-        Sign in with GitHub
+        <img
+          className="github-signin-icon"
+          src="/GitHub_Invertocat_Black.svg"
+          alt=""
+          width="20"
+          height="20"
+        />
       </a>
     );
   return (

@@ -253,6 +253,20 @@ pre {
   border-radius: 50%;
 }
 
+.github-signin-icon {
+  flex: none;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .github-signin-icon {
+    filter: invert(1);
+  }
+}
+
+:root[data-theme="dark"] .github-signin-icon {
+  filter: invert(1);
+}
+
 .account-menu-items {
   position: absolute;
   right: 0;
