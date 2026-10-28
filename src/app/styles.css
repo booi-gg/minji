@@ -1071,16 +1071,44 @@ textarea[readonly] {
   min-height: 0;
 }
 
+/* A gutter in the page colour with a grip in the middle, so the drag handle is easy to find. */
 .separator {
-  flex: 0 0 4px;
-  background: var(--border);
+  position: relative;
+  display: grid;
+  flex: 0 0 8px;
+  place-items: center;
+  border-inline: 1px solid var(--border);
+  background: var(--bg);
   transition: background-color 120ms ease;
 }
 
-.separator:hover,
-.separator[data-separator="active"],
-.separator:focus-visible {
+.separator-horizontal {
+  border-inline: 0;
+  border-block: 1px solid var(--border);
+}
+
+.separator::after {
+  content: "";
+  width: 3px;
+  height: 32px;
+  border-radius: 999px;
+  background: var(--border-strong);
+  transition: background-color 120ms ease;
+}
+
+.separator-horizontal::after {
+  width: 32px;
+  height: 3px;
+}
+
+.separator:hover::after,
+.separator[data-separator="active"]::after,
+.separator:focus-visible::after {
   background: var(--accent);
+}
+
+.separator[data-separator="active"] {
+  background: var(--accent-soft);
 }
 
 .panel {
