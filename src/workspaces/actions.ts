@@ -11,7 +11,9 @@ import {
 import { exportFileName, toExportFile } from "../import/exportFormat.ts";
 import type { Language } from "../runner/types.ts";
 import { downloadText } from "../shared/download.ts";
+import { postChannelMessage } from "../shared/channel.ts";
 import { createWorkspace } from "./model.ts";
+import { currentUserId } from "../sync/store.ts";
 
 const LAST_LANGUAGE_KEY = "minji:lastLanguage";
 
@@ -52,7 +54,13 @@ export const isStoragePersistent = async (db: MinjiDatabase): Promise<boolean | 
 /** Creates a scratch workspace and returns its id. */
 export const createScratchWorkspace = async (db: MinjiDatabase): Promise<string> => {
   const workspace = createWorkspace({ language: readLastLanguage() });
+  const userId = await currentUserId(db);
+  if (typeof userId === "string") {
+    workspace.ownerId = userId;
+    workspace.syncState = "dirty";
+  }
   await saveNewWorkspace(db, { workspace, tests: [], revisions: [] });
+  postChannelMessage({ type: "changed", id: workspace.id });
   requestPersistentStorageInBackground(db);
   return workspace.id;
 };
@@ -61,8 +69,14 @@ export const saveImportedWorkspaces = async (
   db: MinjiDatabase,
   bundles: WorkspaceBundle[],
 ): Promise<void> => {
+  const userId = await currentUserId(db);
   for (const bundle of bundles) {
+    if (typeof userId === "string") {
+      bundle.workspace.ownerId = userId;
+      bundle.workspace.syncState = "dirty";
+    }
     await saveNewWorkspace(db, bundle);
+    postChannelMessage({ type: "changed", id: bundle.workspace.id });
   }
   if (bundles.length > 0) requestPersistentStorageInBackground(db);
 };

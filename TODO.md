@@ -117,29 +117,31 @@ Spec: [workspaces-and-import.md](specs/workspaces-and-import.md).
 
 Spec: [sync-and-auth.md](specs/sync-and-auth.md).
 
-- [ ] D1 databases for staging and production; `0001_init.sql` migration applied to both.
+- [x] D1 databases for staging and production; `0001_init.sql` migration applied to both.
 - [ ] GitHub OAuth apps for staging and production; secrets set with `wrangler secret put`.
-- [ ] Worker: session helpers, `Origin` check, error format, structured error logging, Workers Logs enabled.
-- [ ] OAuth login, callback, logout, `/api/me`, with tests for state mismatch and expired sessions.
-- [ ] Workspace endpoints: pull with cursor, PUT and DELETE with compare-and-swap and sequence numbers, size and type validation.
-- [ ] Revision endpoints with idempotent insert and trimming.
-- [ ] Daily Cron Trigger that removes tombstones older than 90 days.
-- [ ] Client: account control, sign-in/sign-out flow, auth error toasts.
-- [ ] Sync loop: Web Lock `sync`, triggers, push, pull table, backoff, status indicator.
-- [ ] First sign-in upload prompt, excluded workspaces with **Start syncing**, other-account workspaces with **Copy to this account**.
-- [ ] Conflict handling: `conflicts` store, badges, banner, Compare, Keep mine / Keep theirs / Keep both, tombstone cases.
-- [ ] Sync badges on the home screen and `Too large to sync` handling.
+- [x] Worker: session helpers, `Origin` check, error format, structured error logging, Workers Logs enabled.
+- [x] OAuth login, callback, logout, `/api/me`, with tests for state mismatch and expired sessions.
+- [x] Workspace endpoints: pull with cursor, PUT and DELETE with compare-and-swap and sequence numbers, size and type validation.
+- [x] Revision endpoints with idempotent insert and trimming.
+- [x] Daily Cron Trigger that removes tombstones older than 90 days.
+- [x] Client: account control, sign-in/sign-out flow, auth error toasts.
+- [x] Sync loop: Web Lock `sync`, triggers, push, pull table, backoff, status indicator.
+- [x] First sign-in upload prompt, excluded workspaces with **Start syncing**, other-account workspaces with **Copy to this account**.
+- [x] Conflict handling: `conflicts` store, badges, banner, Compare, Keep mine / Keep theirs / Keep both, tombstone cases.
+- [x] Sync badges on the home screen and `Too large to sync` handling.
 - [ ] End-to-end tests (Playwright): create → edit → run → refresh; export → import; sign in on two browser contexts and resume; edit on both and resolve the conflict.
 - [ ] Accessibility pass: axe on every route, keyboard-only walkthrough, screen-reader check of run announcements.
 - [ ] `vp check`, `vp test`, `vp build`, and the end-to-end suite all pass; deploy staging, smoke-test, then deploy production.
 
 **Gate:** sign in on a second device and resume the workspace, tests and saved revisions; editing the same workspace on both devices shows the conflict prompt instead of overwriting.
 
+**Progress:** local API and UI checks pass, including a two-context sync and conflict test with a shared test API. Real GitHub sign-in, a physical second device, manual screen-reader review, and staging/production deployment remain open. The exact OAuth app URLs and secret commands are in [README.md](README.md).
+
 ## Later
 
 - [ ] Problem URL import (needs a per-site adapter; see PLAN.md open decisions).
-- [ ] Linked-list and binary-tree test adapters.
-- [ ] Class-design problems (method sequence tests).
-- [ ] Per-case unordered-array and numeric-tolerance comparison.
+- [x] Linked-list and binary-tree test adapters.
+- [x] Class-design problems (method sequence tests).
+- [x] Per-case unordered-array and numeric-tolerance comparison.
 - [ ] Service worker for offline use.
 - [ ] Tags and folders; more sign-in providers.

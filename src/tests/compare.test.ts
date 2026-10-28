@@ -5,6 +5,17 @@ import { compare, formatEncoded } from "./compare.ts";
 const equal = (expected: Encoded, actual: Encoded) => compare(expected, actual).equal;
 
 describe("compare", () => {
+  it("matches unordered outer arrays with duplicates and nested ordered arrays", () => {
+    expect(compare([1, 1, 2], [2, 1, 1], { unordered: true }).equal).toBe(true);
+    expect(compare([1, 1, 2], [2, 2, 1], { unordered: true }).equal).toBe(false);
+    expect(compare([[1, 2]], [[2, 1]], { unordered: true }).equal).toBe(false);
+  });
+
+  it("applies numeric tolerance recursively and finds a complete unordered matching", () => {
+    expect(compare({ x: [1, 2] }, { x: [1.05, 2.1] }, { tolerance: 0.1 }).equal).toBe(false);
+    expect(compare({ x: [1, 2] }, { x: [1.05, 2.09] }, { tolerance: 0.1 }).equal).toBe(true);
+    expect(compare([0.1, 0], [0, 0.2], { unordered: true, tolerance: 0.1 }).equal).toBe(true);
+  });
   it("compares primitives and nested structures", () => {
     expect(equal([0, 1], [0, 1])).toBe(true);
     expect(equal({ a: [1, { b: "x" }] }, { a: [1, { b: "x" }] })).toBe(true);

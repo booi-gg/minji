@@ -111,7 +111,12 @@ it("removes a local workspace and everything attached to it", async () => {
 });
 
 it("tombstones a synced workspace instead of removing it", async () => {
-  const workspace = { ...createWorkspace({}), syncState: "synced" as const, syncRevision: 3 };
+  const workspace = {
+    ...createWorkspace({}),
+    ownerId: "user-1",
+    syncState: "synced" as const,
+    syncRevision: 3,
+  };
   await saveNewWorkspace(db, { workspace, tests: [testCase(workspace, 0)], revisions: [] });
 
   await deleteWorkspace(db, workspace.id, at("2026-10-27T12:00:00Z"));
@@ -123,6 +128,23 @@ it("tombstones a synced workspace instead of removing it", async () => {
     syncState: "dirty",
   });
   expect(await db.count("test_cases")).toBe(1);
+});
+
+it("removes an account workspace that has never reached the server", async () => {
+  const workspace = {
+    ...createWorkspace({ title: "Draft" }),
+    ownerId: "user-1",
+    syncState: "dirty" as const,
+  };
+  await saveNewWorkspace(db, {
+    workspace,
+    tests: [testCase(workspace, 0)],
+    revisions: [revision(workspace, 1)],
+  });
+  await deleteWorkspace(db, workspace.id);
+  expect(await db.get("workspaces", workspace.id)).toBeUndefined();
+  expect(await db.count("test_cases")).toBe(0);
+  expect(await db.count("revisions")).toBe(0);
 });
 
 it("stores meta values", async () => {

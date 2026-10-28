@@ -94,7 +94,7 @@ export const prepareRun = (
   const runnable: RunRequest["tests"] = [];
   let inputBytes = 0;
   for (const test of selected) {
-    const validation = validateTest(test, workspace.params);
+    const validation = validateTest(test, workspace.params, workspace.functionName);
     if (!validation.valid) {
       const message =
         validation.args ?? validation.expected ?? validation.compare ?? "Invalid test";
@@ -111,7 +111,14 @@ export const prepareRun = (
     }
     inputBytes += byteLength(test.argsText);
     expected.set(test.id, JSON.parse(test.expectedText) as Encoded);
-    runnable.push({ id: test.id, argsJson: test.argsText, capture: test.compare });
+    runnable.push({
+      id: test.id,
+      argsJson: test.argsText,
+      capture: test.compare,
+      kind: test.kind,
+      inputAdapters: test.inputAdapters,
+      outputAdapter: test.outputAdapter,
+    });
   }
   if (inputBytes > MAX_RUN_INPUT_BYTES) {
     return {
@@ -148,7 +155,7 @@ export const toTestResult = (raw: RawTestResult, test: TestCase, expected: Encod
   switch (raw.kind) {
     case "returned": {
       const actual = raw.value ?? null;
-      const comparison = compare(expected, actual);
+      const comparison = compare(expected, actual, test.comparison);
       return comparison.equal
         ? { ...base, status: "passed", expected, actual }
         : { ...base, status: "failed", expected, actual, diffPath: comparison.path };

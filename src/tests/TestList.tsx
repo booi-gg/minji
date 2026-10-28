@@ -7,7 +7,7 @@ import {
   type DragEvent,
   type KeyboardEvent,
 } from "react";
-import type { CompareTarget } from "../runner/types.ts";
+import type { CompareTarget, NodeAdapter } from "../runner/types.ts";
 import { ConfirmDialog } from "../shared/ConfirmDialog.tsx";
 import { newId } from "../shared/ids.ts";
 import { MAX_TESTS_PER_WORKSPACE } from "../shared/limits.ts";
@@ -138,6 +138,7 @@ interface TestRowProps {
   index: number;
   count: number;
   params: readonly string[];
+  functionName: string;
   readOnly: boolean;
   running: boolean;
   autoFocus: boolean;
@@ -153,6 +154,7 @@ const TestRow = ({
   index,
   count,
   params,
+  functionName,
   readOnly,
   running,
   autoFocus,
@@ -164,13 +166,24 @@ const TestRow = ({
 }: TestRowProps) => {
   const compareId = useId();
   const labelId = useId();
+  const kindId = useId();
+  const outputId = useId();
+  const toleranceId = useId();
   const current = useMemo(
-    () => validateTest(test, params),
-    [test.argsText, test.expectedText, test.compare, params],
+    () => validateTest(test, params, functionName),
+    [test, params, functionName],
   );
   const validation: TestValidation = useSettled(current);
   const name = test.label === "" ? `Test ${index + 1}` : test.label;
   const argCount = current.argCount ?? params.length;
+  const kind = test.kind ?? "function";
+  const adapterOptions = (
+    <>
+      <option value="plain">Plain JSON</option>
+      <option value="linked-list">Linked list</option>
+      <option value="binary-tree">Binary tree</option>
+    </>
+  );
 
   const onKeyDown = (event: KeyboardEvent<HTMLLIElement>): void => {
     if (readOnly || !event.altKey) return;
@@ -280,9 +293,45 @@ const TestRow = ({
         )}
       </div>
       <div className="test-fields">
+        <div className="field">
+          <label htmlFor={kindId} className="field-label">
+            Test type
+          </label>
+          <select
+            id={kindId}
+            value={kind}
+            disabled={readOnly}
+            onChange={(event) =>
+              onChange({
+                ...test,
+                kind: event.target.value as "function" | "class",
+                argsText:
+                  event.target.value === "class" && test.argsText === "[]"
+                    ? JSON.stringify([[functionName], [[]]])
+                    : test.argsText,
+                expectedText:
+                  event.target.value === "class" && test.expectedText === ""
+                    ? "[null]"
+                    : test.expectedText,
+                compare: { kind: "return" },
+                inputAdapters: event.target.value === "class" ? [] : test.inputAdapters,
+                outputAdapter: event.target.value === "class" ? "plain" : test.outputAdapter,
+              })
+            }
+          >
+            <option value="function">Function call</option>
+            <option value="class">Class method sequence</option>
+          </select>
+        </div>
         <JsonField
           label="Arguments"
-          hint={params.length === 0 ? undefined : `[${params.join(", ")}]`}
+          hint={
+            kind === "class"
+              ? `[["${functionName}", "method"], [[], [args]]]`
+              : params.length === 0
+                ? undefined
+                : `[${params.join(", ")}]`
+          }
           value={test.argsText}
           error={validation.args}
           readOnly={readOnly}
@@ -296,29 +345,112 @@ const TestRow = ({
           readOnly={readOnly}
           onChange={(expectedText) => onChange({ ...test, expectedText })}
         />
-        <div className="field">
-          <label htmlFor={compareId} className="field-label">
-            Compare
-          </label>
-          <select
-            id={compareId}
-            value={compareValue(test.compare)}
-            disabled={readOnly}
-            onChange={(event) => onChange({ ...test, compare: parseCompare(event.target.value) })}
-          >
-            <option value="return">Return value</option>
-            {Array.from({ length: Math.max(argCount, 1) }, (_, argument) => (
-              <option key={argument} value={`argument-${argument}`}>
-                Argument {argument + 1}
-                {params[argument] === undefined ? "" : ` (${params[argument]})`} after the call
-              </option>
+        {kind === "class" ? null : (
+          <div className="field">
+            <label htmlFor={compareId} className="field-label">
+              Compare
+            </label>
+            <select
+              id={compareId}
+              value={compareValue(test.compare)}
+              disabled={readOnly}
+              onChange={(event) => onChange({ ...test, compare: parseCompare(event.target.value) })}
+            >
+              <option value="return">Return value</option>
+              {Array.from({ length: Math.max(argCount, 1) }, (_, argument) => (
+                <option key={argument} value={`argument-${argument}`}>
+                  Argument {argument + 1}
+                  {params[argument] === undefined ? "" : ` (${params[argument]})`} after the call
+                </option>
+              ))}
+            </select>
+            {validation.compare === undefined ? null : (
+              <p className="field-error">{validation.compare}</p>
+            )}
+          </div>
+        )}
+        {kind === "class" ? null : (
+          <>
+            {Array.from({ length: argCount }, (_, argument) => (
+              <div className="field" key={argument}>
+                <label className="field-label" htmlFor={`${kindId}-arg-${argument}`}>
+                  Argument {argument + 1} adapter
+                </label>
+                <select
+                  id={`${kindId}-arg-${argument}`}
+                  value={test.inputAdapters?.[argument] ?? "plain"}
+                  disabled={readOnly}
+                  onChange={(event) => {
+                    const inputAdapters = [...(test.inputAdapters ?? [])];
+                    inputAdapters[argument] = event.target.value as NodeAdapter;
+                    onChange({ ...test, inputAdapters });
+                  }}
+                >
+                  {adapterOptions}
+                </select>
+              </div>
             ))}
-          </select>
-          {validation.compare === undefined ? null : (
-            <p className="field-error">{validation.compare}</p>
-          )}
+            <div className="field">
+              <label className="field-label" htmlFor={outputId}>
+                Result adapter
+              </label>
+              <select
+                id={outputId}
+                value={test.outputAdapter ?? "plain"}
+                disabled={readOnly}
+                onChange={(event) =>
+                  onChange({ ...test, outputAdapter: event.target.value as NodeAdapter })
+                }
+              >
+                {adapterOptions}
+              </select>
+            </div>
+          </>
+        )}
+        <label className="field">
+          <span className="field-label">Comparison</span>
+          <span>
+            <input
+              type="checkbox"
+              checked={test.comparison?.unordered ?? false}
+              disabled={readOnly}
+              onChange={(event) =>
+                onChange({
+                  ...test,
+                  comparison: { ...test.comparison, unordered: event.target.checked },
+                })
+              }
+            />{" "}
+            Ignore outer array order
+          </span>
+        </label>
+        <div className="field">
+          <label className="field-label" htmlFor={toleranceId}>
+            Numeric tolerance (absolute)
+          </label>
+          <input
+            id={toleranceId}
+            type="number"
+            min="0"
+            step="any"
+            placeholder="Exact"
+            value={test.comparison?.tolerance ?? ""}
+            readOnly={readOnly}
+            onChange={(event) =>
+              onChange({
+                ...test,
+                comparison: {
+                  ...test.comparison,
+                  tolerance: event.target.value === "" ? undefined : Number(event.target.value),
+                },
+              })
+            }
+          />
         </div>
       </div>
+      {validation.options === undefined ? null : (
+        <p className="field-error">{validation.options}</p>
+      )}
       {validation.warning === undefined ? null : <p className="hint">{validation.warning}</p>}
     </li>
   );
@@ -328,6 +460,7 @@ interface TestListProps {
   workspaceId: string;
   tests: TestCase[];
   params: readonly string[];
+  functionName: string;
   readOnly: boolean;
   running: boolean;
   onChange: (tests: TestCase[]) => void;
@@ -342,6 +475,7 @@ export const TestList = ({
   workspaceId,
   tests,
   params,
+  functionName,
   readOnly,
   running,
   onChange,
@@ -426,6 +560,7 @@ export const TestList = ({
               index={index}
               count={tests.length}
               params={params}
+              functionName={functionName}
               readOnly={readOnly}
               running={running}
               autoFocus={test.id === focusId}

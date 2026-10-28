@@ -15,8 +15,8 @@ import {
   usePanelRef,
   type PanelImperativeHandle,
 } from "react-resizable-panels";
-import { Link, useLoaderData, type LoaderFunctionArgs } from "react-router";
-import { getDatabase } from "../db/database.ts";
+import { Link, useLoaderData, useNavigate, type LoaderFunctionArgs } from "react-router";
+import { getDatabase, type ConflictRecord } from "../db/database.ts";
 import {
   addRevision,
   getBundle,
@@ -32,6 +32,8 @@ import { newId } from "../shared/ids.ts";
 import { AUTOSAVE_DEBOUNCE_MS } from "../shared/limits.ts";
 import { useToast } from "../shared/toast.tsx";
 import { useMediaQuery } from "../shared/useMediaQuery.ts";
+import { useSync } from "../sync/SyncProvider.tsx";
+import { getConflict, keepBoth, keepTheirs, prepareKeepMine } from "../sync/store.ts";
 import { ConsolePanel, ResultsPanel } from "../tests/ResultsPanel.tsx";
 import type { RunScope } from "../tests/results.ts";
 import { TestList } from "../tests/TestList.tsx";
@@ -39,6 +41,7 @@ import { exportWorkspaces } from "../workspaces/actions.ts";
 import { scratchStub, type Revision, type TestCase, type Workspace } from "../workspaces/model.ts";
 import { createAutosaver, type SaveStatus } from "./autosave.ts";
 import { CodeEditor, type CodeEditorHandle } from "./CodeEditor.tsx";
+import { ConflictDialog } from "./ConflictDialog.tsx";
 import { HistoryDialog } from "./HistoryDialog.tsx";
 import { onFormatFailure, type FormatFailure } from "./monaco.ts";
 import { rememberLanguage, useEditorSettings } from "./settings.ts";
@@ -176,11 +179,15 @@ interface PracticeProps {
 
 const Practice = ({ initial }: PracticeProps) => {
   const id = initial.workspace.id;
+  const navigate = useNavigate();
+  const { account, sync } = useSync();
   const [workspace, setWorkspace] = useState<Workspace>(initial.workspace);
   const [tests, setTests] = useState<TestCase[]>(initial.tests);
   const [revisions, setRevisions] = useState<Revision[]>(initial.revisions);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("saved");
   const [dialog, setDialog] = useState<Dialog>(null);
+  const [conflict, setConflict] = useState<ConflictRecord | null>(null);
+  const [comparing, setComparing] = useState(false);
   const [bottomTab, setBottomTab] = useState<BottomTab>("tests");
   const [phoneTab, setPhoneTab] = useState<PhoneTab>("code");
   const settings = useEditorSettings();
@@ -245,13 +252,23 @@ const Practice = ({ initial }: PracticeProps) => {
     };
   }, [autosaver]);
 
-  // A read-only tab follows changes saved by the tab that holds the lock.
   useEffect(() => {
-    if (!readOnly) return undefined;
+    void getDatabase().then(async (db) => setConflict((await getConflict(db, id)) ?? null));
     return subscribeToChannel((message) => {
-      if (message.type === "changed" && message.id === id) void reload();
+      if (message.type !== "changed" || message.id !== id) return;
+      void (async () => {
+        const db = await getDatabase();
+        const stored = await db.get("workspaces", id);
+        if (stored === undefined || stored.deletedAt !== null) {
+          showToast({ message: "This workspace was deleted on another device." });
+          await navigate("/");
+          return;
+        }
+        setConflict((await getConflict(db, id)) ?? null);
+        if (!autosaver.hasPending()) await reload();
+      })();
     });
-  }, [readOnly, id, reload]);
+  }, [id, reload, autosaver, navigate, showToast]);
 
   useEffect(
     () =>
@@ -316,6 +333,7 @@ const Practice = ({ initial }: PracticeProps) => {
       : undefined;
     await autosaver.flush();
     const { added } = await snapshot("save");
+    postChannelMessage({ type: "sync-request" });
     if (failure !== undefined) {
       showToast({ message: failureText("Saved without formatting", failure) });
     } else {
@@ -336,6 +354,7 @@ const Practice = ({ initial }: PracticeProps) => {
       await autosaver.flush();
       if (readOnly) return null;
       const { id: revisionId } = await snapshot("run");
+      postChannelMessage({ type: "sync-request" });
       return revisionId;
     },
     onLastRun: (lastRun) => setWorkspace((current) => ({ ...current, lastRun })),
@@ -391,6 +410,30 @@ const Practice = ({ initial }: PracticeProps) => {
   const exportCurrent = async (): Promise<void> => {
     await autosaver.flush();
     await exportWorkspaces(await getDatabase(), [id]);
+  };
+
+  const resolveConflict = async (choice: "mine" | "theirs" | "both"): Promise<void> => {
+    if (account === null || conflict === null) return;
+    await autosaver.flush();
+    const db = await getDatabase();
+    if (choice === "mine") {
+      const result = await prepareKeepMine(db, id, account.id);
+      setConflict(null);
+      if (result?.id !== id && result !== undefined) await navigate(`/w/${result.id}`);
+      else await reload();
+      sync();
+    } else if (choice === "theirs") {
+      await keepTheirs(db, id, account.id);
+      setConflict(null);
+      if (conflict.deleted) await navigate("/");
+      else await reload();
+    } else {
+      const copyId = await keepBoth(db, id, account.id);
+      setConflict(null);
+      if (copyId !== undefined) await navigate(`/w/${copyId}`);
+      sync();
+    }
+    postChannelMessage({ type: "changed", id });
   };
 
   // Shortcuts that also work outside the editor. Monaco handles its own copies and
@@ -456,6 +499,7 @@ const Practice = ({ initial }: PracticeProps) => {
       workspaceId={id}
       tests={tests}
       params={workspace.params}
+      functionName={workspace.functionName}
       readOnly={readOnly}
       running={testRun.running}
       onChange={changeTests}
@@ -522,6 +566,25 @@ const Practice = ({ initial }: PracticeProps) => {
           </button>
         </div>
       ) : null}
+      {conflict === null ? null : (
+        <div className="notice" role="status">
+          <p>This workspace changed on another device.</p>
+          <div className="actions">
+            <button type="button" className="button" onClick={() => setComparing(true)}>
+              Compare
+            </button>
+            <button type="button" className="button" onClick={() => void resolveConflict("mine")}>
+              Keep mine
+            </button>
+            <button type="button" className="button" onClick={() => void resolveConflict("theirs")}>
+              Keep theirs
+            </button>
+            <button type="button" className="button" onClick={() => void resolveConflict("both")}>
+              Keep both
+            </button>
+          </div>
+        </div>
+      )}
       {isPhone ? (
         <div className="phone-layout">
           <Tabs
@@ -565,6 +628,14 @@ const Practice = ({ initial }: PracticeProps) => {
         readOnly={readOnly}
         onRestore={(revision) => void restore(revision)}
         onClose={() => setDialog(null)}
+      />
+      <ConflictDialog
+        open={comparing}
+        conflict={conflict}
+        workspace={workspace}
+        tests={tests}
+        theme={settings.resolvedTheme}
+        onClose={() => setComparing(false)}
       />
       <ShortcutsDialog open={dialog === "shortcuts"} onClose={() => setDialog(null)} />
     </main>

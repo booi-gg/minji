@@ -21,6 +21,17 @@ interface Console {
   debug(...data: unknown[]): void;
 }
 declare var console: Console;
+declare class ListNode<T = unknown> {
+  constructor(val?: T, next?: ListNode<T> | null);
+  val: T;
+  next: ListNode<T> | null;
+}
+declare class TreeNode<T = unknown> {
+  constructor(val?: T, left?: TreeNode<T> | null, right?: TreeNode<T> | null);
+  val: T;
+  left: TreeNode<T> | null;
+  right: TreeNode<T> | null;
+}
 `;
 
 const { typescript } = monaco;

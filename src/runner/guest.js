@@ -158,6 +158,145 @@
     debug: makeLogger("debug"),
   };
 
+  function ListNode(val, next) {
+    this.val = val === undefined ? 0 : val;
+    this.next = next === undefined ? null : next;
+  }
+  function TreeNode(val, left, right) {
+    this.val = val === undefined ? 0 : val;
+    this.left = left === undefined ? null : left;
+    this.right = right === undefined ? null : right;
+  }
+  globalThis.ListNode = ListNode;
+  globalThis.TreeNode = TreeNode;
+
+  var MAX_NODES = 100000;
+
+  var userListNode = ListNode;
+  var userTreeNode = TreeNode;
+
+  function fromList(values) {
+    if (!isArray(values)) throw new TypeError("Linked-list input must be a JSON array");
+    if (values.length > MAX_NODES) throw new RangeError("Linked list exceeds node limit");
+    var head = null;
+    for (var i = values.length - 1; i >= 0; i -= 1) {
+      var next = head;
+      head = new userListNode(values[i], next);
+      head.val = values[i];
+      head.next = next;
+    }
+    return head;
+  }
+
+  function fromTree(values) {
+    if (!isArray(values)) throw new TypeError("Binary-tree input must be a JSON array");
+    if (values.length > MAX_NODES) throw new RangeError("Binary tree exceeds node limit");
+    if (values.length === 0) return null;
+    if (values[0] === null)
+      throw new TypeError("Binary-tree root cannot be null in a nonempty array");
+    var root = new userTreeNode(values[0]);
+    root.val = values[0];
+    var queue = [root];
+    var cursor = 0;
+    var index = 1;
+    while (cursor < queue.length && index < values.length) {
+      var parent = queue[cursor++];
+      if (values[index] !== null) {
+        parent.left = new userTreeNode(values[index]);
+        parent.left.val = values[index];
+        queue.push(parent.left);
+      }
+      index += 1;
+      if (index < values.length && values[index] !== null) {
+        parent.right = new userTreeNode(values[index]);
+        parent.right.val = values[index];
+        queue.push(parent.right);
+      }
+      index += 1;
+    }
+    if (index !== values.length) throw new TypeError("Binary-tree input has unreachable nodes");
+    return root;
+  }
+
+  function toList(head) {
+    var values = [];
+    var seen = new Set();
+    while (head !== null) {
+      if (typeof head !== "object" || seen.has(head))
+        throw new TypeError("Invalid or cyclic linked list");
+      seen.add(head);
+      if (values.length >= MAX_NODES) throw new RangeError("Linked list exceeds node limit");
+      values.push(head.val);
+      head = head.next;
+    }
+    return values;
+  }
+
+  function toTree(root) {
+    if (root === null) return [];
+    var values = [];
+    var queue = [root];
+    var seen = new Set();
+    for (var cursor = 0; cursor < queue.length; cursor += 1) {
+      var node = queue[cursor];
+      if (node === null) {
+        values.push(null);
+        continue;
+      }
+      if (typeof node !== "object" || seen.has(node))
+        throw new TypeError("Invalid or cyclic binary tree");
+      seen.add(node);
+      if (seen.size > MAX_NODES) throw new RangeError("Binary tree exceeds node limit");
+      values.push(node.val);
+      queue.push(node.left === undefined ? null : node.left);
+      queue.push(node.right === undefined ? null : node.right);
+    }
+    while (values.length > 0 && values[values.length - 1] === null) values.pop();
+    return values;
+  }
+
+  function adaptInput(value, adapter) {
+    if (adapter === "linked-list") return fromList(value);
+    if (adapter === "binary-tree") return fromTree(value);
+    return value;
+  }
+
+  function adaptOutput(value, adapter) {
+    if (adapter === "linked-list") return toList(value);
+    if (adapter === "binary-tree") return toTree(value);
+    return value;
+  }
+
+  function runClass(ClassType, sequence) {
+    if (!isArray(sequence) || !isArray(sequence[0]) || !isArray(sequence[1]))
+      throw new TypeError("Class test needs [method names, argument arrays]");
+    var methods = sequence[0];
+    var inputs = sequence[1];
+    if (methods.length === 0 || methods.length !== inputs.length)
+      throw new TypeError("Class test methods and arguments must have equal lengths");
+    if (!isArray(inputs[0])) throw new TypeError("Constructor arguments must be an array");
+    var instance = new ClassType(...inputs[0]);
+    var output = [null];
+    for (var i = 1; i < methods.length; i += 1) {
+      var name = methods[i];
+      if (
+        typeof name !== "string" ||
+        name === "constructor" ||
+        name === "__proto__" ||
+        name === "prototype" ||
+        !IDENTIFIER.test(name)
+      )
+        throw new TypeError("Invalid method at step " + i);
+      if (!isArray(inputs[i])) throw new TypeError("Arguments for step " + i + " must be an array");
+      var method = instance[name];
+      if (typeof method !== "function")
+        throw new TypeError("Method " + name + " is missing at step " + i);
+      var result = method.apply(instance, inputs[i]);
+      output.push(result === undefined ? null : result);
+    }
+    return output;
+  }
+
   // ---- Encoding -------------------------------------------------------------------
 
   function EncodeFailure(kind, path, type) {
@@ -288,7 +427,10 @@
     var fn;
     try {
       var exportsObject = {};
-      fn = load(exportsObject, { exports: exportsObject }, requireShim);
+      var loaded = load(exportsObject, { exports: exportsObject }, requireShim);
+      fn = loaded.callable;
+      userListNode = loaded.listNode || ListNode;
+      userTreeNode = loaded.treeNode || TreeNode;
     } catch (error) {
       if (error && error.name === "MinjiImportsUnsupported") {
         return finish({ kind: "imports-unsupported", specifier: error.specifier });
@@ -314,14 +456,22 @@
     var returned;
     var start = now();
     try {
-      returned = fn.apply(undefined, args);
+      if (config.kind === "class") {
+        returned = runClass(fn, args);
+      } else {
+        for (var i = 0; i < args.length; i += 1)
+          args[i] = adaptInput(args[i], config.inputAdapters && config.inputAdapters[i]);
+        returned = fn.apply(undefined, args);
+      }
     } catch (error) {
       return finish({ kind: "threw", error: errorInfo(error), durationMs: now() - start });
     }
     var durationMs = now() - start;
 
-    var target = config.captureIndex >= 0 ? args[config.captureIndex] : returned;
+    var target =
+      config.kind !== "class" && config.captureIndex >= 0 ? args[config.captureIndex] : returned;
     try {
+      if (config.kind !== "class") target = adaptOutput(target, config.outputAdapter);
       var value = encode(target, config.maxResultSize);
       return finish({ kind: "returned", value: value, durationMs: durationMs });
     } catch (failure) {

@@ -1,0 +1,47 @@
+import { useSync } from "./SyncProvider.tsx";
+
+export const AccountControl = () => {
+  const { account, loading, status, signOut, sync } = useSync();
+  if (loading)
+    return (
+      <span className="hint" role="status">
+        Checking account…
+      </span>
+    );
+  if (account === null)
+    return (
+      <a className="button" href="/api/auth/github/login">
+        Sign in with GitHub
+      </a>
+    );
+  return (
+    <div className="account-control">
+      {status === "retrying" ? (
+        <span className="hint" role="status">
+          Sync paused — retrying
+        </span>
+      ) : null}
+      {status === "syncing" ? (
+        <span className="hint" role="status">
+          Syncing…
+        </span>
+      ) : null}
+      <details className="account-menu">
+        <summary className="button">
+          {account.avatarUrl === null ? null : (
+            <img src={account.avatarUrl} alt="" width="24" height="24" />
+          )}{" "}
+          {account.login}
+        </summary>
+        <div className="account-menu-items">
+          <button type="button" className="button button-quiet" onClick={sync}>
+            Sync now
+          </button>
+          <button type="button" className="button button-quiet" onClick={() => void signOut()}>
+            Sign out
+          </button>
+        </div>
+      </details>
+    </div>
+  );
+};

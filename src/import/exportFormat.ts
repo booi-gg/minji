@@ -1,6 +1,12 @@
 // The versioned JSON format used for export and JSON import. See specs/data-model.md.
 import type { WorkspaceBundle } from "../db/workspaces.ts";
-import type { CompareTarget, Language } from "../runner/types.ts";
+import type {
+  CompareTarget,
+  ComparisonOptions,
+  Language,
+  NodeAdapter,
+  TestKind,
+} from "../runner/types.ts";
 import { isValidIdentifier, newId } from "../shared/ids.ts";
 import { MAX_TEST_TIMEOUT_MS, MIN_TEST_TIMEOUT_MS } from "../shared/limits.ts";
 import { createWorkspace, type Revision, type TestCase } from "../workspaces/model.ts";
@@ -14,6 +20,10 @@ export interface ExportedTest {
   args: unknown;
   expected: unknown;
   compare: CompareTarget;
+  kind?: TestKind;
+  inputAdapters?: NodeAdapter[];
+  outputAdapter?: NodeAdapter;
+  comparison?: ComparisonOptions;
 }
 
 export interface ExportedRevision {
@@ -74,6 +84,10 @@ export const toExportFile = (bundles: WorkspaceBundle[], now: Date = new Date())
       args: toJsonValue(test.argsText),
       expected: toJsonValue(test.expectedText),
       compare: test.compare,
+      kind: test.kind,
+      inputAdapters: test.inputAdapters,
+      outputAdapter: test.outputAdapter,
+      comparison: test.comparison,
     })),
     revisions: revisions.map(({ language, source, reason, createdAt }) => ({
       language,
@@ -136,6 +150,27 @@ const testOf = (value: unknown): ExportedTest | undefined => {
     args: value.args === undefined ? "[]" : value.args,
     expected: value.expected === undefined ? "" : value.expected,
     compare: compareOf(value.compare),
+    kind: value.kind === "class" ? "class" : "function",
+    inputAdapters: Array.isArray(value.inputAdapters)
+      ? value.inputAdapters.map((adapter) =>
+          adapter === "linked-list" || adapter === "binary-tree" ? adapter : "plain",
+        )
+      : undefined,
+    outputAdapter:
+      value.outputAdapter === "linked-list" || value.outputAdapter === "binary-tree"
+        ? value.outputAdapter
+        : "plain",
+    comparison: isObject(value.comparison)
+      ? {
+          unordered: value.comparison.unordered === true,
+          tolerance:
+            typeof value.comparison.tolerance === "number" &&
+            Number.isFinite(value.comparison.tolerance) &&
+            value.comparison.tolerance >= 0
+              ? value.comparison.tolerance
+              : undefined,
+        }
+      : undefined,
   };
 };
 
@@ -237,6 +272,10 @@ export const toBundle = (imported: ExportedWorkspace, now: Date = new Date()): W
     argsText: toRawText(test.args, "[]"),
     expectedText: toRawText(test.expected, ""),
     compare: test.compare,
+    kind: test.kind,
+    inputAdapters: test.inputAdapters,
+    outputAdapter: test.outputAdapter,
+    comparison: test.comparison,
   }));
   const revisions: Revision[] = imported.revisions.map((revision) => ({
     id: newId(),

@@ -12,7 +12,7 @@ interface DiffViewProps {
 }
 
 /** Read-only Monaco diff: the revision on the left, the current code on the right. */
-const DiffView = ({ original, modified, language, theme }: DiffViewProps) => {
+export const DiffView = ({ original, modified, language, theme }: DiffViewProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const container = containerRef.current;

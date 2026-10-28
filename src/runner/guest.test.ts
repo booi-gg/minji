@@ -15,7 +15,7 @@ import guestSource from "./guest.js?raw";
 import type { GuestOutput } from "./guest-output.ts";
 import { buildLoaderBody, guestConfigFor } from "./invocation.ts";
 import { transformSource } from "./transform.ts";
-import type { CompareTarget, Language } from "./types.ts";
+import type { CompareTarget, Language, NodeAdapter, TestKind } from "./types.ts";
 
 // Runs the harness in a fresh Node vm context, which stands in for the sandbox Worker here,
 // compiling the user's code the same way the Worker does. The browser suite runs the
@@ -24,7 +24,13 @@ const runGuest = (
   source: string,
   functionName: string,
   args: unknown[],
-  options: { capture?: CompareTarget; language?: Language } = {},
+  options: {
+    capture?: CompareTarget;
+    language?: Language;
+    kind?: TestKind;
+    inputAdapters?: NodeAdapter[];
+    outputAdapter?: NodeAdapter;
+  } = {},
 ): GuestOutput => {
   const transformed = transformSource(source, options.language ?? "javascript");
   if (!transformed.ok) throw new Error(transformed.message);
@@ -32,6 +38,9 @@ const runGuest = (
     id: "t",
     argsJson: "",
     capture: options.capture ?? { kind: "return" },
+    kind: options.kind,
+    inputAdapters: options.inputAdapters,
+    outputAdapter: options.outputAdapter,
   });
   const context = vm.createContext({
     __args: JSON.stringify(args),
@@ -48,6 +57,90 @@ const runGuest = (
 
 const valueOf = (output: GuestOutput): unknown =>
   output.kind === "returned" ? output.value : output;
+
+describe("structured test modes", () => {
+  it("passes a linked list to a solution and converts the returned list", () => {
+    const source =
+      "function solve(head) { let node = head; while (node.next) node = node.next; node.next = new ListNode(4); return head; }";
+    expect(
+      valueOf(
+        runGuest(source, "solve", [[1, 2, 3]], {
+          inputAdapters: ["linked-list"],
+          outputAdapter: "linked-list",
+        }),
+      ),
+    ).toEqual([1, 2, 3, 4]);
+  });
+
+  it("uses a node constructor declared in the solution", () => {
+    const source =
+      "class ListNode { constructor(val) { this.val = val; } } function solve(head) { return head instanceof ListNode ? head : null; }";
+    expect(
+      valueOf(
+        runGuest(source, "solve", [[1, 2]], {
+          inputAdapters: ["linked-list"],
+          outputAdapter: "linked-list",
+        }),
+      ),
+    ).toEqual([1, 2]);
+  });
+
+  it("uses level-order binary-tree arrays with null gaps", () => {
+    const source = "function solve(root) { root.left.right = new TreeNode(7); return root; }";
+    expect(
+      valueOf(
+        runGuest(source, "solve", [[1, 2, 3]], {
+          inputAdapters: ["binary-tree"],
+          outputAdapter: "binary-tree",
+        }),
+      ),
+    ).toEqual([1, 2, 3, null, 7]);
+  });
+
+  it("converts a captured argument after an in-place list change", () => {
+    const source = "function solve(head) { head.next = new ListNode(9); }";
+    expect(
+      valueOf(
+        runGuest(source, "solve", [[1, 2]], {
+          capture: { kind: "argument", index: 0 },
+          inputAdapters: ["linked-list"],
+          outputAdapter: "linked-list",
+        }),
+      ),
+    ).toEqual([1, 9]);
+  });
+
+  it("runs class constructor and methods in order", () => {
+    const source =
+      "class Counter { constructor(start) { this.n = start; } add(n) { this.n += n; } get() { return this.n; } }";
+    expect(
+      valueOf(
+        runGuest(
+          source,
+          "Counter",
+          [
+            ["Counter", "add", "get", "add", "get"],
+            [[2], [3], [], [4], []],
+          ],
+          { kind: "class" },
+        ),
+      ),
+    ).toEqual([null, null, 5, null, 9]);
+  });
+
+  it("reports cyclic node output", () => {
+    const source = "function solve(head) { head.next = head; return head; }";
+    expect(
+      runGuest(source, "solve", [[1]], {
+        inputAdapters: ["linked-list"],
+        outputAdapter: "linked-list",
+      }),
+    ).toMatchObject({
+      kind: "threw",
+      error: { name: "TypeError", message: "Invalid or cyclic linked list" },
+    });
+  });
+});
 
 describe("function lookup", () => {
   it("calls a TypeScript function declaration", () => {

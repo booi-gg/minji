@@ -17,7 +17,7 @@ The editor is desktop-first. On a phone the app should let the user read a works
 5. **History:** save code revision snapshots on each run and on explicit save, keeping the most recent 20 per workspace, plus recent test runs and a simple pass count for each workspace. Optional GitHub sign-in syncs workspaces, tests, and revisions across devices; run results stay on the device.
 6. **Backup:** export one or all workspaces as JSON, and import that file again. Local-only users depend on this, because browsers can clear IndexedDB (see **Local storage**).
 
-The initial runner supports functions over JSON-compatible values: primitives, arrays, and plain objects. The user names the function to call, such as `twoSum` or `solve`. Imported starter code can be edited before the first run. Rich LeetCode structures such as linked lists and binary trees need explicit serializers and can follow later. Design problems that call a sequence of methods on a class (LRU Cache, MinStack) are out of scope for the MVP.
+The runner supports functions over JSON-compatible values: primitives, arrays, and plain objects. The user names the function to call, such as `twoSum` or `solve`. Imported starter code can be edited before the first run. Linked lists and binary trees use explicit per-test adapters. Design problems can call a sequence of methods on a class.
 
 ## Cloudflare architecture
 
@@ -56,7 +56,7 @@ The practice page sends current source, language, function name, and selected te
 
 **Timeouts:** each test has its own deadline (default 2 seconds), and the whole run has a total cap. The watchdog fires at the total cap plus a grace period, which also covers work the runtime cannot interrupt, such as a long native `sort`.
 
-Keep expected results and comparison rules outside the runner; pass only test inputs into it. Use deep equality for JSON values in the MVP, with an option for unordered arrays or numeric tolerance per case later. A thrown error, timeout, non-serializable return value, invalid JSON test, or missing function receives a distinct, actionable result. Cap source size, test count, output size, and runtime memory to protect the browser tab. Use a new Worker for each test, since re-running code in the same Worker keeps its globals, so one case cannot change the next case's globals.
+Keep expected results and comparison rules outside the runner; pass only test inputs into it. Use deep equality for JSON values, with optional unordered outer arrays or numeric tolerance per case. A thrown error, timeout, non-serializable return value, invalid JSON test, or missing function receives a distinct, actionable result. Cap source size, test count, output size, and runtime memory to protect the browser tab. Use a new Worker for each test, since re-running code in the same Worker keeps its globals, so one case cannot change the next case's globals.
 
 Tests are user-authored and visible. A green run means the solution passed the selected tests, not that it passed an unseen platform judge. The UI should use **Passed all 8 tests**, not **Accepted**.
 
@@ -137,7 +137,7 @@ Add unit tests with `vp test` from step 0 onward, starting with the deep-equalit
 
 - ~~**Editor:**~~ decided 2026-10-27: Monaco, desktop-first. On phones the code is read-only; tests can still be edited. Revisit CodeMirror 6 if editing code on a phone becomes a goal.
 - Confirm whether **Import problem** should also accept a URL. A URL importer needs a source-specific adapter and must handle sites that restrict automated access.
-- After the runner is proven, consider linked-list/tree test adapters, class-design problems, tags, folders, and more sign-in options.
+- Consider tags, folders, and more sign-in options.
 
 ## Reference documentation
 

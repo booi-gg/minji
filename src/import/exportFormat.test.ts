@@ -82,6 +82,31 @@ describe("export", () => {
 });
 
 describe("import", () => {
+  it("preserves class, adapter, and comparison settings through export and import", () => {
+    const original = sampleBundle();
+    original.tests[0] = {
+      ...original.tests[0],
+      kind: "class",
+      argsText: '[["Counter","get"],[[],[]]]',
+      expectedText: "[null,0]",
+      comparison: { unordered: false, tolerance: 0.01 },
+    };
+    original.tests[1] = {
+      ...original.tests[1],
+      inputAdapters: ["linked-list"],
+      outputAdapter: "binary-tree",
+      comparison: { unordered: true },
+    };
+    const parsed = parseExportFile(JSON.stringify(toExportFile([original], NOW)));
+    if (!parsed.ok || parsed.workspaces[0] === undefined) throw new Error("Import failed");
+    const restored = toBundle(parsed.workspaces[0], NOW);
+    expect(restored.tests[0]).toMatchObject({ kind: "class", comparison: { tolerance: 0.01 } });
+    expect(restored.tests[1]).toMatchObject({
+      inputAdapters: ["linked-list"],
+      outputAdapter: "binary-tree",
+      comparison: { unordered: true },
+    });
+  });
   it("round-trips through the file format with new ids", () => {
     const original = sampleBundle();
     const parsed = parseExportFile(JSON.stringify(toExportFile([original], NOW)));

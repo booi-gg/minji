@@ -30,6 +30,27 @@ const testRows = (draft: ImportDraft) =>
   draft.tests.map((test) => [argsTextFor(test, draft.params), test.expectedText]);
 
 describe("pasted text", () => {
+  it("imports class-design examples as method sequences", () => {
+    const draft = text(
+      'Min Stack\nExample 1:\nInput:\n["MinStack","push","getMin"]\n[[],[3],[]]\nOutput: [null,null,3]',
+      "class MinStack { push(value) { this.value = value; } getMin() { return this.value; } }",
+    );
+    expect(draft.functionName).toBe("MinStack");
+    expect(draft.params).toEqual([]);
+    expect(draft.tests[0]?.kind).toBe("class");
+    expect(testRows(draft)).toEqual([
+      ['[["MinStack","push","getMin"],[[],[3],[]]]', "[null,null,3]"],
+    ]);
+  });
+  it("keeps a function target when starter code also declares a node class", () => {
+    const draft = text(
+      "Reverse List\nExample 1:\nInput: head = [1,2]\nOutput: [2,1]",
+      "class ListNode {}\nfunction reverseList(head) { return head; }",
+    );
+    expect(draft.functionName).toBe("reverseList");
+    expect(draft.params).toEqual(["head"]);
+    expect(draft.tests[0]?.kind).toBeUndefined();
+  });
   it("reads a LeetCode-style statement with separate starter code", () => {
     const draft = text(pairSum, pairSumStarter);
     expect(draft).toMatchObject({

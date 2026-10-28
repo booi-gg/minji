@@ -69,7 +69,10 @@ const touch = (workspace: Workspace, edit: WorkspaceEdit, now: Date): Workspace 
   ...workspace,
   ...edit,
   updatedAt: now.toISOString(),
-  syncState: workspace.syncState === "synced" ? "dirty" : workspace.syncState,
+  syncState:
+    workspace.syncState === "synced" || workspace.syncState === "too-large"
+      ? "dirty"
+      : workspace.syncState,
 });
 
 /**
@@ -242,7 +245,11 @@ export const deleteWorkspace = async (
     return;
   }
 
-  if (!LOCAL_ONLY_STATES.has(workspace.syncState)) {
+  if (
+    !LOCAL_ONLY_STATES.has(workspace.syncState) &&
+    workspace.ownerId !== null &&
+    workspace.syncRevision > 0
+  ) {
     const timestamp = now.toISOString();
     await workspaces.put({
       ...workspace,

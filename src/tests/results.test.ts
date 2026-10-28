@@ -91,6 +91,10 @@ describe("prepareRun", () => {
 });
 
 describe("toTestResult", () => {
+  it("applies each case's comparison settings", () => {
+    const current = { ...test(0, "[]", "[1,2]"), comparison: { unordered: true, tolerance: 0.1 } };
+    expect(toTestResult(raw({ value: [2.05, 0.95] }), current, [1, 2]).status).toBe("passed");
+  });
   it("compares returned values", () => {
     const passing = toTestResult(raw({ value: [0, 1] }), test(0, "[]", "[0,1]"), [0, 1]);
     expect(passing).toMatchObject({ status: "passed", label: "Test 1", durationMs: 3 });

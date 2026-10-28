@@ -19,6 +19,36 @@ it("accepts a valid case", () => {
   });
 });
 
+it("validates node adapters and class call sequences", () => {
+  expect(
+    validateTest({
+      ...test("[[1,2,null,4]]", "[1,2,null,4]"),
+      inputAdapters: ["binary-tree"],
+      outputAdapter: "binary-tree",
+    }).valid,
+  ).toBe(true);
+  expect(validateTest({ ...test("[3]", "[]"), inputAdapters: ["linked-list"] }).args).toContain(
+    "node-value array",
+  );
+  expect(
+    validateTest(
+      { ...test('[["Counter","add","get"],[[],[2],[]]]', "[null,null,2]"), kind: "class" },
+      [],
+      "Counter",
+    ).valid,
+  ).toBe(true);
+  expect(
+    validateTest(
+      { ...test('[["Wrong","add"],[[],[2]]]', "[null,null]"), kind: "class" },
+      [],
+      "Counter",
+    ).args,
+  ).toContain("Class calls");
+  expect(validateTest({ ...test("[]", "0"), comparison: { tolerance: -1 } }).options).toContain(
+    "nonnegative",
+  );
+});
+
 it("reports arguments that aren't JSON or aren't an array", () => {
   expect(validateTest(test("[1,", "1")).args).toMatch(/^Arguments aren't valid JSON: /);
   expect(validateTest(test("{}", "1")).args).toBe(

@@ -45,6 +45,10 @@ interface TestCase {
   argsText: string; // raw editor text; must parse to a JSON array to run
   expectedText: string; // raw editor text; JSON plus the tags in runner.md
   compare: CompareTarget;
+  kind?: "function" | "class"; // defaults to function for older records
+  inputAdapters?: ("plain" | "linked-list" | "binary-tree")[];
+  outputAdapter?: "plain" | "linked-list" | "binary-tree";
+  comparison?: { unordered?: boolean; tolerance?: number };
 }
 
 interface Revision {

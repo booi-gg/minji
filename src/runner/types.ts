@@ -3,6 +3,12 @@
 export type Language = "javascript" | "typescript";
 
 export type CompareTarget = { kind: "return" } | { kind: "argument"; index: number };
+export type TestKind = "function" | "class";
+export type NodeAdapter = "plain" | "linked-list" | "binary-tree";
+export interface ComparisonOptions {
+  unordered?: boolean;
+  tolerance?: number;
+}
 
 /** JSON, plus `{"$minji": ...}` tags for values JSON would silently change. */
 export type Encoded = null | boolean | number | string | Encoded[] | { [key: string]: Encoded };
@@ -12,6 +18,9 @@ export interface RunnerTest {
   /** JSON array text, already validated by the page. Parsed inside the sandbox. */
   argsJson: string;
   capture: CompareTarget;
+  kind?: TestKind;
+  inputAdapters?: NodeAdapter[];
+  outputAdapter?: NodeAdapter;
 }
 
 export interface RunRequest {

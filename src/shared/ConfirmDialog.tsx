@@ -5,6 +5,7 @@ interface ConfirmDialogProps {
   title: string;
   children: ReactNode;
   confirmLabel: string;
+  cancelLabel?: string;
   danger?: boolean;
   onConfirm: () => void;
   onCancel: () => void;
@@ -16,6 +17,7 @@ export const ConfirmDialog = ({
   title,
   children,
   confirmLabel,
+  cancelLabel = "Cancel",
   danger = false,
   onConfirm,
   onCancel,
@@ -37,7 +39,7 @@ export const ConfirmDialog = ({
         {children}
         <div className="dialog-actions">
           <button type="button" className="button" onClick={onCancel}>
-            Cancel
+            {cancelLabel}
           </button>
           <button
             type="button"

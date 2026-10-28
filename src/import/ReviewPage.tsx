@@ -2,7 +2,13 @@ import { useEffect, useRef, useState } from "react";
 import { useBlocker, useNavigate } from "react-router";
 import { getDatabase } from "../db/database.ts";
 import type { WorkspaceBundle } from "../db/workspaces.ts";
-import type { Language, CompareTarget } from "../runner/types.ts";
+import type {
+  Language,
+  CompareTarget,
+  ComparisonOptions,
+  NodeAdapter,
+  TestKind,
+} from "../runner/types.ts";
 import { ConfirmDialog } from "../shared/ConfirmDialog.tsx";
 import { isValidIdentifier, newId } from "../shared/ids.ts";
 import { validateTest } from "../tests/validate.ts";
@@ -23,6 +29,10 @@ interface ReviewTest {
   argsText: string;
   expectedText: string;
   compare: CompareTarget;
+  kind?: TestKind;
+  inputAdapters?: NodeAdapter[];
+  outputAdapter?: NodeAdapter;
+  comparison?: ComparisonOptions;
 }
 
 interface ReviewState {
@@ -45,10 +55,11 @@ interface ReviewState {
 const fromProblemTest = (test: DraftTest, params: string[]): ReviewTest => ({
   id: newId(),
   label: test.label,
-  namedArgs: test.args,
+  namedArgs: test.kind === "class" ? null : test.args,
   argsText: argsTextFor(test, params),
   expectedText: test.expectedText,
   compare: { kind: "return" },
+  kind: test.kind,
 });
 
 const createReview = (entry: ReviewEntry): ReviewState => {
@@ -82,6 +93,10 @@ const createReview = (entry: ReviewEntry): ReviewState => {
       argsText: test.argsText,
       expectedText: test.expectedText,
       compare: test.compare,
+      kind: test.kind,
+      inputAdapters: test.inputAdapters,
+      outputAdapter: test.outputAdapter,
+      comparison: test.comparison,
     })),
     warnings: [],
     suggestInPlace: false,
@@ -99,6 +114,7 @@ const argsFor = (test: ReviewTest, params: string[]): string =>
           args: test.namedArgs,
           expectedText: test.expectedText,
           expectedValid: true,
+          kind: test.kind,
         },
         params,
       );
@@ -209,6 +225,10 @@ export const ReviewPage = ({ entry, onBack }: { entry: ReviewEntry; onBack: () =
         argsText: argsFor(test, state.params),
         expectedText: test.expectedText,
         compare: test.compare,
+        kind: test.kind,
+        inputAdapters: test.inputAdapters,
+        outputAdapter: test.outputAdapter,
+        comparison: test.comparison,
       }));
       await saveImportedWorkspaces(await getDatabase(), [
         {
@@ -424,8 +444,17 @@ export const ReviewPage = ({ entry, onBack }: { entry: ReviewEntry; onBack: () =
             {state.tests.map((test) => {
               const argsText = argsFor(test, state.params);
               const validation = validateTest(
-                { argsText, expectedText: test.expectedText, compare: test.compare },
+                {
+                  argsText,
+                  expectedText: test.expectedText,
+                  compare: test.compare,
+                  kind: test.kind,
+                  inputAdapters: test.inputAdapters,
+                  outputAdapter: test.outputAdapter,
+                  comparison: test.comparison,
+                },
                 state.params,
+                state.functionName,
               );
               return (
                 <li className="test-row" key={test.id}>

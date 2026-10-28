@@ -12,7 +12,9 @@ const escapeRegExp = (text: string): string => text.replaceAll(/[.*+?^${}()|[\]\
 
 /** Rough check that the code defines or assigns the function. */
 const mentionsFunction = (source: string, name: string): boolean =>
-  new RegExp(`function\\s+${escapeRegExp(name)}\\b|\\b${escapeRegExp(name)}\\s*[=(]`).test(source);
+  new RegExp(
+    `(?:function|class)\\s+${escapeRegExp(name)}\\b|\\b${escapeRegExp(name)}\\s*[=(]`,
+  ).test(source);
 
 interface FunctionNameFieldProps {
   name: string;
@@ -30,12 +32,12 @@ const FunctionNameField = ({ name, source, readOnly, onChange }: FunctionNameFie
     ? "Use a JavaScript identifier, like twoSum."
     : mentionsFunction(source, draft)
       ? undefined
-      : `No function named ${draft} in your code`;
+      : `No function or class named ${draft} in your code`;
 
   return (
     <div className="toolbar-field">
       <label htmlFor={id} className="toolbar-label">
-        Function
+        Function or class
       </label>
       <input
         id={id}

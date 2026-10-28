@@ -19,6 +19,8 @@ import { createNativeRunner } from "./native/runner.ts";
 import type {
   CompareTarget,
   Language,
+  NodeAdapter,
+  TestKind,
   RawTestResult,
   RunRequest,
   Runner,
@@ -28,6 +30,9 @@ import type {
 interface CaseTest {
   args: unknown[] | string;
   capture?: CompareTarget;
+  kind?: TestKind;
+  inputAdapters?: NodeAdapter[];
+  outputAdapter?: NodeAdapter;
 }
 
 interface CaseRequest {
@@ -59,6 +64,9 @@ const toRequest = (input: CaseRequest): RunRequest => {
       id: `t${index}`,
       argsJson: typeof test.args === "string" ? test.args : JSON.stringify(test.args),
       capture: test.capture ?? { kind: "return" },
+      kind: test.kind,
+      inputAdapters: test.inputAdapters,
+      outputAdapter: test.outputAdapter,
     })),
   };
 };
@@ -140,6 +148,38 @@ const create = (budget?: number): Runner =>
 describe("native runner", () => {
   const runner = create();
   afterAll(() => runner.dispose());
+
+  it("runs node adapters and class method sequences inside sandbox workers", async () => {
+    const list = await execute(runner, {
+      source: "function solve(head) { return new ListNode(0, head); }",
+      functionName: "solve",
+      tests: [{ args: [[1, 2]], inputAdapters: ["linked-list"], outputAdapter: "linked-list" }],
+    });
+    expect(valueOf(list)).toEqual([0, 1, 2]);
+    const tree = await execute(runner, {
+      source: "function solve(root) { return root.right; }",
+      functionName: "solve",
+      tests: [
+        { args: [[1, null, 3]], inputAdapters: ["binary-tree"], outputAdapter: "binary-tree" },
+      ],
+    });
+    expect(valueOf(tree)).toEqual([3]);
+    const sequence = await execute(runner, {
+      source:
+        "class Counter { constructor() { this.value = 0; } add(n) { this.value += n; } get() { return this.value; } }",
+      functionName: "Counter",
+      tests: [
+        {
+          args: [
+            ["Counter", "add", "get"],
+            [[], [4], []],
+          ],
+          kind: "class",
+        },
+      ],
+    });
+    expect(valueOf(sequence)).toEqual([null, null, 4]);
+  });
 
   it("runs TypeScript and records cold and warm times", async () => {
     const twoSum: CaseRequest = {

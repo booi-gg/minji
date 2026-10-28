@@ -4,14 +4,17 @@
 
 The **Tests** tab lists a workspace's cases in `position` order. Each row has:
 
-| Control   | Behaviour                                                                                                                                                            |
-| --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Label     | Optional text field. Placeholder `Test <n>`.                                                                                                                         |
-| Arguments | Monospace auto-growing textarea (up to 8 visible lines), holding `argsText`. A hint above it shows the parameter names, e.g. `[nums, target]`, when `params` is set. |
-| Expected  | Monospace textarea holding `expectedText`.                                                                                                                           |
-| Compare   | Select: **Return value** (default) or **Argument N after the call** (one entry per argument, labelled with the parameter name when known).                           |
-| Run       | Runs only this case.                                                                                                                                                 |
-| Actions   | ↑ and ↓ (move), Duplicate and Delete, shown inline on the row.                                                                                                       |
+| Control   | Behaviour                                                                                                                                                                |
+| --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Label     | Optional text field. Placeholder `Test <n>`.                                                                                                                             |
+| Arguments | Monospace auto-growing textarea (up to 8 visible lines), holding `argsText`. A hint above it shows the parameter names, e.g. `[nums, target]`, when `params` is set.     |
+| Expected  | Monospace textarea holding `expectedText`.                                                                                                                               |
+| Compare   | Select: **Return value** (default) or **Argument N after the call** (one entry per argument, labelled with the parameter name when known).                               |
+| Test type | Function call or class method sequence. A class case uses `[["ClassName","method"],[[],[args]]]` and compares the full result sequence.                                  |
+| Adapters  | Each function argument and its result can use plain JSON, a linked list, or a binary tree. List and tree values are JSON arrays; trees use level order with `null` gaps. |
+| Options   | Per-case unordered outer-array comparison and absolute numeric tolerance.                                                                                                |
+| Run       | Runs only this case.                                                                                                                                                     |
+| Actions   | ↑ and ↓ (move), Duplicate and Delete, shown inline on the row.                                                                                                           |
 
 - **Add test** appends a row with `argsText: '[]'`, `expectedText: ''`, and focuses Arguments. It is disabled at `MAX_TESTS_PER_WORKSPACE`.
 - Reorder by dragging the row handle, with the menu, or with `Alt+↑` / `Alt+↓` while focus is in the row. Positions are rewritten densely in one transaction.
@@ -41,13 +44,13 @@ Invalid tests are skipped when running and reported with status `invalid-test`. 
 
 - Tags compare by tag. `{"$minji":"-0"}` equals `0`. `{"$minji":"NaN"}` equals only `NaN`.
 - `{"$minji":"object","value":…}` is unwrapped before comparing.
-- Numbers compare with `===` after the rules above. No tolerance in the MVP.
-- Arrays are equal when lengths match and elements are equal in order.
+- Numbers compare exactly by default. A case may allow an absolute numeric difference at every nested numeric value.
+- Arrays are equal when lengths match and elements are equal in order by default. Unordered comparison matches outer-array elements one to one, including duplicates; nested arrays keep their order.
 - Objects are equal when they have the same set of keys, in any order, with equal values.
 - Different JSON types are never equal (`1` vs `"1"`, `[]` vs `{}`, `null` vs `undefined`).
 - `path` names the first difference: `''` for the root, then `[3]`, `.name`, or `["key with spaces"]` segments, e.g. `[2].next`. A length mismatch reports the array's own path and the UI says "length 4, expected 5".
 
-`CompareTarget` is a discriminated union so per-case options (unordered arrays, numeric tolerance) can be added later without a migration.
+Class cases construct a fresh instance and call methods in sequence. `undefined` method results become `null`. Node adapters convert JSON arrays to nodes before function calls and convert the selected result back to arrays before encoding.
 
 ## Statuses
 

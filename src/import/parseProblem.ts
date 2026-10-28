@@ -1,7 +1,7 @@
 // Parses pasted or uploaded problem text into an import draft.
 // See specs/workspaces-and-import.md, "Import". Parsing never fails: anything it can't
 // place stays in the statement, and a warning says so.
-import type { Language } from "../runner/types.ts";
+import type { Language, TestKind } from "../runner/types.ts";
 import { isValidIdentifier } from "../shared/ids.ts";
 import { DEFAULT_FUNCTION_NAME, scratchStub } from "../workspaces/model.ts";
 
@@ -18,6 +18,8 @@ export interface DraftTest {
   args: DraftArg[];
   expectedText: string;
   expectedValid: boolean;
+  kind?: TestKind;
+  classArgsText?: string;
 }
 
 export interface ImportDraft {
@@ -152,6 +154,9 @@ export const findFunction = (code: string): { name: string; params: string[] } |
   return { name: best.name, params };
 };
 
+const CLASS_DECLARATION = /\bclass\s+([A-Za-z_$][\w$]*)\b/;
+const findClass = (code: string): string | undefined => CLASS_DECLARATION.exec(code)?.[1];
+
 // ---- Examples --------------------------------------------------------------------
 
 const EXAMPLE_HEADING = /^\s*(?:#+\s*)?Example\s*\d*\s*:?\s*$/i;
@@ -244,6 +249,38 @@ const parseInput = (input: string): DraftArg[] => {
   });
 };
 
+const parseClassInput = (input: string): { className: string; text: string } | undefined => {
+  const lines = input
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean);
+  const candidates = [input.trim()];
+  if (lines.length === 2) candidates.push(`[${lines.join(",")}]`);
+  candidates.push(`[${input.trim()}]`);
+  for (const candidate of candidates) {
+    try {
+      const parsed = JSON.parse(candidate) as unknown;
+      if (!Array.isArray(parsed) || parsed.length !== 2) continue;
+      const [methods, args] = parsed;
+      if (
+        !Array.isArray(methods) ||
+        !Array.isArray(args) ||
+        methods.length === 0 ||
+        methods.length !== args.length ||
+        !methods.every((name) => typeof name === "string") ||
+        !args.every(Array.isArray)
+      )
+        continue;
+      const className = methods[0] as string;
+      if (!isValidIdentifier(className)) continue;
+      return { className, text: JSON.stringify(parsed) };
+    } catch {
+      // Try another common class-example layout.
+    }
+  }
+  return undefined;
+};
+
 // ---- Draft -----------------------------------------------------------------------
 
 const IN_PLACE = /in[- ]place|do not return anything|modify .* in place/i;
@@ -276,28 +313,35 @@ export const parseProblem = ({
     (starterCode === undefined ? undefined : detectLanguage(starterCode)) ??
     (starterCode === undefined ? fallbackLanguage : "javascript");
 
+  const className = starterCode === undefined ? undefined : findClass(starterCode);
   const found = starterCode === undefined ? undefined : findFunction(starterCode);
-  if (starterCode !== undefined && found === undefined) {
-    warnings.push("Couldn't find a function in the starter code; check the function name.");
+  if (starterCode !== undefined && found === undefined && className === undefined) {
+    warnings.push("Couldn't find a function or class in the starter code; check its name.");
   }
 
   const examples = readExamples(text.replaceAll("\r\n", "\n").split("\n"));
   if (examples.length === 0) warnings.push("No examples were found, so there are no tests yet.");
 
-  const parsedExamples = examples.map((example) => ({
-    args: parseInput(example.input),
-    expected: parseValue(example.output),
-  }));
+  const parsedExamples = examples.map((example) => {
+    const classInput = parseClassInput(example.input);
+    return {
+      classInput,
+      args: classInput === undefined ? parseInput(example.input) : [],
+      expected: parseValue(example.output),
+    };
+  });
 
-  let params = found?.params ?? [];
-  const paramsConfirmed = found !== undefined;
+  const firstClassInput = parsedExamples[0]?.classInput;
+  const isClass = firstClassInput !== undefined || (className !== undefined && found === undefined);
+  let params = isClass ? [] : (found?.params ?? []);
+  const paramsConfirmed = isClass || found !== undefined;
   if (!paramsConfirmed) {
     const firstNames =
       parsedExamples[0]?.args.flatMap((arg) => (arg.name === null ? [] : [arg.name])) ?? [];
     params = firstNames.filter((name) => isValidIdentifier(name));
   }
 
-  const tests = parsedExamples.map(({ args, expected }, index) => {
+  const tests = parsedExamples.map(({ args, expected, classInput }, index) => {
     const label = `Example ${index + 1}`;
     for (const arg of args) {
       if (arg.name !== null && params.length > 0 && !params.includes(arg.name)) {
@@ -308,10 +352,19 @@ export const parseProblem = ({
     }
     if (!expected.valid)
       warnings.push(`${label} has an output that isn't valid JSON; fix it below.`);
-    return { label, args, expectedText: expected.text, expectedValid: expected.valid };
+    return {
+      label,
+      args,
+      expectedText: expected.text,
+      expectedValid: expected.valid,
+      kind: classInput === undefined ? undefined : ("class" as const),
+      classArgsText: classInput?.text,
+    };
   });
 
-  const functionName = found?.name ?? DEFAULT_FUNCTION_NAME;
+  const functionName = isClass
+    ? (firstClassInput?.className ?? className ?? DEFAULT_FUNCTION_NAME)
+    : (found?.name ?? DEFAULT_FUNCTION_NAME);
   return {
     title,
     statement,
@@ -319,7 +372,11 @@ export const parseProblem = ({
     functionName,
     params,
     paramsConfirmed,
-    starterSource: starterCode ?? scratchStub(functionName, params),
+    starterSource:
+      starterCode ??
+      (isClass
+        ? `class ${functionName} {\n  constructor() {\n    \n  }\n}\n`
+        : scratchStub(functionName, params)),
     tests,
     suggestInPlace: IN_PLACE.test(text),
     warnings,
@@ -331,6 +388,7 @@ export const parseProblem = ({
  * aren't parameters go last; missing parameters become null.
  */
 export const argsTextFor = (test: DraftTest, params: readonly string[]): string => {
+  if (test.classArgsText !== undefined) return test.classArgsText;
   const named = test.args.every((arg) => arg.name !== null);
   if (!named || params.length === 0) return `[${test.args.map((arg) => arg.text).join(", ")}]`;
   const byName = new Map(test.args.map((arg) => [arg.name, arg.text]));

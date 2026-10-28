@@ -1,9 +1,13 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useLoaderData, useNavigate, useRevalidator } from "react-router";
 import { getDatabase } from "../db/database.ts";
 import { deleteWorkspace, listWorkspaces } from "../db/workspaces.ts";
 import { ConfirmDialog } from "../shared/ConfirmDialog.tsx";
+import { postChannelMessage, subscribeToChannel } from "../shared/channel.ts";
 import { absoluteTime, relativeTime } from "../shared/format.ts";
+import { AccountControl } from "../sync/AccountControl.tsx";
+import { useSync } from "../sync/SyncProvider.tsx";
+import { copyToAccount, startSyncingWorkspace } from "../sync/store.ts";
 import { createScratchWorkspace, exportWorkspaces, isStoragePersistent } from "./actions.ts";
 import { displayTitle, type Workspace } from "./model.ts";
 import { StorageBanner } from "./StorageBanner.tsx";
@@ -23,12 +27,34 @@ const lastRunText = (workspace: Workspace): string =>
 
 interface WorkspaceRowProps {
   workspace: Workspace;
+  currentUserId: string | null;
   onExport: (workspace: Workspace) => void;
   onDelete: (workspace: Workspace) => void;
+  onStartSync: (workspace: Workspace) => void;
+  onCopy: (workspace: Workspace) => void;
 }
 
-const WorkspaceRow = ({ workspace, onExport, onDelete }: WorkspaceRowProps) => {
+const syncLabel = (workspace: Workspace, currentUserId: string | null): string | null => {
+  if (workspace.ownerId !== null && workspace.ownerId !== currentUserId)
+    return currentUserId === null ? "Local only" : "From another account";
+  if (currentUserId === null) return null;
+  if (workspace.syncState === "too-large") return "Too large to sync";
+  if (workspace.syncState === "conflict") return "Conflict";
+  if (workspace.syncState === "dirty") return "Syncing";
+  if (workspace.syncState === "synced") return "Synced";
+  return "Local only";
+};
+
+const WorkspaceRow = ({
+  workspace,
+  currentUserId,
+  onExport,
+  onDelete,
+  onStartSync,
+  onCopy,
+}: WorkspaceRowProps) => {
   const title = displayTitle(workspace);
+  const badge = syncLabel(workspace, currentUserId);
   return (
     <li className="workspace-row">
       <div className="workspace-main">
@@ -38,6 +64,7 @@ const WorkspaceRow = ({ workspace, onExport, onDelete }: WorkspaceRowProps) => {
         <div className="workspace-meta">
           <span className="badge">{LANGUAGE_LABELS[workspace.language]}</span>
           <span>{lastRunText(workspace)}</span>
+          {badge === null ? null : <span className="badge">{badge}</span>}
           <span>
             Updated{" "}
             <time dateTime={workspace.updatedAt} title={absoluteTime(workspace.updatedAt)}>
@@ -47,6 +74,22 @@ const WorkspaceRow = ({ workspace, onExport, onDelete }: WorkspaceRowProps) => {
         </div>
       </div>
       <div className="actions">
+        {currentUserId !== null && workspace.syncState === "excluded" ? (
+          <button
+            type="button"
+            className="button button-quiet"
+            onClick={() => onStartSync(workspace)}
+          >
+            Start syncing
+          </button>
+        ) : null}
+        {currentUserId !== null &&
+        workspace.ownerId !== null &&
+        workspace.ownerId !== currentUserId ? (
+          <button type="button" className="button button-quiet" onClick={() => onCopy(workspace)}>
+            Copy to this account
+          </button>
+        ) : null}
         <button
           type="button"
           className="button button-quiet"
@@ -90,6 +133,15 @@ export const HomePage = () => {
   const revalidator = useRevalidator();
   const [pendingDelete, setPendingDelete] = useState<Workspace | null>(null);
   const [creating, setCreating] = useState(false);
+  const { account, sync } = useSync();
+
+  useEffect(
+    () =>
+      subscribeToChannel((message) => {
+        if (message.type === "changed") void revalidator.revalidate();
+      }),
+    [revalidator],
+  );
 
   const startScratch = async (): Promise<void> => {
     setCreating(true);
@@ -104,6 +156,7 @@ export const HomePage = () => {
   const confirmDelete = async (): Promise<void> => {
     if (pendingDelete === null) return;
     await deleteWorkspace(await getDatabase(), pendingDelete.id);
+    postChannelMessage({ type: "changed", id: pendingDelete.id });
     setPendingDelete(null);
     await revalidator.revalidate();
   };
@@ -114,6 +167,22 @@ export const HomePage = () => {
 
   const exportAll = async (): Promise<void> => {
     await exportWorkspaces(await getDatabase());
+  };
+
+  const startSync = async (workspace: Workspace): Promise<void> => {
+    if (account === null) return;
+    await startSyncingWorkspace(await getDatabase(), workspace.id, account.id);
+    postChannelMessage({ type: "changed", id: workspace.id });
+    sync();
+  };
+
+  const copy = async (workspace: Workspace): Promise<void> => {
+    if (account === null) return;
+    const id = await copyToAccount(await getDatabase(), workspace.id, account.id);
+    if (id !== undefined) {
+      postChannelMessage({ type: "changed", id });
+      sync();
+    }
   };
 
   const synced = pendingDelete !== null && !["local", "excluded"].includes(pendingDelete.syncState);
@@ -137,10 +206,11 @@ export const HomePage = () => {
           >
             Export all
           </button>
+          <AccountControl />
         </div>
       </div>
 
-      {persistent === false && workspaces.length > 0 ? <StorageBanner /> : null}
+      {account === null && persistent === false && workspaces.length > 0 ? <StorageBanner /> : null}
 
       {workspaces.length === 0 ? (
         <section className="empty-state" aria-labelledby="empty-heading">
@@ -156,8 +226,11 @@ export const HomePage = () => {
             <WorkspaceRow
               key={workspace.id}
               workspace={workspace}
+              currentUserId={account?.id ?? null}
               onExport={(target) => void exportOne(target)}
               onDelete={setPendingDelete}
+              onStartSync={(target) => void startSync(target)}
+              onCopy={(target) => void copy(target)}
             />
           ))}
         </ul>

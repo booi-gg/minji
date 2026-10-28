@@ -1,19 +1,24 @@
 import { Link, Outlet, isRouteErrorResponse, useRouteError } from "react-router";
 import { ToastProvider } from "../shared/toast.tsx";
+import { SyncProvider } from "../sync/SyncProvider.tsx";
 
 // No top bar: the app name is a small link in the bottom-right corner.
 const Brand = () => (
-  <Link className="brand" to="/" aria-label="minji: all workspaces">
-    minji
-  </Link>
+  <footer>
+    <Link className="brand" to="/" aria-label="minji: all workspaces">
+      minji
+    </Link>
+  </footer>
 );
 
 export const AppLayout = () => (
   <ToastProvider>
-    <div className="app">
-      <Outlet />
-      <Brand />
-    </div>
+    <SyncProvider>
+      <div className="app">
+        <Outlet />
+        <Brand />
+      </div>
+    </SyncProvider>
   </ToastProvider>
 );
 

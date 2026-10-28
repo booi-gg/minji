@@ -7,10 +7,37 @@
     "not_found_handling": "single-page-application",
     "run_worker_first": ["/api/*"],
   },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "minji",
+      "database_id": "c889e344-5c0c-4f9f-a6cf-200f55b95375",
+      "migrations_dir": "worker/migrations",
+    },
+  ],
+  "vars": {
+    "GITHUB_CLIENT_ID": "",
+    "APP_ORIGIN": "https://minji.booboosable.workers.dev",
+  },
+  "triggers": { "crons": ["0 3 * * *"] },
   "observability": { "enabled": true },
   "env": {
     "staging": {
       "name": "minji-staging",
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "minji-staging",
+          "database_id": "6bbd6120-1863-4278-b146-823fa20ac1d0",
+          "migrations_dir": "worker/migrations",
+        },
+      ],
+      "vars": {
+        "GITHUB_CLIENT_ID": "",
+        "APP_ORIGIN": "https://minji-staging.booboosable.workers.dev",
+      },
+      "triggers": { "crons": ["0 3 * * *"] },
+      "observability": { "enabled": true },
     },
   },
 }

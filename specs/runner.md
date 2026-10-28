@@ -11,6 +11,9 @@ interface RunnerTest {
   id: string;
   argsJson: string; // JSON array text, validated by the page; parsed inside the sandbox
   capture: CompareTarget; // what to send back: the return value or args[index] after the call
+  kind?: "function" | "class";
+  inputAdapters?: ("plain" | "linked-list" | "binary-tree")[];
+  outputAdapter?: "plain" | "linked-list" | "binary-tree";
 }
 
 interface RunRequest {
@@ -75,13 +78,13 @@ Every run ends with exactly one `run-complete` or `crashed`. Before it come eith
 
 1. **Check limits.** The page rejects the run before calling the runner when `source`, a test's args, or the total input exceed the limits in specs/README.md.
 2. **Strip types** on the page. Run `sucrase.transform(source, { transforms })` with `transforms = ['typescript', 'imports']` for TypeScript and `['imports']` for JavaScript, `disableESTransforms: true`, `production: true`. A sucrase syntax error becomes `compile-error` with its line and column. Sucrase keeps line numbers and reports only the first error; the editor shows the rest.
-3. **Build the loader body** (`buildLoaderBody`): the transformed code followed by `;return (<lookup>);`, where the lookup is `typeof NAME === "function" ? NAME : typeof exports.NAME === "function" ? exports.NAME : typeof module.exports === "function" ? module.exports : exports.default`. `NAME` is the `functionName`, validated as an identifier because it is interpolated. The `imports` transform turns `export` into assignments on `exports` and `import` into `require(...)`, and adds `"use strict"`, which matches how LeetCode runs JavaScript.
+3. **Build the loader body** (`buildLoaderBody`): the transformed code followed by a return object containing the named callable and any `ListNode` or `TreeNode` constructors declared by the solution. `NAME` is the `functionName`, validated as an identifier because it is interpolated. The `imports` transform turns `export` into assignments on `exports` and `import` into `require(...)`, and adds `"use strict"`.
 4. **Per test**, in a fresh Worker:
    1. Evaluate the harness (`src/runner/guest.js`), which installs the console shim and `__minjiRun`.
    2. Compile the loader body with `new Function("exports", "module", "require", body)`. A `SyntaxError` here becomes `compile-error` (without a line number) and ends the run.
    3. `__minjiRun` calls the loader with a fresh `exports`/`module` and a `require` that throws; a thrown import becomes `imports-unsupported` and ends the run. Any other throw while loading becomes `threw` for that test.
    4. No function found → `missing-function`.
-   5. Parse the args from JSON inside the Worker, so the function receives values it can mutate.
+   5. Parse the args from JSON inside the Worker. For function cases, convert selected array arguments to list or tree nodes. For class cases, construct the class and call each named method in order on the same instance.
    6. Time the call with `performance.now()`.
    7. Encode either the return value or `args[capture.index]`, and post the result as a JSON string.
 

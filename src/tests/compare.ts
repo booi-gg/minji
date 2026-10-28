@@ -1,5 +1,5 @@
 // Comparison of expected and actual values. See specs/test-cases.md, "Comparison".
-import type { Encoded } from "../runner/types.ts";
+import type { ComparisonOptions, Encoded } from "../runner/types.ts";
 
 export type Comparison = { equal: true } | { equal: false; path: string };
 
@@ -44,7 +44,12 @@ const kindOf = ({ value, literal }: Normalised): string => {
   return typeof value;
 };
 
-const compareAt = (expected: Encoded, actual: Encoded, path: string): Comparison => {
+const compareAt = (
+  expected: Encoded,
+  actual: Encoded,
+  path: string,
+  tolerance: number,
+): Comparison => {
   const normalisedLeft = normalise(expected);
   const normalisedRight = normalise(actual);
   const kind = kindOf(normalisedLeft);
@@ -56,7 +61,12 @@ const compareAt = (expected: Encoded, actual: Encoded, path: string): Comparison
   if (Array.isArray(left) && Array.isArray(right)) {
     if (left.length !== right.length) return { equal: false, path };
     for (let index = 0; index < left.length; index += 1) {
-      const result = compareAt(left[index] ?? null, right[index] ?? null, `${path}[${index}]`);
+      const result = compareAt(
+        left[index] ?? null,
+        right[index] ?? null,
+        `${path}[${index}]`,
+        tolerance,
+      );
       if (!result.equal) return result;
     }
     return { equal: true };
@@ -72,18 +82,66 @@ const compareAt = (expected: Encoded, actual: Encoded, path: string): Comparison
       if (!(key in left)) return { equal: false, path: `${path}${keySegment(key)}` };
     }
     for (const key of leftKeys) {
-      const result = compareAt(left[key] ?? null, right[key] ?? null, `${path}${keySegment(key)}`);
+      const result = compareAt(
+        left[key] ?? null,
+        right[key] ?? null,
+        `${path}${keySegment(key)}`,
+        tolerance,
+      );
       if (!result.equal) return result;
     }
     return { equal: true };
   }
 
+  if (typeof left === "number" && typeof right === "number") {
+    return Math.abs(left - right) <= tolerance ? { equal: true } : { equal: false, path };
+  }
   return left === right ? { equal: true } : { equal: false, path };
 };
 
-/** Deep equality for encoded JSON values; reports the path of the first difference. */
-export const compare = (expected: Encoded, actual: Encoded): Comparison =>
-  compareAt(expected, actual, "");
+const MAX_UNORDERED_ITEMS = 1000;
+
+/** Match array elements one to one, including duplicates and overlapping tolerance ranges. */
+const compareUnordered = (
+  expected: Encoded[],
+  actual: Encoded[],
+  tolerance: number,
+): Comparison => {
+  if (expected.length !== actual.length || expected.length > MAX_UNORDERED_ITEMS)
+    return { equal: false, path: "" };
+  const matched = new Int32Array(actual.length).fill(-1);
+  const edges = expected.map((item) =>
+    actual.map((candidate) => compareAt(item, candidate, "", tolerance).equal),
+  );
+  const assign = (index: number, seen: Uint8Array): boolean => {
+    for (let candidate = 0; candidate < actual.length; candidate += 1) {
+      if (!edges[index]?.[candidate] || seen[candidate]) continue;
+      seen[candidate] = 1;
+      const previous = matched[candidate];
+      if (previous === -1 || assign(previous, seen)) {
+        matched[candidate] = index;
+        return true;
+      }
+    }
+    return false;
+  };
+  for (let index = 0; index < expected.length; index += 1) {
+    if (!assign(index, new Uint8Array(actual.length))) return { equal: false, path: `[${index}]` };
+  }
+  return { equal: true };
+};
+
+/** Deep equality; unordered comparison applies to the outer array only. */
+export const compare = (
+  expected: Encoded,
+  actual: Encoded,
+  options: ComparisonOptions = {},
+): Comparison => {
+  const tolerance = options.tolerance ?? 0;
+  if (options.unordered && Array.isArray(expected) && Array.isArray(actual))
+    return compareUnordered(expected, actual, tolerance);
+  return compareAt(expected, actual, "", tolerance);
+};
 
 const TAG_TEXT: Record<string, string> = {
   undefined: "undefined",

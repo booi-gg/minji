@@ -1,7 +1,13 @@
 // Workspace data types and constructors. See specs/data-model.md.
 import { newId } from "../shared/ids.ts";
 import { DEFAULT_TEST_TIMEOUT_MS } from "../shared/limits.ts";
-import type { CompareTarget, Language } from "../runner/types.ts";
+import type {
+  CompareTarget,
+  ComparisonOptions,
+  Language,
+  NodeAdapter,
+  TestKind,
+} from "../runner/types.ts";
 import type { RunOutcome, TestResult } from "../tests/results.ts";
 
 export type SyncState = "local" | "excluded" | "dirty" | "synced" | "conflict" | "too-large";
@@ -35,6 +41,10 @@ export interface TestCase {
   argsText: string;
   expectedText: string;
   compare: CompareTarget;
+  kind?: TestKind;
+  inputAdapters?: NodeAdapter[];
+  outputAdapter?: NodeAdapter;
+  comparison?: ComparisonOptions;
 }
 
 export interface Revision {
