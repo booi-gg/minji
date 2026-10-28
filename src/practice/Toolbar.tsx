@@ -134,7 +134,7 @@ const MoreMenu = ({
   const formatId = useId();
   return (
     <details className="menu">
-      <summary className="button button-quiet icon-button" aria-label="More" title="More">
+      <summary className="button button-quiet icon-button" aria-label="More" data-tooltip="More">
         <Ellipsis size={16} aria-hidden="true" />
       </summary>
       <div className="menu-panel">
@@ -257,7 +257,7 @@ export const Toolbar = ({
           className="button button-quiet icon-button"
           aria-label={sidebarOpen ? "Hide problem list" : "Show problem list"}
           aria-expanded={sidebarOpen}
-          title={sidebarOpen ? "Hide problem list" : "Show problem list"}
+          data-tooltip={sidebarOpen ? "Hide problem list" : "Show problem list"}
           onClick={onToggleSidebar}
         >
           {sidebarOpen ? (
@@ -299,7 +299,7 @@ export const Toolbar = ({
             type="button"
             className="button button-danger icon-button"
             aria-label="Stop running tests"
-            title="Stop running tests"
+            data-tooltip="Stop running tests"
             onClick={onStop}
           >
             <Square size={16} aria-hidden="true" />
@@ -309,7 +309,7 @@ export const Toolbar = ({
             type="button"
             className="button button-primary icon-button"
             aria-label="Run all tests"
-            title="Run all tests"
+            data-tooltip="Run all tests"
             onClick={onRunAll}
           >
             <Play size={16} aria-hidden="true" />
@@ -319,7 +319,7 @@ export const Toolbar = ({
           type="button"
           className="button icon-button"
           aria-label="Format code"
-          title="Format code"
+          data-tooltip="Format code"
           onClick={onFormat}
           disabled={readOnly}
         >
@@ -329,7 +329,7 @@ export const Toolbar = ({
           type="button"
           className="button icon-button"
           aria-label="Reset code"
-          title="Reset code"
+          data-tooltip="Reset code"
           onClick={onReset}
           disabled={readOnly || unchanged}
         >
@@ -339,7 +339,7 @@ export const Toolbar = ({
           type="button"
           className="button icon-button"
           aria-label="History"
-          title="History"
+          data-tooltip="History"
           onClick={onHistory}
         >
           <History size={16} aria-hidden="true" />
@@ -355,7 +355,7 @@ export const Toolbar = ({
         />
       </div>
       {readOnly ? null : (
-        <span className="save-status" data-status={saveStatus} title={STATUS_TEXT[saveStatus]}>
+        <span className="save-status" data-status={saveStatus} data-tooltip={STATUS_TEXT[saveStatus]}>
           <SaveIcon size={16} aria-hidden="true" />
           <span className="visually-hidden" role="status">
             {STATUS_TEXT[saveStatus]}
@@ -365,7 +365,7 @@ export const Toolbar = ({
               type="button"
               className="button button-quiet icon-button"
               aria-label="Retry save"
-              title="Retry save"
+              data-tooltip="Retry save"
               onClick={onRetrySave}
             >
               <RotateCcw size={16} aria-hidden="true" />

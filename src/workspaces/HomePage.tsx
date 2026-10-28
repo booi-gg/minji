@@ -90,7 +90,7 @@ const WorkspaceRow = ({
             type="button"
             className="button button-quiet icon-button"
             aria-label={`Organize ${title}`}
-            title="Organize"
+            data-tooltip="Organize"
             onClick={() => onOrganize(workspace)}
           >
             <FolderInput size={16} aria-hidden="true" />
@@ -116,7 +116,7 @@ const WorkspaceRow = ({
           type="button"
           className="button button-quiet icon-button"
           aria-label={`Export ${title}`}
-          title="Export"
+          data-tooltip="Export"
           onClick={() => onExport(workspace)}
         >
           <Download size={16} aria-hidden="true" />
@@ -125,7 +125,7 @@ const WorkspaceRow = ({
           type="button"
           className="button button-quiet icon-button"
           aria-label={`Delete ${title}`}
-          title="Delete"
+          data-tooltip="Delete"
           onClick={() => onDelete(workspace)}
         >
           <Trash2 size={16} aria-hidden="true" />
@@ -253,14 +253,14 @@ export const HomePage = () => {
           <Link className="button button-primary" to="/new">
             New problem
           </Link>
-          <Link className="button icon-button" to="/new/import" aria-label="Import" title="Import">
+          <Link className="button icon-button" to="/new/import" aria-label="Import" data-tooltip="Import">
             <Upload size={16} aria-hidden="true" />
           </Link>
           <button
             type="button"
             className="button icon-button"
             aria-label="Export all"
-            title="Export all"
+            data-tooltip="Export all"
             onClick={() => void exportAll()}
             disabled={workspaces.length === 0}
           >

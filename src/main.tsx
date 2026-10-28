@@ -5,8 +5,10 @@ import "@fontsource-variable/jetbrains-mono";
 import "./app/styles.css";
 import { router } from "./app/router.tsx";
 import { applyStoredTheme } from "./app/theme.ts";
+import { installTooltips } from "./shared/tooltip.ts";
 
 applyStoredTheme();
+installTooltips();
 
 const root = document.getElementById("root");
 if (root === null) throw new Error("Missing #root element");

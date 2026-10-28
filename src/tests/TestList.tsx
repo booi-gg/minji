@@ -249,7 +249,7 @@ const TestRow = ({
                     type="button"
                     className="button button-quiet button-small"
                     aria-label={`Move ${name} up`}
-                    title="Move up"
+                    data-tooltip="Move up"
                     disabled={index === 0}
                     onClick={() => onMove(index, index - 1)}
                   >
@@ -259,7 +259,7 @@ const TestRow = ({
                     type="button"
                     className="button button-quiet button-small"
                     aria-label={`Move ${name} down`}
-                    title="Move down"
+                    data-tooltip="Move down"
                     disabled={index === count - 1}
                     onClick={() => onMove(index, index + 1)}
                   >
@@ -269,7 +269,7 @@ const TestRow = ({
                     type="button"
                     className="button button-quiet button-small"
                     aria-label={`Duplicate ${name}`}
-                    title="Duplicate"
+                    data-tooltip="Duplicate"
                     onClick={() => onDuplicate(index)}
                   >
                     <Copy size={16} aria-hidden="true" />
@@ -540,7 +540,7 @@ export const TestList = ({
                   type="button"
                   className="case-tab-remove"
                   aria-label={`Delete ${caseName}`}
-                  title="Delete case"
+                  data-tooltip="Delete case"
                   onClick={() => remove(index)}
                 >
                   <X size={12} aria-hidden="true" />
@@ -554,7 +554,7 @@ export const TestList = ({
             type="button"
             className="case-add"
             aria-label="Add case"
-            title="Add case"
+            data-tooltip="Add case"
             onClick={add}
             disabled={full}
           >

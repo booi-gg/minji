@@ -120,10 +120,10 @@ export const ProblemSidebar = ({ activeId }: ProblemSidebarProps) => {
   return (
     <nav className="sidebar" aria-label="Problems">
       <div className="sidebar-header">
-        <Link className="sidebar-heading" to="/" aria-label="All problems" title="All problems">
+        <Link className="sidebar-heading" to="/" aria-label="All problems">
           Problems
         </Link>
-        <Link className="button button-quiet icon-button" to="/new" aria-label="New problem" title="New problem">
+        <Link className="button button-quiet icon-button" to="/new" aria-label="New problem" data-tooltip="New problem">
           <Plus size={16} aria-hidden="true" />
         </Link>
       </div>
