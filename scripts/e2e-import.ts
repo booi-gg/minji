@@ -1,8 +1,8 @@
 // Step 4 gate: paste a problem, review named arguments, save, and run its tests.
-// Usage: start `vp dev`, then `vpx ./scripts/e2e-import.ts http://127.0.0.1:5173`
+// Usage: start `vp dev`, then `vpx ./scripts/e2e-import.ts http://127.0.0.1:8000`
 import { chromium, firefox, webkit, type Browser } from "playwright";
 
-const base = process.argv[2] ?? "http://127.0.0.1:5173";
+const base = process.argv[2] ?? "http://127.0.0.1:8000";
 const statement = `Pair With Target Sum
 Return the indices of two entries that add up to target.
 

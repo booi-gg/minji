@@ -12,6 +12,7 @@ const isTest = process.env.VITEST !== undefined;
 
 export default defineConfig({
   plugins: isTest ? [react()] : [react(), cloudflare()],
+  server: { port: 8000, strictPort: true },
   fmt: {
     // runner.html's CSP pins the exact bytes of its inline script.
     ignorePatterns: [runnerFixtures, importFixtures, "public/runner.html"],

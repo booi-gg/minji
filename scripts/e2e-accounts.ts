@@ -1,12 +1,12 @@
 // UI gate for account sync. API routes are fulfilled by one shared in-memory server,
 // so two isolated browser contexts exercise the client without GitHub credentials.
-// Usage: vpx ./scripts/e2e-accounts.ts http://localhost:5173
+// Usage: vpx ./scripts/e2e-accounts.ts http://localhost:8000
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { chromium, type BrowserContext, type Page, type Route } from "playwright";
 import type { RevisionDto, WorkspaceDoc } from "../src/sync/protocol.ts";
 
-const base = process.argv[2] ?? "http://localhost:5173";
+const base = process.argv[2] ?? "http://localhost:8000";
 const account = { id: "e2e-user", login: "e2e", avatarUrl: null };
 interface Row {
   revision: number;

@@ -1,9 +1,9 @@
 // End-to-end check of the step 3 gate in Chromium, Firefox and WebKit: imports workspaces
 // through the UI, runs their tests, and prints each result.
-// Usage: start `vp dev`, then `vpx ./scripts/e2e-runs.ts http://localhost:5173`
+// Usage: start `vp dev`, then `vpx ./scripts/e2e-runs.ts http://localhost:8000`
 import { chromium, firefox, webkit, type Browser, type Page } from "playwright";
 
-const base = process.argv[2] ?? "http://localhost:5173";
+const base = process.argv[2] ?? "http://localhost:8000";
 
 const gateSource = `function solve(kind: string): unknown {
   switch (kind) {

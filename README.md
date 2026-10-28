@@ -9,7 +9,7 @@ vp install
 vp dev
 ```
 
-`vp dev` runs the app and the Cloudflare Worker together: `@cloudflare/vite-plugin` serves `/api/*` from a local workerd runtime, so no separate `wrangler dev` is needed.
+`vp dev` serves the app at `http://localhost:8000` and runs the Cloudflare Worker together with it: `@cloudflare/vite-plugin` serves `/api/*` from a local workerd runtime, so no separate `wrangler dev` is needed.
 
 | Command                                               | What it does                                                            |
 | ----------------------------------------------------- | ----------------------------------------------------------------------- |
@@ -19,7 +19,7 @@ vp dev
 | `vp test --project unit`                              | Unit tests only                                                         |
 | `vp run build`                                        | Type-check, build, and generate the offline service worker              |
 | `vp run deploy:staging`                               | Build and deploy to the `minji-staging` Worker (needs `wrangler login`) |
-| `vpx ./scripts/e2e-accounts.ts http://localhost:5173` | Account, sync and conflict UI check against a shared test API           |
+| `vpx ./scripts/e2e-accounts.ts http://localhost:8000` | Account, sync and conflict UI check against a shared test API           |
 | `vpx ./scripts/e2e-offline.ts http://localhost:4173`  | Offline check against `vp preview` after a production build             |
 
 Runner tests need Playwright's browsers once: `node_modules/.bin/playwright install chromium firefox webkit`.

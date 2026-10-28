@@ -16,7 +16,7 @@
     },
   ],
   "vars": {
-    "GITHUB_CLIENT_ID": "",
+    "GITHUB_CLIENT_ID": "6b32b687cc2d7cf5212de6ec42d334e95d6a921e",
     "APP_ORIGIN": "https://minji.booboosable.workers.dev",
   },
   "triggers": { "crons": ["0 3 * * *"] },

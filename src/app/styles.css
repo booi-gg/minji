@@ -152,6 +152,7 @@ pre {
 /* ---- Layout ---------------------------------------------------------------------- */
 
 .page {
+  width: 100%;
   max-width: var(--content-width);
   margin: 0 auto;
   padding-inline: var(--space-4);

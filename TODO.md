@@ -118,8 +118,8 @@ Spec: [workspaces-and-import.md](specs/workspaces-and-import.md).
 Spec: [sync-and-auth.md](specs/sync-and-auth.md).
 
 - [x] D1 databases for staging and production; `0001_init.sql` migration applied to both.
-- [ ] Sign in to the intended Cloudflare account with `wrangler login`; run `wrangler whoami` and `wrangler d1 list` to confirm access to the two D1 databases already bound in `wrangler.jsonc`.
-- [ ] Confirm that this account's Workers.dev subdomain is `booboosable` and that both `APP_ORIGIN` values in `wrangler.jsonc` match the URLs the Workers will use. If the subdomain differs, update these values and the GitHub OAuth homepage/callback URLs below before creating the OAuth apps.
+- [x] Sign in to the intended Cloudflare account with `wrangler login`; run `wrangler whoami` and `wrangler d1 list` to confirm access to the two D1 databases already bound in `wrangler.jsonc`.
+- [x] Confirm that this account's Workers.dev subdomain is `booboosable` and that both `APP_ORIGIN` values in `wrangler.jsonc` match the URLs the Workers will use. If the subdomain differs, update these values and the GitHub OAuth homepage/callback URLs below before creating the OAuth apps.
 - [ ] Create a **staging** GitHub OAuth app in GitHub Settings → Developer settings → OAuth apps. Set homepage to `https://minji-staging.booboosable.workers.dev` and callback to `https://minji-staging.booboosable.workers.dev/api/auth/github/callback`.
 - [ ] Create a separate **production** GitHub OAuth app. Set homepage to `https://minji.booboosable.workers.dev` and callback to `https://minji.booboosable.workers.dev/api/auth/github/callback`.
 - [ ] Copy each app's client ID into its `GITHUB_CLIENT_ID` entry in `wrangler.jsonc` (staging under `env.staging.vars`, production under `vars`).
