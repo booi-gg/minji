@@ -67,7 +67,7 @@ export const ImportPage = () => {
         return;
       }
       if (result.workspaces.length === 0) {
-        setError("This file has no workspaces that can be imported.");
+        setError("This file has no problems that can be imported.");
         return;
       }
       if (result.workspaces.length === 1) {
@@ -117,7 +117,7 @@ export const ImportPage = () => {
       await saveImportedWorkspaces(await getDatabase(), bundles);
       await navigate("/");
     } catch {
-      setError("The selected workspaces couldn't be saved. Try again.");
+      setError("The selected problems couldn't be saved. Try again.");
     } finally {
       setSaving(false);
     }

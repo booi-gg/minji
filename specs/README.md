@@ -63,7 +63,7 @@ public/
 
 ## Glossary
 
-- **Workspace:** one problem or scratch pad: statement, notes, code, tests, history.
+- **Workspace:** one problem or scratch pad: statement, notes, code, tests, history. The UI calls it a **problem**; code, routes, storage and the export format keep the name `workspace`.
 - **Test case:** one set of arguments and one expected value.
 - **Run:** one execution of some or all of a workspace's tests against the current source.
 - **Revision:** a saved snapshot of the source, taken on run or explicit save.

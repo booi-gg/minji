@@ -1,20 +1,22 @@
 # Workspaces and import
 
-## My workspaces (`/`)
+## My problems (`/`)
 
-- Header: app name, **New workspace**, **Import**, **Export all**, and the account control (sign in, or avatar menu with Sign out).
+The UI calls workspaces **problems**; see the glossary in README.md.
+
+- Header: heading "problems", **New problem**, icon-only **Import** and **Export all**, and the account control (sign in, or avatar menu with Sign out).
 - Rows are sorted by `updatedAt`, newest first, excluding tombstoned workspaces. Each row shows:
   - title, or "Untitled";
   - language;
   - last run: `5/8 passed`, or `Not run yet`;
   - updated time, relative ("3 h ago"), with the exact time in a tooltip;
   - sync badge, only while signed in: `Synced`, `Syncing`, `Conflict`, `Local only`, or `Too large to sync`.
-- Row actions: open (click the row), **Export**, **Delete**.
+- Row actions: open (click the row), and icon-only **Organize**, **Export**, **Delete**.
 - **Delete** asks "Delete "<title>"?" with the detail "This also removes it from your other devices." when the workspace is synced, and "This can't be undone." otherwise.
-- Empty state: "No workspaces yet." with **Start from scratch** and **Import problem** buttons.
+- Empty state: "No problems yet." with **Start from scratch** and **Import problem** buttons.
 - The storage banner from data-model.md appears above the list when it applies.
 
-## New workspace (`/new`)
+## New problem (`/new`)
 
 Two choices:
 
@@ -113,6 +115,6 @@ Editable fields: title, language, function name, params, statement (rendered, wi
 
 - **Params** show as chips with **Move left** / **Move right** buttons. Reordering remaps every draft test's named arguments. When `paramsConfirmed` is `false`, a notice reads "Check the parameter order; it was guessed from the examples." and stays until the user reorders or ticks **Order is correct**.
 - Warnings are listed at the top.
-- **Save workspace** creates the workspace and tests in one transaction, with `source` equal to `starterSource`, and opens `/w/:id`. Invalid tests are saved as raw text so the user can fix them in the editor.
+- **Save problem** creates the workspace and tests in one transaction, with `source` equal to `starterSource`, and opens `/w/:id`. Invalid tests are saved as raw text so the user can fix them in the editor.
 - Save is disabled only when title, statement and starter code are all empty.
 - Leaving with an unsaved draft asks for confirmation (router blocker and `beforeunload`).

@@ -332,13 +332,13 @@ export const SyncProvider = ({ children }: { children: ReactNode }) => {
       {children}
       <ConfirmDialog
         open={account !== null && localCount > 0}
-        title={`Upload ${localCount} ${localCount === 1 ? "workspace" : "workspaces"} from this device?`}
+        title={`Upload ${localCount} ${localCount === 1 ? "problem" : "problems"} from this device?`}
         confirmLabel="Upload"
         cancelLabel="Keep on this device only"
         onConfirm={() => void choose(true)}
         onCancel={() => void choose(false)}
       >
-        <p>Upload these workspaces to your account, or keep them on this device only.</p>
+        <p>Upload these problems to your account, or keep them on this device only.</p>
       </ConfirmDialog>
     </SyncContext>
   );

@@ -2,9 +2,9 @@
 
 ## Authoring
 
-The **Tests** tab has a **Case 1 / Case 2 / … / +** picker in `position` order and shows one selected case. Function tests show one JSON field per argument, labeled with the parameter name when known. On a wide test pane, arguments are on the left and **Expected output** is on the right; they stack when the pane is narrow. The fields edit the existing `argsText` JSON array; no data migration is needed. Cases with unsplittable argument text and class method sequences show a raw JSON field.
+The **Testcase** tab has a **Case 1 / Case 2 / … / +** picker in `position` order and shows one selected case. Hovering a case shows **×** to delete it (not on the last case). Function tests show one JSON field per argument, labeled `name =` with the parameter name when known, followed by **Expected =**, all in one column. The fields edit the existing `argsText` JSON array; no data migration is needed. Cases with unsplittable argument text and class method sequences show a raw JSON field.
 
-The selected case has a Run button. **Options** contains its name, move/duplicate/delete controls, test type, compare target, input and result adapters, unordered comparison, and numeric tolerance. The summary marks customized options. A class case uses `[["ClassName","method"],[[],[args]]]` and compares the full result sequence.
+Cases run with **Run all** (or Mod+Shift+Enter for the selected case). **Options** contains its name, move/duplicate controls, test type, compare target, input and result adapters, unordered comparison, and numeric tolerance. The summary marks customized options. A class case uses `[["ClassName","method"],[[],[args]]]` and compares the full result sequence.
 
 - **Add case** appends a case with `argsText: '[]'` and `expectedText: ''`, selects it, and focuses its first argument when present. It is disabled at `MAX_TESTS_PER_WORKSPACE`.
 - **Delete** selects a neighboring case and shows an **Undo** toast for 5 seconds. Moving rewrites positions densely in one transaction.
@@ -109,7 +109,7 @@ Run-level outcomes replace the per-test list with one message:
 
 Shown at the top of the **Results** tab and announced through an `aria-live="polite"` region.
 
-The results view has a case picker. It shows only the selected case's input and result, side by side when the pane is wide; selecting another case does not rerun code. Inputs come from the run snapshot, so later test edits do not change the displayed result.
+The **Test Result** tab shows the run summary as a heading (green when every case passed, red otherwise), then a case picker with a pass/fail dot per case. It shows only the selected case, in one column: Input, Stdout (when the case logged anything), Output and Expected — or the status and its detail for other statuses; selecting another case does not rerun code. Inputs come from the run snapshot, so later test edits do not change the displayed result.
 
 | Situation                  | Text                                                           |
 | -------------------------- | -------------------------------------------------------------- |
@@ -119,12 +119,12 @@ The results view has a case picker. It shows only the selected case's input and 
 | Run one                    | `Test "<label or Test n>" passed` / `… failed` / `… timed out` |
 | Run-level outcome          | the outcome message                                            |
 
-Never use "Accepted" or any wording that implies a hidden judge. Durations show as `12 ms` beside each row, with the tooltip "Local timing on this device, for comparison between your own runs only."
+Never use "Accepted" or any wording that implies a hidden judge. Durations show as `Runtime 12 ms` under the selected case, with the tooltip "Local timing on this device, for comparison between your own runs only."
 
 **Run all** updates `workspace.lastRun` with `passed` and `total`, where `total` counts invalid tests, only when the run completes (not when stopped or crashed); this doesn't change `updatedAt`. **Run one** never changes `lastRun`. Every run that starts is stored as a `RunRecord`; runs rejected before starting (no tests, code over the limit) only show their message.
 
 Error details list the stack frames in the user's code as `at helper (line 16)`, each a link that moves the editor's cursor there. Harness frames are removed. Line numbers come from `src/runner/stack.ts`; Safari reports no locations for this code, so it shows function names only.
 
-## Console tab
+## Stdout
 
-Shows the console entries of the selected test, or of all tests grouped by test with a header row. `warn` and `error` entries use the warning and error colours. When truncated, the last line reads `Output truncated at 16 KB.`
+The selected case's console entries show under **Stdout** in the Test Result tab. `warn` and `error` entries use the warning and error colours. When truncated, the last line reads `Output truncated at 16 KB.`

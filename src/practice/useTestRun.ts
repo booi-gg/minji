@@ -1,5 +1,5 @@
-// Runs tests through the sandboxed runner and keeps the live results for the Results and
-// Console tabs. See specs/test-cases.md and specs/runner.md.
+// Runs tests through the sandboxed runner and keeps the live results for the Test Result
+// tab. See specs/test-cases.md and specs/runner.md.
 import { useCallback, useEffect, useRef, useState } from "react";
 import { getDatabase } from "../db/database.ts";
 import { addRun, setLastRun } from "../db/workspaces.ts";

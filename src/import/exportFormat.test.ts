@@ -216,7 +216,7 @@ describe("import", () => {
       '{"format":"minji.workspaces","version":2,"workspaces":[]}',
       "This file was made by a newer version of the app.",
     ],
-    ['{"format":"minji.workspaces","version":1}', "This file has no workspaces."],
+    ['{"format":"minji.workspaces","version":1}', "This file has no problems."],
   ])("rejects %s", (text, message) => {
     expect(parseExportFile(text)).toEqual({ ok: false, message });
   });

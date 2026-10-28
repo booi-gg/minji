@@ -20,7 +20,7 @@ export const NewWorkspacePage = () => {
   return (
     <main className="page">
       <div className="page-heading">
-        <h1>New workspace</h1>
+        <h1>New problem</h1>
       </div>
       <div className="choices">
         <button

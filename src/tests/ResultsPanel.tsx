@@ -79,23 +79,21 @@ const ResultDetail = ({ result, functionName, timeoutMs, onGoToLine }: DetailPro
   switch (result.status) {
     case "passed":
       return (
-        <div className="result-detail value-pair">
-          <ValueBlock label="Expected output" value={result.expected} />
-          <ValueBlock label="Actual output" value={result.actual} />
+        <div className="result-detail">
+          <ValueBlock label="Output" value={result.actual} />
+          <ValueBlock label="Expected" value={result.expected} />
         </div>
       );
     case "failed":
       return (
         <div className="result-detail">
-          <p>
+          <ValueBlock label="Output" value={result.actual} />
+          <ValueBlock label="Expected" value={result.expected} />
+          <p className="hint">
             {result.diffPath === ""
               ? "The values differ."
               : `First difference at ${result.diffPath}`}
           </p>
-          <div className="value-pair">
-            <ValueBlock label="Expected output" value={result.expected} />
-            <ValueBlock label="Actual output" value={result.actual} />
-          </div>
         </div>
       );
     case "error":
@@ -160,7 +158,31 @@ const headline = (view: RunView, results: TestResult[]): string => {
   return summarize(view.scope, results);
 };
 
-/** The Results tab. See specs/test-cases.md, "Statuses" and "Run summary". */
+const Stdout = ({ result }: { result: TestResult }) =>
+  result.console.length === 0 ? null : (
+    <div className="value-block">
+      <span className="field-label">Stdout</span>
+      <pre className="console-lines">
+        {result.console.map((entry, index) => (
+          // Console lines have no identity beyond their order.
+          // oxlint-disable-next-line react/no-array-index-key
+          <span key={index} className={`console-line console-${entry.level}`}>
+            {entry.text}
+            {"\n"}
+          </span>
+        ))}
+      </pre>
+      {result.consoleTruncated ? <p className="hint">Output truncated at 16 KB.</p> : null}
+    </div>
+  );
+
+const headlineTone = (view: RunView, results: TestResult[]): "pass" | "fail" | "pending" => {
+  if (view.message !== null) return "fail";
+  if (view.running || results.length === 0) return "pending";
+  return results.every((result) => result.status === "passed") ? "pass" : "fail";
+};
+
+/** The Test Result tab. See specs/test-cases.md, "Statuses" and "Run summary". */
 export const ResultsPanel = ({
   view,
   functionName,
@@ -173,7 +195,7 @@ export const ResultsPanel = ({
   if (view === null) {
     return (
       <p className="hint" role="status">
-        No results yet. Use Run all or a test's Run button.
+        You must run your code first.
       </p>
     );
   }
@@ -182,6 +204,9 @@ export const ResultsPanel = ({
   const selected = view.order.find(({ id }) => id === selectedId) ?? view.order[0];
   const selectedResult = selected === undefined ? undefined : view.results.get(selected.id);
   const inputs = selected === undefined ? null : splitArguments(selected.argsText);
+  const showStatus =
+    selectedResult === undefined ||
+    (selectedResult.status !== "passed" && selectedResult.status !== "failed");
 
   return (
     <div className="results">
@@ -189,7 +214,7 @@ export const ResultsPanel = ({
         <p
           role="status"
           aria-live="polite"
-          className={view.message === null ? "summary" : "summary summary-error"}
+          className={`summary summary-${headlineTone(view, results)}`}
         >
           {headline(view, results)}
         </p>
@@ -202,24 +227,34 @@ export const ResultsPanel = ({
       <div className="case-picker" role="group" aria-label="Test results">
         {view.order.map(({ id, label }) => {
           const result = view.results.get(id);
+          const active = selected?.id === id;
           return (
-            <button
-              key={id}
-              type="button"
-              className={`case-tab${selected?.id === id ? " case-tab-active" : ""}`}
-              aria-current={selected?.id === id ? "true" : undefined}
-              onClick={() => onSelect(id)}
-            >
-              {label}
-              {result === undefined ? "" : result.status === "passed" ? " ✓" : " ✕"}
-            </button>
+            <span key={id} className={`case-tab${active ? " case-tab-active" : ""}`}>
+              <button
+                type="button"
+                className="case-tab-select"
+                aria-current={active ? "true" : undefined}
+                onClick={() => onSelect(id)}
+              >
+                {result === undefined ? null : (
+                  <>
+                    <span
+                      className={`case-dot case-dot-${statusTone(result.status)}`}
+                      aria-hidden="true"
+                    />
+                    <span className="visually-hidden">{STATUS_LABELS[result.status]}: </span>
+                  </>
+                )}
+                <span className="case-label">{label}</span>
+              </button>
+            </span>
           );
         })}
       </div>
       {selected === undefined ? null : (
         <div className="result-row">
-          <div className="result-header">
-            <span
+          {showStatus ? (
+            <p
               className={`status status-${selectedResult === undefined ? "pending" : statusTone(selectedResult.status)}`}
             >
               {selectedResult === undefined
@@ -227,74 +262,44 @@ export const ResultsPanel = ({
                   ? "Running…"
                   : "Not run"
                 : STATUS_LABELS[selectedResult.status]}
-            </span>
-            <span className="result-label">{selected.label}</span>
-            {selectedResult?.durationMs === null ||
-            selectedResult?.durationMs === undefined ? null : (
-              <span className="duration" title={TIMING_NOTE}>
-                {formatDuration(selectedResult.durationMs)}
-              </span>
-            )}
-          </div>
-          <div className="result-inputs">
-            {inputs === null ? (
-              <div className="value-block">
-                <span className="field-label">Input</span>
+            </p>
+          ) : null}
+          <div className="value-block">
+            <span className="field-label">Input</span>
+            <div className="result-inputs">
+              {inputs === null ? (
                 <pre>{selected.argsText}</pre>
-              </div>
-            ) : inputs.length === 0 ? (
-              <div className="value-block">
-                <span className="field-label">Input</span>
+              ) : inputs.length === 0 ? (
                 <pre>No arguments</pre>
-              </div>
-            ) : (
-              inputs.map((input, index) => (
-                <div key={index} className="value-block">
-                  <span className="field-label">{params[index] ?? `Argument ${index + 1}`} =</span>
-                  <pre>{input}</pre>
-                </div>
-              ))
-            )}
+              ) : (
+                inputs.map((input, index) => (
+                  <pre key={index}>
+                    <span className="input-name">{params[index] ?? `Argument ${index + 1}`} =</span>
+                    {"\n"}
+                    {input}
+                  </pre>
+                ))
+              )}
+            </div>
           </div>
           {selectedResult === undefined ? null : (
-            <ResultDetail
-              result={selectedResult}
-              functionName={functionName}
-              timeoutMs={timeoutMs}
-              onGoToLine={onGoToLine}
-            />
+            <>
+              <Stdout result={selectedResult} />
+              <ResultDetail
+                result={selectedResult}
+                functionName={functionName}
+                timeoutMs={timeoutMs}
+                onGoToLine={onGoToLine}
+              />
+              {selectedResult.durationMs === null ? null : (
+                <span className="duration" title={TIMING_NOTE}>
+                  Runtime {formatDuration(selectedResult.durationMs)}
+                </span>
+              )}
+            </>
           )}
         </div>
       )}
-    </div>
-  );
-};
-
-/** The Console tab: output grouped by test. */
-export const ConsolePanel = ({ view }: { view: RunView | null }) => {
-  const withOutput = (view?.order ?? []).flatMap(({ id, label }) => {
-    const result = view?.results.get(id);
-    return result === undefined || result.console.length === 0 ? [] : [{ id, label, result }];
-  });
-  if (withOutput.length === 0) return <p className="hint">No console output.</p>;
-  return (
-    <div className="console">
-      {withOutput.map(({ id, label, result }) => (
-        <section key={id} className="console-group" aria-label={`Console output of ${label}`}>
-          <h3 className="console-heading">{label}</h3>
-          <pre className="console-lines">
-            {result.console.map((entry, index) => (
-              // Console lines have no identity beyond their order.
-              // oxlint-disable-next-line react/no-array-index-key
-              <span key={index} className={`console-line console-${entry.level}`}>
-                {entry.text}
-                {"\n"}
-              </span>
-            ))}
-          </pre>
-          {result.consoleTruncated ? <p className="hint">Output truncated at 16 KB.</p> : null}
-        </section>
-      ))}
     </div>
   );
 };

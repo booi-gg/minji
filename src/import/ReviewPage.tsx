@@ -250,7 +250,7 @@ export const ReviewPage = ({ entry, onBack }: { entry: ReviewEntry; onBack: () =
       saved.current = true;
       await navigate(`/w/${workspace.id}`);
     } catch {
-      setError("The workspace couldn't be saved. Try again.");
+      setError("The problem couldn't be saved. Try again.");
     } finally {
       setSaving(false);
     }
@@ -283,7 +283,7 @@ export const ReviewPage = ({ entry, onBack }: { entry: ReviewEntry; onBack: () =
           {error}
         </p>
       )}
-      <section className="import-form" aria-label="Workspace fields">
+      <section className="import-form" aria-label="Problem fields">
         <label className="field">
           <span className="field-label">Title</span>
           <input value={state.title} onChange={(event) => update({ title: event.target.value })} />
@@ -448,7 +448,7 @@ export const ReviewPage = ({ entry, onBack }: { entry: ReviewEntry; onBack: () =
       <section className="import-form" aria-label="Imported tests">
         <h2>Tests ({state.tests.length})</h2>
         {state.tests.length === 0 ? (
-          <p className="hint">No examples were found. You can add tests in the workspace.</p>
+          <p className="hint">No examples were found. You can add tests in the problem.</p>
         ) : (
           <ol className="test-rows">
             {state.tests.map((test) => {
@@ -542,7 +542,7 @@ export const ReviewPage = ({ entry, onBack }: { entry: ReviewEntry; onBack: () =
           disabled={cannotSave}
           onClick={() => void save()}
         >
-          Save workspace
+          Save problem
         </button>
       </div>
       <ConfirmDialog

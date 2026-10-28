@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Download, FolderDown, FolderInput, Trash2, Upload } from "lucide-react";
 import { Link, useLoaderData, useNavigate, useRevalidator } from "react-router";
 import { getDatabase } from "../db/database.ts";
 import { deleteWorkspace, listWorkspaces, saveDraft } from "../db/workspaces.ts";
@@ -87,10 +88,12 @@ const WorkspaceRow = ({
         {workspace.ownerId === null || workspace.ownerId === currentUserId ? (
           <button
             type="button"
-            className="button button-quiet"
+            className="button button-quiet icon-button"
+            aria-label={`Organize ${title}`}
+            title="Organize"
             onClick={() => onOrganize(workspace)}
           >
-            Organize
+            <FolderInput size={16} aria-hidden="true" />
           </button>
         ) : null}
         {currentUserId !== null && workspace.syncState === "excluded" ? (
@@ -111,19 +114,21 @@ const WorkspaceRow = ({
         ) : null}
         <button
           type="button"
-          className="button button-quiet"
+          className="button button-quiet icon-button"
           aria-label={`Export ${title}`}
+          title="Export"
           onClick={() => onExport(workspace)}
         >
-          Export
+          <Download size={16} aria-hidden="true" />
         </button>
         <button
           type="button"
-          className="button button-quiet"
+          className="button button-quiet icon-button"
           aria-label={`Delete ${title}`}
+          title="Delete"
           onClick={() => onDelete(workspace)}
         >
-          Delete
+          <Trash2 size={16} aria-hidden="true" />
         </button>
       </div>
     </li>
@@ -236,28 +241,30 @@ export const HomePage = () => {
       setOrganizing(null);
       await revalidator.revalidate();
     } catch {
-      showToast({ message: "Couldn't save this workspace's folder and tags." });
+      showToast({ message: "Couldn't save this problem's folder and tags." });
     }
   };
 
   return (
     <main className="page">
       <div className="page-heading">
-        <h1>workspaces</h1>
+        <h1>problems</h1>
         <div className="actions">
           <Link className="button button-primary" to="/new">
-            New workspace
+            New problem
           </Link>
-          <Link className="button" to="/new/import">
-            Import
+          <Link className="button icon-button" to="/new/import" aria-label="Import" title="Import">
+            <Upload size={16} aria-hidden="true" />
           </Link>
           <button
             type="button"
-            className="button"
+            className="button icon-button"
+            aria-label="Export all"
+            title="Export all"
             onClick={() => void exportAll()}
             disabled={workspaces.length === 0}
           >
-            Export all
+            <FolderDown size={16} aria-hidden="true" />
           </button>
           <AccountControl />
         </div>
@@ -267,7 +274,7 @@ export const HomePage = () => {
 
       {workspaces.length === 0 ? (
         <section className="empty-state" aria-labelledby="empty-heading">
-          <h2 id="empty-heading">No workspaces yet</h2>
+          <h2 id="empty-heading">No problems yet</h2>
           <p className="page-intro">
             Start with a blank editor, or bring a problem you want to practise.
           </p>
@@ -303,8 +310,8 @@ export const HomePage = () => {
               </select>
             </label>
           </div>
-          {visible.length === 0 ? <p className="hint">No workspaces match these filters.</p> : null}
-          <ul className="workspace-list" aria-label="Workspaces">
+          {visible.length === 0 ? <p className="hint">No problems match these filters.</p> : null}
+          <ul className="workspace-list" aria-label="Problems">
             {visible.map((workspace) => (
               <WorkspaceRow
                 key={workspace.id}

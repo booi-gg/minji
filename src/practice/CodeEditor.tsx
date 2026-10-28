@@ -1,6 +1,12 @@
 import { useEffect, useImperativeHandle, useRef, type Ref } from "react";
 import type { Language } from "../runner/types.ts";
-import { formatEditor, monaco, type FormatFailure } from "./monaco.ts";
+import {
+  EDITOR_FONT_FAMILY,
+  editorTheme,
+  formatEditor,
+  monaco,
+  type FormatFailure,
+} from "./monaco.ts";
 
 export interface CodeEditorHandle {
   /** Formats with Prettier as one undo step; resolves with the failure, if any. */
@@ -72,6 +78,8 @@ export const CodeEditor = ({
       scrollBeyondLastLine: false,
       tabSize: 2,
       fontSize,
+      fontFamily: EDITOR_FONT_FAMILY,
+      fontLigatures: true,
       readOnly,
       ariaLabel: "Solution code",
     });
@@ -127,7 +135,7 @@ export const CodeEditor = ({
   }, [readOnly, fontSize]);
 
   useEffect(() => {
-    monaco.editor.setTheme(theme === "dark" ? "vs-dark" : "vs");
+    monaco.editor.setTheme(editorTheme(theme));
   }, [theme]);
 
   useImperativeHandle(

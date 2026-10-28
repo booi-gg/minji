@@ -7,7 +7,7 @@ React Router 8 in data mode (`createBrowserRouter`, `src/app/router.tsx`), so ro
 | Path          | Screen                                   |
 | ------------- | ---------------------------------------- |
 | `/`           | My workspaces (workspaces-and-import.md) |
-| `/new`        | New workspace                            |
+| `/new`        | New problem                              |
 | `/new/import` | Import problem and review                |
 | `/w/:id`      | Practice                                 |
 | anything else | "Page not found" with a link to `/`      |
@@ -20,7 +20,7 @@ Panels use `react-resizable-panels`. Sizes and collapsed state persist in `local
 
 | Width       | Layout                                                                                                                                                         |
 | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| ≥ 1024 px   | Left: **Statement / Notes** tabs (30 %). Right: editor on top (60 %) and a bottom panel with **Tests / Results / Console** tabs (40 %).                        |
+| ≥ 1024 px   | Left: **Statement / Notes** tabs (30 %). Right: editor on top (60 %) and a bottom panel with **Testcase / Test Result** tabs (40 %).                           |
 | 768–1023 px | Same, with the statement panel collapsed by default.                                                                                                           |
 | < 768 px    | Full-width tabs: **Statement**, **Code**, **Tests**, **Results**. Code is read-only until the editor decision in PLAN.md is made; tests can be edited and run. |
 
@@ -28,7 +28,7 @@ The statement panel collapses with a button or `Mod+\`. Resize handles are keybo
 
 ## Toolbar
 
-Left to right: back to workspaces, title (inline edit, placeholder "Untitled"), language select (JavaScript / TypeScript), icon-only **Run all**, **Stop** (only while running), **Reset code**, **Format**, **History**, **More**, and save status. Each icon action has an accessible name and hover title. More contains Entry point, Export workspace, Test timeout, Format on save, Font size, Theme, and Keyboard shortcuts.
+Left to right: back to problems, title (inline edit, placeholder "Untitled"), language select (JavaScript / TypeScript), icon-only **Run all**, **Stop** (only while running), **Reset code**, **Format**, **History**, **More**, and save status. Each icon action has an accessible name and hover title. More contains Entry point, Export problem, Test timeout, Format on save, Font size, Theme, and Keyboard shortcuts.
 
 - A known entry point remains selected while its declaration exists. When the source has exactly one detectable function or class and the stored name is absent, the entry point and parameter names follow the code. More exposes a manual Entry point field for ambiguous source. Function name edits are validated as in data-model.md. Changing the name of an untouched generated scratch stub regenerates that stub; imported starter code is preserved.
 - Save status uses an icon with a screen-reader message and hover title for `Saved`, `Saving…`, or `Couldn't save`; a failed save adds an icon-only Retry action.

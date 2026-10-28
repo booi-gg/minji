@@ -34,7 +34,7 @@ export const StorageBanner = () => {
   return (
     <aside className="notice" aria-label="Storage warning">
       <p>
-        Your browser may clear these workspaces if you don't visit for a while. Use{" "}
+        Your browser may clear these problems if you don't visit for a while. Use{" "}
         <strong>Export all</strong> to keep a backup.
       </p>
       <div className="actions">

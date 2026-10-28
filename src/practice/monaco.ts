@@ -106,4 +106,47 @@ export const formatEditor = async (
   return lastFailure;
 };
 
+// Match the app palette in styles.css: the editor sits on --surface, with the orange accent.
+monaco.editor.defineTheme("minji-dark", {
+  base: "vs-dark",
+  inherit: true,
+  rules: [],
+  colors: {
+    "editor.background": "#111113",
+    "editorGutter.background": "#111113",
+    "editor.lineHighlightBackground": "#18181b",
+    "editor.lineHighlightBorder": "#00000000",
+    "editorLineNumber.foreground": "#4a4a52",
+    "editorLineNumber.activeForeground": "#a1a1aa",
+    "editorCursor.foreground": "#ff8a3d",
+    "editor.selectionBackground": "#ff8a3d33",
+    "editor.inactiveSelectionBackground": "#ff8a3d1f",
+    "editorIndentGuide.background1": "#222226",
+    "editorWidget.background": "#18181b",
+    "editorWidget.border": "#323238",
+    "scrollbarSlider.background": "#ffffff14",
+    "scrollbarSlider.hoverBackground": "#ffffff24",
+  },
+});
+
+monaco.editor.defineTheme("minji-light", {
+  base: "vs",
+  inherit: true,
+  rules: [],
+  colors: {
+    "editorCursor.foreground": "#d9480f",
+    "editor.selectionBackground": "#d9480f26",
+    "editor.lineHighlightBorder": "#00000000",
+    "editor.lineHighlightBackground": "#f7f7f5",
+  },
+});
+
+export const editorTheme = (theme: "light" | "dark"): string =>
+  theme === "dark" ? "minji-dark" : "minji-light";
+
+export const EDITOR_FONT_FAMILY = '"JetBrains Mono Variable", ui-monospace, Menlo, monospace';
+
+// Monaco measures glyphs when an editor is created; remeasure once the web font arrives.
+void document.fonts.ready.then(() => monaco.editor.remeasureFonts());
+
 export { monaco };

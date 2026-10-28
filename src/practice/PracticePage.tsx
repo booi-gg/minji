@@ -7,6 +7,7 @@ import {
   type ReactNode,
   type RefObject,
 } from "react";
+import { SquareCheck, SquareTerminal, type LucideIcon } from "lucide-react";
 import {
   Group,
   Panel,
@@ -34,7 +35,7 @@ import { useToast } from "../shared/toast.tsx";
 import { useMediaQuery } from "../shared/useMediaQuery.ts";
 import { useSync } from "../sync/SyncProvider.tsx";
 import { getConflict, keepBoth, keepTheirs, prepareKeepMine } from "../sync/store.ts";
-import { ConsolePanel, ResultsPanel } from "../tests/ResultsPanel.tsx";
+import { ResultsPanel } from "../tests/ResultsPanel.tsx";
 import type { RunScope } from "../tests/results.ts";
 import { TestList } from "../tests/TestList.tsx";
 import { exportWorkspaces } from "../workspaces/actions.ts";
@@ -64,7 +65,7 @@ interface Draft {
 }
 
 type Dialog = "reset" | "history" | "shortcuts" | null;
-type BottomTab = "tests" | "results" | "console";
+type BottomTab = "tests" | "results";
 type PhoneTab = "statement" | "code" | "tests" | "results";
 
 const isMacPlatform = /Mac|iPhone|iPad/.test(navigator.platform);
@@ -80,7 +81,7 @@ const isTypingTarget = (target: EventTarget | null): boolean =>
 
 interface TabsProps<T extends string> {
   label: string;
-  tabs: { id: T; label: string }[];
+  tabs: { id: T; label: string; icon?: LucideIcon }[];
   selected: T;
   onSelect: (id: T) => void;
 }
@@ -97,6 +98,9 @@ const Tabs = <T extends string>({ label, tabs, selected, onSelect }: TabsProps<T
         className="tab"
         onClick={() => onSelect(tab.id)}
       >
+        {tab.icon === undefined ? null : (
+          <tab.icon size={16} className={`tab-icon tab-icon-${tab.id}`} aria-hidden="true" />
+        )}
         {tab.label}
       </button>
     ))}
@@ -104,16 +108,15 @@ const Tabs = <T extends string>({ label, tabs, selected, onSelect }: TabsProps<T
 );
 
 const BOTTOM_TABS: { id: BottomTab; label: string }[] = [
-  { id: "tests", label: "Tests" },
-  { id: "results", label: "Results" },
-  { id: "console", label: "Console" },
+  { id: "tests", label: "Testcase", icon: SquareCheck },
+  { id: "results", label: "Test Result", icon: SquareTerminal },
 ];
 
 const PHONE_TABS: { id: PhoneTab; label: string }[] = [
   { id: "statement", label: "Statement" },
   { id: "code", label: "Code" },
-  { id: "tests", label: "Tests" },
-  { id: "results", label: "Results" },
+  { id: "tests", label: "Testcase", icon: SquareCheck },
+  { id: "results", label: "Result", icon: SquareTerminal },
 ];
 
 interface DesktopLayoutProps {
@@ -262,7 +265,7 @@ const Practice = ({ initial }: PracticeProps) => {
         const db = await getDatabase();
         const stored = await db.get("workspaces", id);
         if (stored === undefined || stored.deletedAt !== null) {
-          showToast({ message: "This workspace was deleted on another device." });
+          showToast({ message: "This problem was deleted on another device." });
           await navigate("/");
           return;
         }
@@ -519,11 +522,9 @@ const Practice = ({ initial }: PracticeProps) => {
       params={workspace.params}
       functionName={workspace.functionName}
       readOnly={readOnly}
-      running={testRun.running}
       selectedId={selectedTestId}
       onSelect={setSelectedTestId}
       onChange={changeTests}
-      onRunTest={(testId) => startRun({ kind: "single", testId })}
     />
   );
 
@@ -540,10 +541,10 @@ const Practice = ({ initial }: PracticeProps) => {
   );
 
   const bottom = (
-    <section className="panel" aria-label="Tests, results and console">
+    <section className="panel" aria-label="Testcase and test result">
       <div className="panel-header">
         <Tabs
-          label="Tests, results and console"
+          label="Testcase and test result"
           tabs={BOTTOM_TABS}
           selected={bottomTab}
           onSelect={setBottomTab}
@@ -552,7 +553,6 @@ const Practice = ({ initial }: PracticeProps) => {
       <div className="panel-body">
         {bottomTab === "tests" ? testList : null}
         {bottomTab === "results" ? results : null}
-        {bottomTab === "console" ? <ConsolePanel view={testRun.view} /> : null}
       </div>
     </section>
   );
@@ -583,7 +583,7 @@ const Practice = ({ initial }: PracticeProps) => {
       />
       {lock.state === "read-only" ? (
         <div className="notice" role="status">
-          <p>This workspace is open in another tab.</p>
+          <p>This problem is open in another tab.</p>
           <button type="button" className="button" onClick={lock.takeOver}>
             Take over
           </button>
@@ -591,7 +591,7 @@ const Practice = ({ initial }: PracticeProps) => {
       ) : null}
       {conflict === null ? null : (
         <div className="notice" role="status">
-          <p>This workspace changed on another device.</p>
+          <p>This problem changed on another device.</p>
           <div className="actions">
             <button type="button" className="button" onClick={() => setComparing(true)}>
               Compare
@@ -611,7 +611,7 @@ const Practice = ({ initial }: PracticeProps) => {
       {isPhone ? (
         <div className="phone-layout">
           <Tabs
-            label="Workspace sections"
+            label="Problem sections"
             tabs={PHONE_TABS}
             selected={phoneTab}
             onSelect={setPhoneTab}
@@ -672,10 +672,10 @@ export const PracticePage = () => {
   if (bundle === null) {
     return (
       <main className="page">
-        <h1>Workspace not found</h1>
-        <p className="page-intro">This workspace doesn't exist or was deleted.</p>
+        <h1>Problem not found</h1>
+        <p className="page-intro">This problem doesn't exist or was deleted.</p>
         <p>
-          <Link to="/">Back to my workspaces</Link>
+          <Link to="/">Back to my problems</Link>
         </p>
       </main>
     );

@@ -1,6 +1,7 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { RouterProvider } from "react-router";
+import "@fontsource-variable/jetbrains-mono";
 import "./app/styles.css";
 import { router } from "./app/router.tsx";
 import { applyStoredTheme } from "./app/theme.ts";

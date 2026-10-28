@@ -142,7 +142,7 @@ const MoreMenu = ({
           />
         </div>
         <button type="button" className="menu-item" onClick={onExport}>
-          Export workspace
+          Export problem
         </button>
         <button type="button" className="menu-item" onClick={onShortcuts}>
           Keyboard shortcuts
@@ -240,7 +240,7 @@ export const Toolbar = ({
 
   return (
     <div className="toolbar">
-      <Link className="button button-quiet" to="/" aria-label="All workspaces">
+      <Link className="button button-quiet" to="/" aria-label="All problems">
         ←
       </Link>
       <label htmlFor={titleId} className="visually-hidden">

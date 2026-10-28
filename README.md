@@ -1,6 +1,6 @@
 # minji
 
-Personal workspace for practising data structures and algorithms problems in JavaScript and TypeScript. See [PLAN.md](PLAN.md), the [specs](specs/README.md) and the [checklist](TODO.md).
+Personal space for practising data structures and algorithms problems in JavaScript and TypeScript. See [PLAN.md](PLAN.md), the [specs](specs/README.md) and the [checklist](TODO.md).
 
 ## Development
 
@@ -28,7 +28,7 @@ After editing the inline script in `public/runner.html`, update its CSP hash wit
 
 ## Test cases
 
-Open a workspace, set the **Function name** in the toolbar to the function or class in your code, and open the **Tests** tab. Select **Add test**, optionally name the case, then fill in **Arguments** and **Expected**. Both fields use JSON: strings need double quotes, and the Arguments field is always an array with one entry per function parameter. Use `[]` for a function with no arguments. Select **Run** on a row to run one case or **Run all** to run every valid case; invalid cases show an error and are skipped.
+Open a problem, set the **Function name** in the toolbar to the function or class in your code, and open the **Testcase** tab. Select **+** to add a case, then fill in one JSON field per argument (labeled `name =`) and **Expected =**. Strings need double quotes. Hover a case and select **×** to delete it; **Options** holds its name and advanced settings. **Run all** runs every valid case (Mod+Shift+Enter runs the selected one); invalid cases show an error and are skipped. **Test Result** shows each case's input, stdout, output and expected value.
 
 ### Function calls and returned values
 
@@ -77,7 +77,7 @@ Expected values that JSON cannot express directly can use `{"$minji":"undefined"
 
 ## Offline work and organization
 
-Production builds register a service worker that caches the app and editor for offline use. Workspaces and edits remain in IndexedDB, and account changes sync when the connection returns. The footer shows connection status, pending workspaces, conflicts that need attention, and the last completed sync. On the home screen, use **Organize** to assign a folder and tags, then filter the list by either. Folder and tag values are included in JSON export and account sync. GitHub is the only sign-in provider.
+Production builds register a service worker that caches the app and editor for offline use. Problems and edits remain in IndexedDB, and account changes sync when the connection returns. The footer shows connection status, pending problems, conflicts that need attention, and the last completed sync. On the home screen, use **Organize** to assign a folder and tags, then filter the list by either. Folder and tag values are included in JSON export and account sync. GitHub is the only sign-in provider.
 
 ## Account setup and deployment
 

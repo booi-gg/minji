@@ -67,7 +67,7 @@ const importWorkspace = async (page: Page, file: string): Promise<void> => {
     mimeType: "application/json",
     buffer: Buffer.from(file),
   });
-  await page.getByRole("button", { name: "Save workspace" }).click();
+  await page.getByRole("button", { name: "Save problem" }).click();
   // Client-side navigation: wait for the URL, not a page load.
   await page.waitForURL(/\/w\//, { waitUntil: "commit" });
   await page.locator(".monaco-editor").waitFor();
@@ -80,14 +80,20 @@ const runAll = async (page: Page): Promise<string> => {
   return (await page.locator(".summary").textContent()) ?? "";
 };
 
-const rows = async (page: Page): Promise<string[]> => {
-  const tabs = page.locator('.case-picker[aria-label="Test results"] .case-tab');
+const rows = async (page: Page): Promise<{ rows: string[]; stdout: string }> => {
+  const tabs = page.locator('.case-picker[aria-label="Test results"] .case-tab-select');
   const rows: string[] = [];
+  let stdout = "";
   for (let index = 0; index < (await tabs.count()); index += 1) {
     await tabs.nth(index).click();
     const row = page.locator(".result-row");
-    const status = (await row.locator(".status").textContent()) ?? "";
-    const label = (await row.locator(".result-label").textContent()) ?? "";
+    const status = (await tabs.nth(index).locator(".visually-hidden").textContent()) ?? "";
+    const label = (await tabs.nth(index).locator(".case-label").textContent()) ?? "";
+    stdout +=
+      (await row
+        .locator(".console-lines")
+        .textContent()
+        .catch(() => "")) ?? "";
     const detail =
       (
         await row
@@ -99,7 +105,7 @@ const rows = async (page: Page): Promise<string[]> => {
         .trim() ?? "";
     rows.push(`${label}: ${status}${detail === "" ? "" : ` — ${detail.slice(0, 110)}`}`);
   }
-  return rows;
+  return { rows, stdout };
 };
 
 const check = async (name: string, launch: () => Promise<Browser>): Promise<boolean> => {
@@ -119,30 +125,13 @@ const check = async (name: string, launch: () => Promise<Browser>): Promise<bool
       (await page.getByRole("textbox", { name: "kind =" }).inputValue()) === '"ok"',
       "named input field",
     );
-    const argumentColumn = await page.locator(".test-arguments").boundingBox();
-    const expectedColumn = await page.locator(".test-expected").boundingBox();
-    expect(
-      argumentColumn !== null &&
-        expectedColumn !== null &&
-        expectedColumn.x > argumentColumn.x + argumentColumn.width / 2 &&
-        Math.abs(expectedColumn.y - argumentColumn.y) < 8,
-      "arguments and expected output are side by side",
-    );
-    await page.locator('.case-picker[aria-label="Test cases"] .case-tab').nth(1).click();
+    await page.locator('.case-picker[aria-label="Test cases"] .case-tab-select').nth(1).click();
     expect(
       (await page.getByRole("textbox", { name: "kind =" }).inputValue()) === '"wrong"',
       "case picker changes input",
     );
     const summary = await runAll(page);
-    const resultInputs = await page.locator(".result-inputs").boundingBox();
-    const resultOutput = await page.locator(".result-detail").boundingBox();
-    expect(
-      resultInputs !== null &&
-        resultOutput !== null &&
-        resultOutput.x > resultInputs.x + resultInputs.width / 2,
-      "result input and output are side by side",
-    );
-    const results = await rows(page);
+    const { rows: results, stdout } = await rows(page);
     process.stdout.write(`  summary: ${summary}\n${results.map((row) => `  ${row}`).join("\n")}\n`);
     const statusOf = (label: string) => results.find((row) => row.startsWith(`${label}:`)) ?? "";
     expect(summary === "Passed 2 of 7 tests · 1 invalid test skipped", "summary");
@@ -154,12 +143,7 @@ const check = async (name: string, launch: () => Promise<Browser>): Promise<bool
     expect(statusOf("oversized").includes("Too large"), "oversized output");
     expect(statusOf("invalid").includes("Invalid test"), "invalid test");
 
-    await page.getByRole("tab", { name: "Console" }).click();
-    const consoleText = (await page.locator(".console").textContent()) ?? "";
-    expect(
-      consoleText.includes("step 0 {i: 0}") && consoleText.includes("careful"),
-      "console output",
-    );
+    expect(stdout.includes("step 0 {i: 0}") && stdout.includes("careful"), "console output");
 
     const lastRun = await page.evaluate(async () => {
       const response = indexedDB.open("minji");

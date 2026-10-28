@@ -157,7 +157,7 @@ const run = async (): Promise<void> => {
 
     const downloadPromise = a.waitForEvent("download");
     await a.locator(".menu summary").click();
-    await a.getByRole("button", { name: "Export workspace" }).click();
+    await a.getByRole("button", { name: "Export problem" }).click();
     const download = await downloadPromise;
     const exportPath = await download.path();
     assert.ok(exportPath);
@@ -169,7 +169,7 @@ const run = async (): Promise<void> => {
       mimeType: "application/json",
       buffer: await readFile(exportPath),
     });
-    await c.getByRole("button", { name: "Save workspace" }).click();
+    await c.getByRole("button", { name: "Save problem" }).click();
     await c.waitForURL(/\/w\//);
     assert.equal(await c.getByRole("textbox", { name: "Title" }).inputValue(), "Shared workspace");
 
@@ -186,10 +186,10 @@ const run = async (): Promise<void> => {
 
     holdSecondWrites = true;
     await b.getByRole("textbox", { name: "Title" }).fill("Device B edit");
-    await b.getByRole("link", { name: "All workspaces", exact: true }).click();
+    await b.getByRole("link", { name: "All problems", exact: true }).click();
     await a.goto(`${base}${workspacePath}`);
     await a.getByRole("textbox", { name: "Title" }).fill("Device A edit");
-    await a.getByRole("link", { name: "All workspaces", exact: true }).click();
+    await a.getByRole("link", { name: "All problems", exact: true }).click();
     await syncOnHome(a);
     assert.equal([...rows.values()][0]?.doc?.title, "Device A edit");
     await syncOnHome(b);
@@ -215,7 +215,7 @@ const run = async (): Promise<void> => {
         break;
       }
     }
-    assert.ok(focusedNew, "New workspace must be reachable by Tab");
+    assert.ok(focusedNew, "New problem must be reachable by Tab");
     await c.keyboard.press("Enter");
     await c.waitForURL(`${base}/new`);
     console.info(

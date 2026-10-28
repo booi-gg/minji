@@ -1,5 +1,5 @@
 import { useEffect, useId, useMemo, useRef, useState } from "react";
-import { ArrowDown, ArrowUp, Copy, Play, Plus, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowUp, Copy, Plus, X } from "lucide-react";
 import type { CompareTarget, NodeAdapter } from "../runner/types.ts";
 import { ConfirmDialog } from "../shared/ConfirmDialog.tsx";
 import { newId } from "../shared/ids.ts";
@@ -134,13 +134,10 @@ interface TestRowProps {
   params: readonly string[];
   functionName: string;
   readOnly: boolean;
-  running: boolean;
   autoFocus: boolean;
   onChange: (test: TestCase) => void;
-  onRun: (testId: string) => void;
   onMove: (from: number, to: number) => void;
   onDuplicate: (index: number) => void;
-  onDelete: (index: number) => void;
 }
 
 const TestRow = ({
@@ -150,13 +147,10 @@ const TestRow = ({
   params,
   functionName,
   readOnly,
-  running,
   autoFocus,
   onChange,
-  onRun,
   onMove,
   onDuplicate,
-  onDelete,
 }: TestRowProps) => {
   const compareId = useId();
   const labelId = useId();
@@ -168,7 +162,7 @@ const TestRow = ({
     [test, params, functionName],
   );
   const validation: TestValidation = useSettled(current);
-  const name = test.label === "" ? `Test ${index + 1}` : test.label;
+  const name = test.label === "" ? `Case ${index + 1}` : test.label;
   const argCount = current.argCount ?? params.length;
   const kind = test.kind ?? "function";
   const argumentParts =
@@ -193,20 +187,6 @@ const TestRow = ({
 
   return (
     <li className="test-row" data-test-id={test.id} aria-label={name}>
-      <div className="test-case-heading">
-        <span>{name}</span>
-        {validation.valid ? null : <span className="badge badge-error">Invalid</span>}
-        <button
-          type="button"
-          className="button button-small test-case-run"
-          aria-label={`Run ${name}`}
-          title={`Run ${name}`}
-          disabled={running}
-          onClick={() => onRun(test.id)}
-        >
-          <Play size={16} aria-hidden="true" />
-        </button>
-      </div>
       <div className="test-fields">
         <div className="test-arguments">
           {argumentParts === null ? (
@@ -242,7 +222,7 @@ const TestRow = ({
         </div>
         <div className="test-expected">
           <JsonField
-            label="Expected output"
+            label="Expected ="
             value={test.expectedText}
             error={validation.expected}
             readOnly={readOnly}
@@ -293,15 +273,6 @@ const TestRow = ({
                     onClick={() => onDuplicate(index)}
                   >
                     <Copy size={16} aria-hidden="true" />
-                  </button>
-                  <button
-                    type="button"
-                    className="button button-quiet button-small"
-                    aria-label={`Delete ${name}`}
-                    title="Delete"
-                    onClick={() => onDelete(index)}
-                  >
-                    <Trash2 size={16} aria-hidden="true" />
                   </button>
                 </div>
               )}
@@ -458,28 +429,24 @@ interface TestListProps {
   params: readonly string[];
   functionName: string;
   readOnly: boolean;
-  running: boolean;
   selectedId: string | null;
   onSelect: (id: string) => void;
   onChange: (tests: TestCase[]) => void;
-  onRunTest: (testId: string) => void;
 }
 
 const withPositions = (tests: TestCase[]): TestCase[] =>
   tests.map((test, position) => (test.position === position ? test : { ...test, position }));
 
-/** The Tests tab. See specs/test-cases.md, "Authoring". */
+/** The Testcase tab. See specs/test-cases.md, "Authoring". */
 export const TestList = ({
   workspaceId,
   tests,
   params,
   functionName,
   readOnly,
-  running,
   selectedId,
   onSelect,
   onChange,
-  onRunTest,
 }: TestListProps) => {
   const showToast = useToast();
   const [focusId, setFocusId] = useState<string | null>(null);
@@ -530,7 +497,7 @@ export const TestList = ({
       if (neighbor !== undefined) onSelect(neighbor.id);
     }
     update(tests.filter((_, position) => position !== index));
-    const name = removed.label === "" ? `Test ${index + 1}` : `“${removed.label}”`;
+    const name = removed.label === "" ? `Case ${index + 1}` : `“${removed.label}”`;
     showToast({
       message: `${name} deleted.`,
       action: {
@@ -555,17 +522,33 @@ export const TestList = ({
   return (
     <div className="test-list">
       <div className="case-picker" role="group" aria-label="Test cases">
-        {tests.map((test, index) => (
-          <button
-            key={test.id}
-            type="button"
-            className={`case-tab${selected?.id === test.id ? " case-tab-active" : ""}`}
-            aria-current={selected?.id === test.id ? "true" : undefined}
-            onClick={() => onSelect(test.id)}
-          >
-            {test.label.trim() === "" ? `Case ${index + 1}` : test.label}
-          </button>
-        ))}
+        {tests.map((test, index) => {
+          const caseName = test.label.trim() === "" ? `Case ${index + 1}` : test.label;
+          const active = selected?.id === test.id;
+          return (
+            <span key={test.id} className={`case-tab${active ? " case-tab-active" : ""}`}>
+              <button
+                type="button"
+                className="case-tab-select"
+                aria-current={active ? "true" : undefined}
+                onClick={() => onSelect(test.id)}
+              >
+                {caseName}
+              </button>
+              {readOnly || tests.length === 1 ? null : (
+                <button
+                  type="button"
+                  className="case-tab-remove"
+                  aria-label={`Delete ${caseName}`}
+                  title="Delete case"
+                  onClick={() => remove(index)}
+                >
+                  <X size={12} aria-hidden="true" />
+                </button>
+              )}
+            </span>
+          );
+        })}
         {readOnly ? null : (
           <button
             type="button"
@@ -592,13 +575,10 @@ export const TestList = ({
               params={params}
               functionName={functionName}
               readOnly={readOnly}
-              running={running}
               autoFocus={selected.id === focusId}
               onChange={replace}
-              onRun={onRunTest}
               onMove={move}
               onDuplicate={duplicate}
-              onDelete={remove}
             />
           )}
         </ol>

@@ -40,7 +40,7 @@ export const ConnectionStatus = () => {
           {connectionMessage === null ? null : <span>· {connectionMessage}</span>}
           {pendingCount > 0 ? (
             <span>
-              · {pendingCount} {pendingCount === 1 ? "workspace needs" : "workspaces need"} sync
+              · {pendingCount} {pendingCount === 1 ? "problem needs" : "problems need"} sync
             </span>
           ) : null}
           {account !== null && pendingCount > 0 && online && status !== "syncing" ? (

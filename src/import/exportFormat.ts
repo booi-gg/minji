@@ -244,7 +244,7 @@ export const parseExportFile = (text: string): ParseResult => {
     return { ok: false, message: "This file was made by a newer version of the app." };
   }
   if (!Array.isArray(data.workspaces)) {
-    return { ok: false, message: "This file has no workspaces." };
+    return { ok: false, message: "This file has no problems." };
   }
   const workspaces: ExportedWorkspace[] = [];
   const skipped: { index: number; reason: string }[] = [];

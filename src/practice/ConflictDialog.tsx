@@ -68,7 +68,7 @@ export const ConflictDialog = ({ open, conflict, workspace, tests, theme, onClos
         </div>
         {conflict?.deleted ? (
           <p>
-            The workspace was deleted on the other device. Your local code is still available until
+            The problem was deleted on the other device. Your local code is still available until
             you resolve this conflict.
           </p>
         ) : null}

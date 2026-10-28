@@ -39,7 +39,7 @@ const check = async (name: string, launch: () => Promise<Browser>): Promise<void
     if (args[0] !== "[[3,8,1,5], 9]" || args[1] !== "[[5,5], 10]") {
       throw new Error(`Incorrect argument mapping: ${JSON.stringify(args)}`);
     }
-    await page.getByRole("button", { name: "Save workspace" }).click();
+    await page.getByRole("button", { name: "Save problem" }).click();
     await page.waitForURL(/\/w\//);
     await page.getByRole("button", { name: "Run all" }).click();
     await page.getByRole("button", { name: "Stop" }).waitFor();

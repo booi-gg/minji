@@ -2,7 +2,7 @@ import { useEffect, useId, useRef, useState } from "react";
 import type { Language } from "../runner/types.ts";
 import { absoluteTime, relativeTime } from "../shared/format.ts";
 import type { Revision } from "../workspaces/model.ts";
-import { monaco } from "./monaco.ts";
+import { EDITOR_FONT_FAMILY, editorTheme, monaco } from "./monaco.ts";
 
 interface DiffViewProps {
   original: string;
@@ -22,13 +22,14 @@ export const DiffView = ({ original, modified, language, theme }: DiffViewProps)
       automaticLayout: true,
       renderSideBySide: true,
       minimap: { enabled: false },
+      fontFamily: EDITOR_FONT_FAMILY,
       originalAriaLabel: "Revision",
       modifiedAriaLabel: "Current code",
     });
     const originalModel = monaco.editor.createModel(original, language);
     const modifiedModel = monaco.editor.createModel(modified, language);
     editor.setModel({ original: originalModel, modified: modifiedModel });
-    monaco.editor.setTheme(theme === "dark" ? "vs-dark" : "vs");
+    monaco.editor.setTheme(editorTheme(theme));
     return () => {
       editor.dispose();
       originalModel.dispose();

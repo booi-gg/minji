@@ -4,7 +4,7 @@ import { SyncProvider } from "../sync/SyncProvider.tsx";
 import { ConnectionStatus } from "../sync/ConnectionStatus.tsx";
 
 const Brand = () => (
-  <Link className="brand" to="/" aria-label="minji: all workspaces">
+  <Link className="brand" to="/" aria-label="minji: all problems">
     minji
   </Link>
 );
@@ -27,7 +27,7 @@ export const NotFoundPage = () => (
   <main className="page">
     <h1>Page not found</h1>
     <p>
-      <Link to="/">Back to my workspaces</Link>
+      <Link to="/">Back to my problems</Link>
     </p>
   </main>
 );
@@ -45,7 +45,7 @@ export const ErrorPage = () => {
         <h1>Something went wrong</h1>
         <p className="page-intro">{message}</p>
         <p>
-          <Link to="/">Back to my workspaces</Link>
+          <Link to="/">Back to my problems</Link>
         </p>
       </main>
       <footer className="app-footer">
