@@ -15,6 +15,7 @@ const error = (code: string, message: string, status: number): Response =>
   json({ error: code, message }, status);
 const localHost = (url: URL): boolean =>
   url.hostname === "localhost" || url.hostname === "127.0.0.1";
+const githubSecretPattern = /^[a-f\d]{40}$/i;
 
 export const handleRequest = async (
   request: Request,
@@ -29,7 +30,11 @@ export const handleRequest = async (
     if (route === "/api/health" && request.method === "GET") return json({ ok: true });
     if (env?.DB === undefined) return error("unavailable", "The API is not configured.", 503);
     if (route === "/api/auth/github/login" && request.method === "GET") {
-      if (env.GITHUB_CLIENT_ID === "" || env.GITHUB_CLIENT_SECRET === "")
+      if (
+        !env.GITHUB_CLIENT_ID ||
+        githubSecretPattern.test(env.GITHUB_CLIENT_ID) ||
+        !env.GITHUB_CLIENT_SECRET
+      )
         return error("unavailable", "GitHub sign-in is not configured yet.", 503);
       return loginRedirect(request, env);
     }

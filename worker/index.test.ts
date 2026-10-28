@@ -30,6 +30,25 @@ it("explains when GitHub sign-in has not been configured", async () => {
   expect(await response.json()).toMatchObject({ error: "unavailable" });
 });
 
+it("does not send a secret-shaped client ID to GitHub", async () => {
+  const response = await handleRequest(new Request("https://minji.test/api/auth/github/login"), {
+    ...env(),
+    GITHUB_CLIENT_ID: "a".repeat(40),
+  });
+  expect(response.status).toBe(503);
+  expect(await response.json()).toMatchObject({ error: "unavailable" });
+});
+
+it("does not redirect when the client secret binding is missing", async () => {
+  const missingSecret = env();
+  Reflect.deleteProperty(missingSecret, "GITHUB_CLIENT_SECRET");
+  const response = await handleRequest(
+    new Request("https://minji.test/api/auth/github/login"),
+    missingSecret,
+  );
+  expect(response.status).toBe(503);
+});
+
 it("rejects a mismatched OAuth state before contacting GitHub", async () => {
   const response = await callback(
     new Request("https://minji.test/api/auth/github/callback?code=abc&state=wrong", {

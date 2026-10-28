@@ -96,3 +96,12 @@ wrangler secret put GITHUB_CLIENT_SECRET
 ```
 
 Then run `vp run deploy:staging`. Check `/api/health`, `/w/anything`, sign-in and a sync round trip on staging before `vp run deploy`. The local Playwright check uses a test API and does not need GitHub credentials.
+
+For GitHub sign-in on the local dev server, the OAuth app used locally must allow the callback `http://localhost:8000/api/auth/github/callback`. You can create a separate OAuth app with homepage `http://localhost:8000` for this. Put the credentials for that app in an ignored `.dev.vars` file at the project root, then start `vp dev`:
+
+```dotenv
+GITHUB_CLIENT_ID="<local OAuth app client ID>"
+GITHUB_CLIENT_SECRET="<local OAuth app client secret>"
+```
+
+Copy the **Client ID** from the OAuth app settings, not a value under **Client secrets**. If a client secret was committed or shared in a URL, revoke it in GitHub and generate a new one.
