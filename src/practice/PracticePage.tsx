@@ -80,9 +80,15 @@ const isTypingTarget = (target: EventTarget | null): boolean =>
   target instanceof HTMLElement &&
   (target.isContentEditable || target.closest("input, textarea, select, .monaco-editor") !== null);
 
+interface TabItem<T extends string> {
+  id: T;
+  label: string;
+  icon?: LucideIcon;
+}
+
 interface TabsProps<T extends string> {
   label: string;
-  tabs: { id: T; label: string; icon?: LucideIcon }[];
+  tabs: TabItem<T>[];
   selected: T;
   onSelect: (id: T) => void;
 }
@@ -108,12 +114,12 @@ const Tabs = <T extends string>({ label, tabs, selected, onSelect }: TabsProps<T
   </div>
 );
 
-const BOTTOM_TABS: { id: BottomTab; label: string }[] = [
+const BOTTOM_TABS: TabItem<BottomTab>[] = [
   { id: "tests", label: "Testcase", icon: SquareCheck },
   { id: "results", label: "Test Result", icon: SquareTerminal },
 ];
 
-const PHONE_TABS: { id: PhoneTab; label: string }[] = [
+const PHONE_TABS: TabItem<PhoneTab>[] = [
   { id: "statement", label: "Statement" },
   { id: "code", label: "Code" },
   { id: "tests", label: "Testcase", icon: SquareCheck },
