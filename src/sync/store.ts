@@ -233,6 +233,8 @@ export const applyRemote = async (
     title: doc.title,
     statement: doc.statement,
     notes: doc.notes,
+    folder: doc.folder ?? "",
+    tags: doc.tags ?? [],
     language: doc.language,
     functionName: doc.functionName,
     params: doc.params,

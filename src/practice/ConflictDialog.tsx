@@ -51,6 +51,12 @@ export const ConflictDialog = ({ open, conflict, workspace, tests, theme, onClos
   }, [open]);
   const doc = conflict?.doc as WorkspaceDoc | null | undefined;
   const changes = doc === null || doc === undefined ? [] : testChanges(tests, doc.tests);
+  const folderChanged =
+    doc !== null && doc !== undefined && (doc.folder ?? "") !== (workspace.folder ?? "");
+  const tagsChanged =
+    doc !== null &&
+    doc !== undefined &&
+    JSON.stringify(doc.tags ?? []) !== JSON.stringify(workspace.tags ?? []);
   return (
     <dialog ref={ref} className="history-dialog" aria-labelledby={titleId} onClose={onClose}>
       <div className="dialog-body">
@@ -76,6 +82,25 @@ export const ConflictDialog = ({ open, conflict, workspace, tests, theme, onClos
                 language={workspace.language}
                 theme={theme}
               />
+            ) : null}
+            {folderChanged || tagsChanged ? (
+              <>
+                <h3>Organization changes</h3>
+                <ul>
+                  {folderChanged ? (
+                    <li>
+                      Folder: theirs “{doc.folder || "Unfiled"}”, yours “
+                      {workspace.folder || "Unfiled"}”
+                    </li>
+                  ) : null}
+                  {tagsChanged ? (
+                    <li>
+                      Tags: theirs {doc.tags?.join(", ") || "none"}; yours{" "}
+                      {workspace.tags?.join(", ") || "none"}
+                    </li>
+                  ) : null}
+                </ul>
+              </>
             ) : null}
             <h3>Test changes</h3>
             {changes.length === 0 ? (

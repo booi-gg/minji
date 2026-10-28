@@ -109,6 +109,8 @@ describe("import", () => {
   });
   it("round-trips through the file format with new ids", () => {
     const original = sampleBundle();
+    original.workspace.folder = "Arrays";
+    original.workspace.tags = ["easy", "two pointers"];
     const parsed = parseExportFile(JSON.stringify(toExportFile([original], NOW)));
     if (!parsed.ok) throw new Error(parsed.message);
     const [imported] = parsed.workspaces;
@@ -122,6 +124,8 @@ describe("import", () => {
       params: ["nums", "target"],
       syncState: "local",
       ownerId: null,
+      folder: "Arrays",
+      tags: ["easy", "two pointers"],
     });
     expect(bundle.tests.map((test) => [test.argsText, test.expectedText])).toEqual([
       ["[[2,7,11,15],9]", "[0,1]"],

@@ -39,6 +39,8 @@ interface ReviewState {
   title: string;
   statement: string;
   notes: string;
+  folder: string;
+  tags: string[];
   language: Language;
   functionName: string;
   params: string[];
@@ -68,6 +70,8 @@ const createReview = (entry: ReviewEntry): ReviewState => {
     return {
       ...draft,
       notes: "",
+      folder: "",
+      tags: [],
       source: draft.starterSource,
       tests: draft.tests.map((test) => fromProblemTest(test, draft.params)),
       inPlace: false,
@@ -80,6 +84,8 @@ const createReview = (entry: ReviewEntry): ReviewState => {
     title: workspace.title,
     statement: workspace.statement,
     notes: workspace.notes,
+    folder: workspace.folder ?? "",
+    tags: workspace.tags ?? [],
     language: workspace.language,
     functionName: workspace.functionName,
     params: workspace.params,
@@ -200,6 +206,8 @@ export const ReviewPage = ({ entry, onBack }: { entry: ReviewEntry; onBack: () =
               title: state.title,
               statement: state.statement,
               notes: state.notes,
+              folder: state.folder,
+              tags: state.tags,
               language: state.language,
               functionName: state.functionName,
               params: state.params,
@@ -211,6 +219,8 @@ export const ReviewPage = ({ entry, onBack }: { entry: ReviewEntry; onBack: () =
               title: state.title,
               statement: state.statement,
               notes: state.notes,
+              folder: state.folder,
+              tags: state.tags,
               language: state.language,
               functionName: state.functionName,
               params: state.params,

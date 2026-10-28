@@ -26,7 +26,7 @@ import {
   unsyncedRevisions,
 } from "./store.ts";
 
-export type SyncStatus = "idle" | "syncing" | "retrying" | "signed-out";
+export type SyncStatus = "idle" | "syncing" | "retrying" | "signed-out" | "offline";
 
 const bytes = (value: unknown): number => new TextEncoder().encode(JSON.stringify(value)).length;
 

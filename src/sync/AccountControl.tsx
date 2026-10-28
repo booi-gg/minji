@@ -1,7 +1,7 @@
 import { useSync } from "./SyncProvider.tsx";
 
 export const AccountControl = () => {
-  const { account, loading, status, signOut, sync } = useSync();
+  const { account, loading, signOut, sync } = useSync();
   if (loading)
     return (
       <span className="hint" role="status">
@@ -16,16 +16,6 @@ export const AccountControl = () => {
     );
   return (
     <div className="account-control">
-      {status === "retrying" ? (
-        <span className="hint" role="status">
-          Sync paused — retrying
-        </span>
-      ) : null}
-      {status === "syncing" ? (
-        <span className="hint" role="status">
-          Syncing…
-        </span>
-      ) : null}
       <details className="account-menu">
         <summary className="button">
           {account.avatarUrl === null ? null : (

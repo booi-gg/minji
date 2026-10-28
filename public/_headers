@@ -5,3 +5,6 @@
 
 /runner.html
   ! X-Frame-Options
+
+/sw.js
+  Cache-Control: no-cache

@@ -6,6 +6,8 @@ export interface WorkspaceDoc extends Pick<
   | "title"
   | "statement"
   | "notes"
+  | "folder"
+  | "tags"
   | "language"
   | "functionName"
   | "params"
@@ -64,6 +66,8 @@ export const workspaceDoc = (workspace: Workspace, tests: TestCase[]): Workspace
   title: workspace.title,
   statement: workspace.statement,
   notes: workspace.notes,
+  folder: workspace.folder,
+  tags: workspace.tags,
   language: workspace.language,
   functionName: workspace.functionName,
   params: workspace.params,

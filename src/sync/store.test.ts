@@ -66,10 +66,16 @@ it("keeps advanced test settings when pulling a workspace", async () => {
     outputAdapter: "plain",
     comparison: { tolerance: 0.01, unordered: false },
   };
+  remote.doc.folder = "Graphs";
+  remote.doc.tags = ["BFS"];
   expect(await applyRemote(db, "user-1", remote)).toBe("updated");
   expect((await getTestCases(db, "workspace-1"))[0]).toMatchObject({
     kind: "class",
     comparison: { tolerance: 0.01, unordered: false },
+  });
+  expect(await db.get("workspaces", "workspace-1")).toMatchObject({
+    folder: "Graphs",
+    tags: ["BFS"],
   });
 });
 

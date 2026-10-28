@@ -1,14 +1,12 @@
 import { Link, Outlet, isRouteErrorResponse, useRouteError } from "react-router";
 import { ToastProvider } from "../shared/toast.tsx";
 import { SyncProvider } from "../sync/SyncProvider.tsx";
+import { ConnectionStatus } from "../sync/ConnectionStatus.tsx";
 
-// No top bar: the app name is a small link in the bottom-right corner.
 const Brand = () => (
-  <footer>
-    <Link className="brand" to="/" aria-label="minji: all workspaces">
-      minji
-    </Link>
-  </footer>
+  <Link className="brand" to="/" aria-label="minji: all workspaces">
+    minji
+  </Link>
 );
 
 export const AppLayout = () => (
@@ -16,7 +14,10 @@ export const AppLayout = () => (
     <SyncProvider>
       <div className="app">
         <Outlet />
-        <Brand />
+        <footer className="app-footer">
+          <ConnectionStatus />
+          <Brand />
+        </footer>
       </div>
     </SyncProvider>
   </ToastProvider>
@@ -47,7 +48,9 @@ export const ErrorPage = () => {
           <Link to="/">Back to my workspaces</Link>
         </p>
       </main>
-      <Brand />
+      <footer className="app-footer">
+        <Brand />
+      </footer>
     </div>
   );
 };

@@ -3,7 +3,8 @@
 export type ChannelMessage =
   | { type: "changed"; id: string }
   | { type: "release"; id: string }
-  | { type: "sync-request" };
+  | { type: "sync-request" }
+  | { type: "sync-complete" };
 
 let channel: BroadcastChannel | undefined;
 
@@ -23,6 +24,7 @@ const isChannelMessage = (data: unknown): data is ChannelMessage =>
   data !== null &&
   "type" in data &&
   (data.type === "sync-request" ||
+    data.type === "sync-complete" ||
     ((data.type === "changed" || data.type === "release") &&
       "id" in data &&
       typeof data.id === "string"));

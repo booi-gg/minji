@@ -118,7 +118,11 @@ Spec: [workspaces-and-import.md](specs/workspaces-and-import.md).
 Spec: [sync-and-auth.md](specs/sync-and-auth.md).
 
 - [x] D1 databases for staging and production; `0001_init.sql` migration applied to both.
-- [ ] GitHub OAuth apps for staging and production; secrets set with `wrangler secret put`.
+- [ ] Create a **staging** GitHub OAuth app in GitHub Settings → Developer settings → OAuth apps. Set homepage to `https://minji-staging.booboosable.workers.dev` and callback to `https://minji-staging.booboosable.workers.dev/api/auth/github/callback`.
+- [ ] Create a separate **production** GitHub OAuth app. Set homepage to `https://minji.booboosable.workers.dev` and callback to `https://minji.booboosable.workers.dev/api/auth/github/callback`.
+- [ ] Copy each app's client ID into its `GITHUB_CLIENT_ID` entry in `wrangler.jsonc` (staging under `env.staging.vars`, production under `vars`).
+- [ ] Set the staging client secret with `wrangler secret put GITHUB_CLIENT_SECRET --env staging` and the production secret with `wrangler secret put GITHUB_CLIENT_SECRET`. Keep both secrets out of the repository.
+- [ ] Deploy staging with `vp run deploy:staging`; test GitHub sign-in, sign-out, and a sync round trip. Then deploy production with `vp run deploy` and repeat the sign-in check.
 - [x] Worker: session helpers, `Origin` check, error format, structured error logging, Workers Logs enabled.
 - [x] OAuth login, callback, logout, `/api/me`, with tests for state mismatch and expired sessions.
 - [x] Workspace endpoints: pull with cursor, PUT and DELETE with compare-and-swap and sequence numbers, size and type validation.
@@ -143,5 +147,9 @@ Spec: [sync-and-auth.md](specs/sync-and-auth.md).
 - [x] Linked-list and binary-tree test adapters.
 - [x] Class-design problems (method sequence tests).
 - [x] Per-case unordered-array and numeric-tolerance comparison.
-- [ ] Service worker for offline use.
-- [ ] Tags and folders; more sign-in providers.
+- [x] Service worker for offline use, including the app shell, editor assets, and sandboxed runner.
+- [x] Tags and folders, included in JSON export and account sync.
+- [x] Connection and sync status: online/offline, pending workspaces, last sync, and attention needed.
+- [ ] Production-preview Playwright smoke test: reload a saved workspace and load the runner while offline. The local sandbox cannot run its browser server (`listen EPERM`); automatic approval review also reached its usage limit.
+
+GitHub remains the only sign-in provider, as requested.

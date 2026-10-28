@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vp dev",
-    "build": "tsc && tsc -p worker && vp build",
+    "build": "tsc && tsc -p worker && vp build && vpx ./scripts/generate-service-worker.ts",
     "preview": "vp preview",
     "deploy:staging": "vp run build && wrangler deploy --env staging",
     "deploy": "vp run build && wrangler deploy"

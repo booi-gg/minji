@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useLoaderData, useNavigate, useRevalidator } from "react-router";
 import { getDatabase } from "../db/database.ts";
-import { deleteWorkspace, listWorkspaces } from "../db/workspaces.ts";
+import { deleteWorkspace, listWorkspaces, saveDraft } from "../db/workspaces.ts";
 import { ConfirmDialog } from "../shared/ConfirmDialog.tsx";
 import { postChannelMessage, subscribeToChannel } from "../shared/channel.ts";
 import { absoluteTime, relativeTime } from "../shared/format.ts";
@@ -10,7 +10,9 @@ import { useSync } from "../sync/SyncProvider.tsx";
 import { copyToAccount, startSyncingWorkspace } from "../sync/store.ts";
 import { createScratchWorkspace, exportWorkspaces, isStoragePersistent } from "./actions.ts";
 import { displayTitle, type Workspace } from "./model.ts";
+import { normalizeFolder, parseTags } from "./organization.ts";
 import { StorageBanner } from "./StorageBanner.tsx";
+import { useToast } from "../shared/toast.tsx";
 
 export const homeLoader = async () => {
   const db = await getDatabase();
@@ -32,6 +34,7 @@ interface WorkspaceRowProps {
   onDelete: (workspace: Workspace) => void;
   onStartSync: (workspace: Workspace) => void;
   onCopy: (workspace: Workspace) => void;
+  onOrganize: (workspace: Workspace) => void;
 }
 
 const syncLabel = (workspace: Workspace, currentUserId: string | null): string | null => {
@@ -52,6 +55,7 @@ const WorkspaceRow = ({
   onDelete,
   onStartSync,
   onCopy,
+  onOrganize,
 }: WorkspaceRowProps) => {
   const title = displayTitle(workspace);
   const badge = syncLabel(workspace, currentUserId);
@@ -64,6 +68,12 @@ const WorkspaceRow = ({
         <div className="workspace-meta">
           <span className="badge">{LANGUAGE_LABELS[workspace.language]}</span>
           <span>{lastRunText(workspace)}</span>
+          {workspace.folder ? <span className="badge">Folder: {workspace.folder}</span> : null}
+          {workspace.tags?.map((tag) => (
+            <span className="badge" key={tag}>
+              #{tag}
+            </span>
+          ))}
           {badge === null ? null : <span className="badge">{badge}</span>}
           <span>
             Updated{" "}
@@ -74,6 +84,15 @@ const WorkspaceRow = ({
         </div>
       </div>
       <div className="actions">
+        {workspace.ownerId === null || workspace.ownerId === currentUserId ? (
+          <button
+            type="button"
+            className="button button-quiet"
+            onClick={() => onOrganize(workspace)}
+          >
+            Organize
+          </button>
+        ) : null}
         {currentUserId !== null && workspace.syncState === "excluded" ? (
           <button
             type="button"
@@ -128,11 +147,19 @@ const NewWorkspaceButtons = ({ onScratch, busy }: NewWorkspaceButtonsProps) => (
 );
 
 export const HomePage = () => {
+  const showToast = useToast();
   const { workspaces, persistent } = useLoaderData<typeof homeLoader>();
   const navigate = useNavigate();
   const revalidator = useRevalidator();
   const [pendingDelete, setPendingDelete] = useState<Workspace | null>(null);
   const [creating, setCreating] = useState(false);
+  const [organizing, setOrganizing] = useState<{
+    workspace: Workspace;
+    folder: string;
+    tags: string;
+  } | null>(null);
+  const [folderFilter, setFolderFilter] = useState("all");
+  const [tagFilter, setTagFilter] = useState("all");
   const { account, sync } = useSync();
 
   useEffect(
@@ -186,6 +213,32 @@ export const HomePage = () => {
   };
 
   const synced = pendingDelete !== null && !["local", "excluded"].includes(pendingDelete.syncState);
+  const folders = [
+    ...new Set(workspaces.map((workspace) => workspace.folder ?? "").filter(Boolean)),
+  ].sort();
+  const tags = [...new Set(workspaces.flatMap((workspace) => workspace.tags ?? []))].sort();
+  const visible = workspaces.filter(
+    (workspace) =>
+      (folderFilter === "all" ||
+        (workspace.folder ?? "") === (folderFilter === "unfiled" ? "" : folderFilter.slice(7))) &&
+      (tagFilter === "all" || (workspace.tags ?? []).includes(tagFilter.slice(4))),
+  );
+
+  const saveOrganization = async (): Promise<void> => {
+    if (organizing === null) return;
+    const { workspace, folder, tags: tagText } = organizing;
+    try {
+      await saveDraft(await getDatabase(), workspace.id, {
+        folder: normalizeFolder(folder),
+        tags: parseTags(tagText),
+      });
+      postChannelMessage({ type: "changed", id: workspace.id });
+      setOrganizing(null);
+      await revalidator.revalidate();
+    } catch {
+      showToast({ message: "Couldn't save this workspace's folder and tags." });
+    }
+  };
 
   return (
     <main className="page">
@@ -221,20 +274,96 @@ export const HomePage = () => {
           <NewWorkspaceButtons onScratch={() => void startScratch()} busy={creating} />
         </section>
       ) : (
-        <ul className="workspace-list" aria-label="Workspaces">
-          {workspaces.map((workspace) => (
-            <WorkspaceRow
-              key={workspace.id}
-              workspace={workspace}
-              currentUserId={account?.id ?? null}
-              onExport={(target) => void exportOne(target)}
-              onDelete={setPendingDelete}
-              onStartSync={(target) => void startSync(target)}
-              onCopy={(target) => void copy(target)}
-            />
-          ))}
-        </ul>
+        <>
+          <div className="actions organization-filters">
+            <label>
+              Folder{" "}
+              <select
+                value={folderFilter}
+                onChange={(event) => setFolderFilter(event.target.value)}
+              >
+                <option value="all">All folders</option>
+                <option value="unfiled">Unfiled</option>
+                {folders.map((folder) => (
+                  <option key={folder} value={`folder:${folder}`}>
+                    {folder}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              Tag{" "}
+              <select value={tagFilter} onChange={(event) => setTagFilter(event.target.value)}>
+                <option value="all">All tags</option>
+                {tags.map((tag) => (
+                  <option key={tag} value={`tag:${tag}`}>
+                    {tag}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+          {visible.length === 0 ? <p className="hint">No workspaces match these filters.</p> : null}
+          <ul className="workspace-list" aria-label="Workspaces">
+            {visible.map((workspace) => (
+              <WorkspaceRow
+                key={workspace.id}
+                workspace={workspace}
+                currentUserId={account?.id ?? null}
+                onExport={(target) => void exportOne(target)}
+                onDelete={setPendingDelete}
+                onStartSync={(target) => void startSync(target)}
+                onCopy={(target) => void copy(target)}
+                onOrganize={(target) =>
+                  setOrganizing({
+                    workspace: target,
+                    folder: target.folder ?? "",
+                    tags: (target.tags ?? []).join(", "),
+                  })
+                }
+              />
+            ))}
+          </ul>
+        </>
       )}
+
+      <ConfirmDialog
+        open={organizing !== null}
+        title={`Organize “${organizing === null ? "" : displayTitle(organizing.workspace)}”`}
+        confirmLabel="Save"
+        onConfirm={() => void saveOrganization()}
+        onCancel={() => setOrganizing(null)}
+      >
+        <div className="field">
+          <label className="field-label" htmlFor="workspace-folder">
+            Folder
+          </label>
+          <input
+            id="workspace-folder"
+            maxLength={60}
+            value={organizing?.folder ?? ""}
+            onChange={(event) =>
+              setOrganizing((current) =>
+                current === null ? null : { ...current, folder: event.target.value },
+              )
+            }
+          />
+        </div>
+        <div className="field">
+          <label className="field-label" htmlFor="workspace-tags">
+            Tags (comma separated)
+          </label>
+          <input
+            id="workspace-tags"
+            value={organizing?.tags ?? ""}
+            onChange={(event) =>
+              setOrganizing((current) =>
+                current === null ? null : { ...current, tags: event.target.value },
+              )
+            }
+          />
+        </div>
+      </ConfirmDialog>
 
       <ConfirmDialog
         open={pendingDelete !== null}

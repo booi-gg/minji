@@ -37,6 +37,8 @@ export interface ExportedWorkspace {
   title: string;
   statement: string;
   notes: string;
+  folder?: string;
+  tags?: string[];
   language: Language;
   functionName: string;
   params: string[];
@@ -73,6 +75,8 @@ export const toExportFile = (bundles: WorkspaceBundle[], now: Date = new Date())
     title: workspace.title,
     statement: workspace.statement,
     notes: workspace.notes,
+    folder: workspace.folder,
+    tags: workspace.tags,
     language: workspace.language,
     functionName: workspace.functionName,
     params: workspace.params,
@@ -210,6 +214,10 @@ const workspaceOf = (value: unknown): ExportedWorkspace | string => {
     title: value.title,
     statement: stringOr(value.statement, ""),
     notes: stringOr(value.notes, ""),
+    folder: stringOr(value.folder, ""),
+    tags: Array.isArray(value.tags)
+      ? value.tags.filter((tag): tag is string => typeof tag === "string")
+      : [],
     language: languageOf(value.language),
     functionName,
     params,
@@ -255,6 +263,8 @@ export const toBundle = (imported: ExportedWorkspace, now: Date = new Date()): W
       title: imported.title,
       statement: imported.statement,
       notes: imported.notes,
+      folder: imported.folder,
+      tags: imported.tags,
       language: imported.language,
       functionName: imported.functionName,
       params: imported.params,

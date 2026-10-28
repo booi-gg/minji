@@ -157,13 +157,38 @@ pre {
   padding-inline: var(--space-4);
 }
 
-/* The app name sits in the bottom-right corner instead of a top bar, so screens start
-   with their own content. It stays small and quiet so it doesn't cover much. */
+.app-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-top: auto;
+  padding: var(--space-2) var(--space-4);
+  border-top: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+}
+
+.connection-status {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0 var(--space-1);
+}
+
+.connection-dot {
+  width: 7px;
+  height: 7px;
+  margin-right: var(--space-1);
+  border-radius: 50%;
+  background: var(--success);
+}
+
+.connection-dot-offline {
+  background: var(--warning-text);
+}
+
 .brand {
-  position: fixed;
-  right: var(--space-3);
-  bottom: var(--space-2);
-  z-index: 10;
   padding: 2px var(--space-2);
   border-radius: var(--radius-sm);
   background: var(--bg);
@@ -314,6 +339,19 @@ pre {
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   background: var(--surface);
+}
+
+.organization-filters {
+  align-items: center;
+  margin-bottom: var(--space-3);
+}
+
+.organization-filters label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--text-muted);
+  font-size: var(--text-sm);
 }
 
 .workspace-row {
