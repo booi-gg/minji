@@ -1,6 +1,7 @@
 import type { RunView } from "../practice/useTestRun.ts";
 import { formatFrame, userFrames } from "../runner/stack.ts";
 import { formatEncoded } from "./compare.ts";
+import { splitArguments } from "./arguments.ts";
 import { summarize, type TestResult, type TestStatus } from "./results.ts";
 
 const formatDuration = (ms: number): string => (ms < 1 ? "<1 ms" : `${Math.round(ms)} ms`);
@@ -77,7 +78,12 @@ const ErrorDetail = ({ result, onGoToLine }: Pick<DetailProps, "result" | "onGoT
 const ResultDetail = ({ result, functionName, timeoutMs, onGoToLine }: DetailProps) => {
   switch (result.status) {
     case "passed":
-      return null;
+      return (
+        <div className="result-detail value-pair">
+          <ValueBlock label="Expected output" value={result.expected} />
+          <ValueBlock label="Actual output" value={result.actual} />
+        </div>
+      );
     case "failed":
       return (
         <div className="result-detail">
@@ -87,8 +93,8 @@ const ResultDetail = ({ result, functionName, timeoutMs, onGoToLine }: DetailPro
               : `First difference at ${result.diffPath}`}
           </p>
           <div className="value-pair">
-            <ValueBlock label="Expected" value={result.expected} />
-            <ValueBlock label="Actual" value={result.actual} />
+            <ValueBlock label="Expected output" value={result.expected} />
+            <ValueBlock label="Actual output" value={result.actual} />
           </div>
         </div>
       );
@@ -141,6 +147,9 @@ interface ResultsPanelProps {
   view: RunView | null;
   functionName: string;
   timeoutMs: number;
+  params: readonly string[];
+  selectedId: string | null;
+  onSelect: (id: string) => void;
   onGoToLine: (line: number) => void;
 }
 
@@ -152,7 +161,15 @@ const headline = (view: RunView, results: TestResult[]): string => {
 };
 
 /** The Results tab. See specs/test-cases.md, "Statuses" and "Run summary". */
-export const ResultsPanel = ({ view, functionName, timeoutMs, onGoToLine }: ResultsPanelProps) => {
+export const ResultsPanel = ({
+  view,
+  functionName,
+  timeoutMs,
+  params,
+  selectedId,
+  onSelect,
+  onGoToLine,
+}: ResultsPanelProps) => {
   if (view === null) {
     return (
       <p className="hint" role="status">
@@ -162,6 +179,9 @@ export const ResultsPanel = ({ view, functionName, timeoutMs, onGoToLine }: Resu
   }
   const results = view.order.flatMap(({ id }) => view.results.get(id) ?? []);
   const line = view.message?.line;
+  const selected = view.order.find(({ id }) => id === selectedId) ?? view.order[0];
+  const selectedResult = selected === undefined ? undefined : view.results.get(selected.id);
+  const inputs = selected === undefined ? null : splitArguments(selected.argsText);
 
   return (
     <div className="results">
@@ -179,40 +199,73 @@ export const ResultsPanel = ({ view, functionName, timeoutMs, onGoToLine }: Resu
           </button>
         )}
       </div>
-      <ol className="result-rows">
+      <div className="case-picker" role="group" aria-label="Test results">
         {view.order.map(({ id, label }) => {
           const result = view.results.get(id);
           return (
-            <li key={id} className="result-row">
-              <div className="result-header">
-                <span
-                  className={`status status-${result === undefined ? "pending" : statusTone(result.status)}`}
-                >
-                  {result === undefined
-                    ? view.running
-                      ? "Running…"
-                      : "Not run"
-                    : STATUS_LABELS[result.status]}
-                </span>
-                <span className="result-label">{label}</span>
-                {result?.durationMs === null || result?.durationMs === undefined ? null : (
-                  <span className="duration" title={TIMING_NOTE}>
-                    {formatDuration(result.durationMs)}
-                  </span>
-                )}
-              </div>
-              {result === undefined ? null : (
-                <ResultDetail
-                  result={result}
-                  functionName={functionName}
-                  timeoutMs={timeoutMs}
-                  onGoToLine={onGoToLine}
-                />
-              )}
-            </li>
+            <button
+              key={id}
+              type="button"
+              className={`case-tab${selected?.id === id ? " case-tab-active" : ""}`}
+              aria-current={selected?.id === id ? "true" : undefined}
+              onClick={() => onSelect(id)}
+            >
+              {label}
+              {result === undefined ? "" : result.status === "passed" ? " ✓" : " ✕"}
+            </button>
           );
         })}
-      </ol>
+      </div>
+      {selected === undefined ? null : (
+        <div className="result-row">
+          <div className="result-header">
+            <span
+              className={`status status-${selectedResult === undefined ? "pending" : statusTone(selectedResult.status)}`}
+            >
+              {selectedResult === undefined
+                ? view.running
+                  ? "Running…"
+                  : "Not run"
+                : STATUS_LABELS[selectedResult.status]}
+            </span>
+            <span className="result-label">{selected.label}</span>
+            {selectedResult?.durationMs === null ||
+            selectedResult?.durationMs === undefined ? null : (
+              <span className="duration" title={TIMING_NOTE}>
+                {formatDuration(selectedResult.durationMs)}
+              </span>
+            )}
+          </div>
+          <div className="result-inputs">
+            {inputs === null ? (
+              <div className="value-block">
+                <span className="field-label">Input</span>
+                <pre>{selected.argsText}</pre>
+              </div>
+            ) : inputs.length === 0 ? (
+              <div className="value-block">
+                <span className="field-label">Input</span>
+                <pre>No arguments</pre>
+              </div>
+            ) : (
+              inputs.map((input, index) => (
+                <div key={index} className="value-block">
+                  <span className="field-label">{params[index] ?? `Argument ${index + 1}`} =</span>
+                  <pre>{input}</pre>
+                </div>
+              ))
+            )}
+          </div>
+          {selectedResult === undefined ? null : (
+            <ResultDetail
+              result={selectedResult}
+              functionName={functionName}
+              timeoutMs={timeoutMs}
+              onGoToLine={onGoToLine}
+            />
+          )}
+        </div>
+      )}
     </div>
   );
 };

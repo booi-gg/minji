@@ -1037,6 +1037,48 @@ textarea[readonly] {
 .test-list {
   display: grid;
   gap: var(--space-3);
+  min-width: 0;
+}
+
+.case-picker {
+  display: flex;
+  gap: var(--space-1);
+  align-items: center;
+  min-width: 0;
+  overflow-x: auto;
+  padding-bottom: var(--space-1);
+}
+
+.case-tab,
+.case-add {
+  flex: none;
+  min-height: 34px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.case-tab {
+  padding: var(--space-1) var(--space-3);
+  font-weight: 600;
+}
+
+.case-tab-active {
+  background: var(--surface-sunken);
+  color: var(--text);
+}
+
+.case-add {
+  display: grid;
+  place-items: center;
+  width: 34px;
+}
+
+.case-tab:hover,
+.case-add:hover {
+  color: var(--text);
 }
 
 .test-rows {
@@ -1050,10 +1092,8 @@ textarea[readonly] {
 .test-row {
   display: grid;
   gap: var(--space-2);
-  padding: var(--space-3);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  background: var(--bg);
+  min-width: 0;
+  container: testcase / inline-size;
 }
 
 .test-row:focus-within {
@@ -1088,9 +1128,66 @@ textarea[readonly] {
 
 .test-fields {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
   gap: var(--space-3);
-  align-items: start;
+  min-width: 0;
+}
+
+.test-arguments {
+  display: grid;
+  align-content: start;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.test-expected {
+  min-width: 0;
+}
+
+@container testcase (min-width: 540px) {
+  .test-fields {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .test-options {
+    grid-column: 1 / -1;
+  }
+}
+
+.test-case-heading {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+.test-case-run {
+  margin-left: auto;
+}
+
+.test-options {
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+}
+
+.test-options > summary {
+  width: max-content;
+  cursor: pointer;
+}
+
+.test-options-content {
+  display: grid;
+  gap: var(--space-3);
+  padding-top: var(--space-3);
+}
+
+.test-case-actions {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.test-case-actions .row-actions {
+  margin-top: var(--space-1);
 }
 
 .field {
@@ -1233,12 +1330,6 @@ dialog.history-dialog {
   flex: 1;
 }
 
-@media (max-width: 1023px) {
-  .test-fields {
-    grid-template-columns: minmax(0, 1fr);
-  }
-}
-
 @media (max-width: 767px) {
   .toolbar .actions .button:not(.button-quiet) {
     min-height: 32px;
@@ -1255,6 +1346,7 @@ dialog.history-dialog {
 .results {
   display: grid;
   gap: var(--space-3);
+  container: testresult / inline-size;
 }
 
 .results-summary {
@@ -1343,6 +1435,22 @@ dialog.history-dialog {
   display: grid;
   gap: var(--space-2);
   font-size: var(--text-sm);
+}
+
+.result-inputs {
+  display: grid;
+  gap: var(--space-2);
+}
+
+@container testresult (min-width: 540px) {
+  .result-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: var(--space-3);
+  }
+
+  .result-header {
+    grid-column: 1 / -1;
+  }
 }
 
 .result-error {

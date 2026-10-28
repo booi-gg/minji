@@ -2,29 +2,18 @@
 
 ## Authoring
 
-The **Tests** tab lists a workspace's cases in `position` order. Each row has:
+The **Tests** tab has a **Case 1 / Case 2 / … / +** picker in `position` order and shows one selected case. Function tests show one JSON field per argument, labeled with the parameter name when known. On a wide test pane, arguments are on the left and **Expected output** is on the right; they stack when the pane is narrow. The fields edit the existing `argsText` JSON array; no data migration is needed. Cases with unsplittable argument text and class method sequences show a raw JSON field.
 
-| Control   | Behaviour                                                                                                                                                                |
-| --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Label     | Optional text field. Placeholder `Test <n>`.                                                                                                                             |
-| Arguments | Monospace auto-growing textarea (up to 8 visible lines), holding `argsText`. A hint above it shows the parameter names, e.g. `[nums, target]`, when `params` is set.     |
-| Expected  | Monospace textarea holding `expectedText`.                                                                                                                               |
-| Compare   | Select: **Return value** (default) or **Argument N after the call** (one entry per argument, labelled with the parameter name when known).                               |
-| Test type | Function call or class method sequence. A class case uses `[["ClassName","method"],[[],[args]]]` and compares the full result sequence.                                  |
-| Adapters  | Each function argument and its result can use plain JSON, a linked list, or a binary tree. List and tree values are JSON arrays; trees use level order with `null` gaps. |
-| Options   | Per-case unordered outer-array comparison and absolute numeric tolerance.                                                                                                |
-| Run       | Runs only this case.                                                                                                                                                     |
-| Actions   | ↑ and ↓ (move), Duplicate and Delete, shown inline on the row.                                                                                                           |
+The selected case has a Run button. **Options** contains its name, move/duplicate/delete controls, test type, compare target, input and result adapters, unordered comparison, and numeric tolerance. The summary marks customized options. A class case uses `[["ClassName","method"],[[],[args]]]` and compares the full result sequence.
 
-- **Add test** appends a row with `argsText: '[]'`, `expectedText: ''`, and focuses Arguments. It is disabled at `MAX_TESTS_PER_WORKSPACE`.
-- Reorder by dragging the row handle, with the menu, or with `Alt+↑` / `Alt+↓` while focus is in the row. Positions are rewritten densely in one transaction.
-- **Delete** removes the row at once and shows an **Undo** toast for 5 seconds.
-- Arguments or expected text over 100 KB collapses to a summary ("Large input · 2.3 MB") with an **Edit** button, so huge inputs don't slow the page. Editing opens the text in a dialog.
+- **Add case** appends a case with `argsText: '[]'` and `expectedText: ''`, selects it, and focuses its first argument when present. It is disabled at `MAX_TESTS_PER_WORKSPACE`.
+- **Delete** selects a neighboring case and shows an **Undo** toast for 5 seconds. Moving rewrites positions densely in one transaction.
+- Arguments or expected text over 100 KB collapses to a summary ("Large input · 2.3 MB") with an **Edit** button.
 - Edits autosave on the same debounce as code.
 
 ## Validation
 
-Validation runs 300 ms after typing stops. Messages appear under the field, except that an empty field is only flagged after it has been left once; the row gets an "Invalid" badge. A new test focuses Arguments with its `[]` selected, so typing replaces it.
+Validation runs 300 ms after typing stops. Messages appear under the field, except that an empty field is only flagged after it has been left once; the case gets an "Invalid" badge.
 
 | Check                                       | Message                                                                          |
 | ------------------------------------------- | -------------------------------------------------------------------------------- |
@@ -95,8 +84,8 @@ The page maps each `RawTestResult` from the runner: `returned` becomes `passed` 
 
 | Status             | Row badge      | Detail text                                                                                                                                      |
 | ------------------ | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `passed`           | Passed         | —                                                                                                                                                |
-| `failed`           | Failed         | `Expected` / `Actual` blocks, pretty-printed, with the differing path highlighted: `First difference at [2]`.                                    |
+| `passed`           | Passed         | Selected case input, expected output, and actual output.                                                                                         |
+| `failed`           | Failed         | Selected case input, expected output, and actual output, with the first differing path.                                                          |
 | `error`            | Error          | `<name>: <message>` and the stack with harness frames removed and line numbers mapped to the user's source when possible.                        |
 | `timeout`          | Timed out      | `Stopped after 2 s. Look for an infinite loop or a slower-than-expected algorithm.`                                                              |
 | `non-serializable` | Can't compare  | `The function returned a <type> at <path>, which can't be compared as JSON. Return arrays, plain objects, strings, numbers, booleans or null.`   |
@@ -119,6 +108,8 @@ Run-level outcomes replace the per-test list with one message:
 ## Run summary
 
 Shown at the top of the **Results** tab and announced through an `aria-live="polite"` region.
+
+The results view has a case picker. It shows only the selected case's input and result, side by side when the pane is wide; selecting another case does not rerun code. Inputs come from the run snapshot, so later test edits do not change the displayed result.
 
 | Situation                  | Text                                                           |
 | -------------------------- | -------------------------------------------------------------- |

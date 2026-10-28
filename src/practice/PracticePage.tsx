@@ -184,6 +184,7 @@ const Practice = ({ initial }: PracticeProps) => {
   const { account, sync } = useSync();
   const [workspace, setWorkspace] = useState<Workspace>(initial.workspace);
   const [tests, setTests] = useState<TestCase[]>(initial.tests);
+  const [selectedTestId, setSelectedTestId] = useState<string | null>(initial.tests[0]?.id ?? null);
   const [revisions, setRevisions] = useState<Revision[]>(initial.revisions);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("saved");
   const [dialog, setDialog] = useState<Dialog>(null);
@@ -376,16 +377,19 @@ const Practice = ({ initial }: PracticeProps) => {
   const lastSingleTest = useRef<string | null>(null);
 
   const startRun = (scope: RunScope): void => {
-    if (scope.kind === "single") lastSingleTest.current = scope.testId;
+    if (scope.kind === "single") {
+      lastSingleTest.current = scope.testId;
+      setSelectedTestId(scope.testId);
+    }
     setBottomTab("results");
     setPhoneTab("results");
     void testRun.run(scope);
   };
 
-  /** Runs the test row that has focus, or else the last test run on its own. */
+  /** Runs the focused case, or the selected case when focus is elsewhere. */
   const runFocusedTest = (): void => {
     const row = document.activeElement?.closest<HTMLElement>("[data-test-id]");
-    const testId = row?.dataset.testId ?? lastSingleTest.current;
+    const testId = row?.dataset.testId ?? selectedTestId ?? lastSingleTest.current;
     if (testId !== null && testId !== undefined) startRun({ kind: "single", testId });
   };
 
@@ -516,6 +520,8 @@ const Practice = ({ initial }: PracticeProps) => {
       functionName={workspace.functionName}
       readOnly={readOnly}
       running={testRun.running}
+      selectedId={selectedTestId}
+      onSelect={setSelectedTestId}
       onChange={changeTests}
       onRunTest={(testId) => startRun({ kind: "single", testId })}
     />
@@ -526,6 +532,9 @@ const Practice = ({ initial }: PracticeProps) => {
       view={testRun.view}
       functionName={workspace.functionName}
       timeoutMs={workspace.testTimeoutMs}
+      params={workspace.params}
+      selectedId={selectedTestId}
+      onSelect={setSelectedTestId}
       onGoToLine={goToLine}
     />
   );

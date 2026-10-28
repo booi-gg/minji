@@ -1,18 +1,12 @@
-import {
-  useEffect,
-  useId,
-  useMemo,
-  useRef,
-  useState,
-  type DragEvent,
-  type KeyboardEvent,
-} from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { ArrowDown, ArrowUp, Copy, Play, Plus, Trash2 } from "lucide-react";
 import type { CompareTarget, NodeAdapter } from "../runner/types.ts";
 import { ConfirmDialog } from "../shared/ConfirmDialog.tsx";
 import { newId } from "../shared/ids.ts";
 import { MAX_TESTS_PER_WORKSPACE } from "../shared/limits.ts";
 import { useToast } from "../shared/toast.tsx";
 import type { TestCase } from "../workspaces/model.ts";
+import { joinArguments, splitArguments } from "./arguments.ts";
 import { validateTest, type TestValidation } from "./validate.ts";
 
 const LARGE_TEXT_CHARS = 100_000;
@@ -177,6 +171,18 @@ const TestRow = ({
   const name = test.label === "" ? `Test ${index + 1}` : test.label;
   const argCount = current.argCount ?? params.length;
   const kind = test.kind ?? "function";
+  const argumentParts =
+    kind === "function" && test.argsText.length <= LARGE_TEXT_CHARS
+      ? splitArguments(test.argsText)
+      : null;
+  const visibleArgumentCount = Math.max(params.length, argumentParts?.length ?? 0);
+  const hasOptions =
+    kind === "class" ||
+    test.compare.kind !== "return" ||
+    test.inputAdapters?.some((adapter) => adapter !== "plain") === true ||
+    (test.outputAdapter !== undefined && test.outputAdapter !== "plain") ||
+    test.comparison?.unordered === true ||
+    test.comparison?.tolerance !== undefined;
   const adapterOptions = (
     <>
       <option value="plain">Plain JSON</option>
@@ -185,268 +191,258 @@ const TestRow = ({
     </>
   );
 
-  const onKeyDown = (event: KeyboardEvent<HTMLLIElement>): void => {
-    if (readOnly || !event.altKey) return;
-    if (event.key === "ArrowUp" && index > 0) {
-      event.preventDefault();
-      onMove(index, index - 1);
-    } else if (event.key === "ArrowDown" && index < count - 1) {
-      event.preventDefault();
-      onMove(index, index + 1);
-    }
-  };
-
-  const onDragStart = (event: DragEvent<HTMLButtonElement>): void => {
-    event.dataTransfer.setData("text/x-minji-test", String(index));
-    event.dataTransfer.effectAllowed = "move";
-  };
-
-  const onDrop = (event: DragEvent<HTMLLIElement>): void => {
-    const from = Number(event.dataTransfer.getData("text/x-minji-test"));
-    if (!Number.isInteger(from)) return;
-    event.preventDefault();
-    onMove(from, index);
-  };
-
   return (
-    <li
-      className="test-row"
-      data-test-id={test.id}
-      aria-label={name}
-      onKeyDown={onKeyDown}
-      onDragOver={(event) => {
-        if (!readOnly) event.preventDefault();
-      }}
-      onDrop={onDrop}
-    >
-      <div className="test-row-header">
-        {readOnly ? null : (
-          <button
-            type="button"
-            className="drag-handle"
-            draggable
-            onDragStart={onDragStart}
-            aria-label={`Drag to reorder ${name}`}
-            title="Drag to reorder (or Alt+↑ / Alt+↓)"
-          >
-            ⠿
-          </button>
-        )}
-        <label htmlFor={labelId} className="visually-hidden">
-          Label for {name}
-        </label>
-        <input
-          id={labelId}
-          className="test-label"
-          placeholder={`Test ${index + 1}`}
-          value={test.label}
-          readOnly={readOnly}
-          onChange={(event) => onChange({ ...test, label: event.target.value })}
-        />
+    <li className="test-row" data-test-id={test.id} aria-label={name}>
+      <div className="test-case-heading">
+        <span>{name}</span>
         {validation.valid ? null : <span className="badge badge-error">Invalid</span>}
         <button
           type="button"
-          className="button button-small"
+          className="button button-small test-case-run"
           aria-label={`Run ${name}`}
+          title={`Run ${name}`}
           disabled={running}
           onClick={() => onRun(test.id)}
         >
-          Run
+          <Play size={16} aria-hidden="true" />
         </button>
-        {readOnly ? null : (
-          <div className="row-actions">
-            <button
-              type="button"
-              className="button button-quiet button-small"
-              aria-label={`Move ${name} up`}
-              disabled={index === 0}
-              onClick={() => onMove(index, index - 1)}
-            >
-              ↑
-            </button>
-            <button
-              type="button"
-              className="button button-quiet button-small"
-              aria-label={`Move ${name} down`}
-              disabled={index === count - 1}
-              onClick={() => onMove(index, index + 1)}
-            >
-              ↓
-            </button>
-            <button
-              type="button"
-              className="button button-quiet button-small"
-              aria-label={`Duplicate ${name}`}
-              onClick={() => onDuplicate(index)}
-            >
-              Duplicate
-            </button>
-            <button
-              type="button"
-              className="button button-quiet button-small"
-              aria-label={`Delete ${name}`}
-              onClick={() => onDelete(index)}
-            >
-              Delete
-            </button>
-          </div>
-        )}
       </div>
       <div className="test-fields">
-        <div className="field">
-          <label htmlFor={kindId} className="field-label">
-            Test type
-          </label>
-          <select
-            id={kindId}
-            value={kind}
-            disabled={readOnly}
-            onChange={(event) =>
-              onChange({
-                ...test,
-                kind: event.target.value as "function" | "class",
-                argsText:
-                  event.target.value === "class" && test.argsText === "[]"
-                    ? JSON.stringify([[functionName], [[]]])
-                    : test.argsText,
-                expectedText:
-                  event.target.value === "class" && test.expectedText === ""
-                    ? "[null]"
-                    : test.expectedText,
-                compare: { kind: "return" },
-                inputAdapters: event.target.value === "class" ? [] : test.inputAdapters,
-                outputAdapter: event.target.value === "class" ? "plain" : test.outputAdapter,
-              })
-            }
-          >
-            <option value="function">Function call</option>
-            <option value="class">Class method sequence</option>
-          </select>
+        <div className="test-arguments">
+          {argumentParts === null ? (
+            <JsonField
+              label={kind === "class" ? "Calls" : "Arguments"}
+              value={test.argsText}
+              error={validation.args}
+              readOnly={readOnly}
+              autoFocus={autoFocus}
+              onChange={(argsText) => onChange({ ...test, argsText })}
+            />
+          ) : (
+            Array.from({ length: visibleArgumentCount }, (_, argument) => (
+              <JsonField
+                key={argument}
+                label={`${params[argument] ?? `Argument ${argument + 1}`} =`}
+                value={argumentParts[argument] ?? ""}
+                error={argument === 0 ? validation.args : undefined}
+                readOnly={readOnly}
+                autoFocus={autoFocus && argument === 0}
+                onChange={(value) => {
+                  const next = [...argumentParts];
+                  while (next.length <= argument) next.push("");
+                  next[argument] = value;
+                  onChange({ ...test, argsText: joinArguments(next) });
+                }}
+              />
+            ))
+          )}
+          {visibleArgumentCount === 0 && argumentParts !== null ? (
+            <p className="hint">This function takes no arguments.</p>
+          ) : null}
         </div>
-        <JsonField
-          label="Arguments"
-          hint={
-            kind === "class"
-              ? `[["${functionName}", "method"], [[], [args]]]`
-              : params.length === 0
-                ? undefined
-                : `[${params.join(", ")}]`
-          }
-          value={test.argsText}
-          error={validation.args}
-          readOnly={readOnly}
-          autoFocus={autoFocus}
-          onChange={(argsText) => onChange({ ...test, argsText })}
-        />
-        <JsonField
-          label="Expected"
-          value={test.expectedText}
-          error={validation.expected}
-          readOnly={readOnly}
-          onChange={(expectedText) => onChange({ ...test, expectedText })}
-        />
-        {kind === "class" ? null : (
-          <div className="field">
-            <label htmlFor={compareId} className="field-label">
-              Compare
-            </label>
-            <select
-              id={compareId}
-              value={compareValue(test.compare)}
-              disabled={readOnly}
-              onChange={(event) => onChange({ ...test, compare: parseCompare(event.target.value) })}
-            >
-              <option value="return">Return value</option>
-              {Array.from({ length: Math.max(argCount, 1) }, (_, argument) => (
-                <option key={argument} value={`argument-${argument}`}>
-                  Argument {argument + 1}
-                  {params[argument] === undefined ? "" : ` (${params[argument]})`} after the call
-                </option>
-              ))}
-            </select>
-            {validation.compare === undefined ? null : (
-              <p className="field-error">{validation.compare}</p>
-            )}
-          </div>
-        )}
-        {kind === "class" ? null : (
-          <>
-            {Array.from({ length: argCount }, (_, argument) => (
-              <div className="field" key={argument}>
-                <label className="field-label" htmlFor={`${kindId}-arg-${argument}`}>
-                  Argument {argument + 1} adapter
-                </label>
-                <select
-                  id={`${kindId}-arg-${argument}`}
-                  value={test.inputAdapters?.[argument] ?? "plain"}
-                  disabled={readOnly}
-                  onChange={(event) => {
-                    const inputAdapters = [...(test.inputAdapters ?? [])];
-                    inputAdapters[argument] = event.target.value as NodeAdapter;
-                    onChange({ ...test, inputAdapters });
-                  }}
-                >
-                  {adapterOptions}
-                </select>
-              </div>
-            ))}
-            <div className="field">
-              <label className="field-label" htmlFor={outputId}>
-                Result adapter
-              </label>
-              <select
-                id={outputId}
-                value={test.outputAdapter ?? "plain"}
-                disabled={readOnly}
-                onChange={(event) =>
-                  onChange({ ...test, outputAdapter: event.target.value as NodeAdapter })
-                }
-              >
-                {adapterOptions}
-              </select>
-            </div>
-          </>
-        )}
-        <label className="field">
-          <span className="field-label">Comparison</span>
-          <span>
-            <input
-              type="checkbox"
-              checked={test.comparison?.unordered ?? false}
-              disabled={readOnly}
-              onChange={(event) =>
-                onChange({
-                  ...test,
-                  comparison: { ...test.comparison, unordered: event.target.checked },
-                })
-              }
-            />{" "}
-            Ignore outer array order
-          </span>
-        </label>
-        <div className="field">
-          <label className="field-label" htmlFor={toleranceId}>
-            Numeric tolerance (absolute)
-          </label>
-          <input
-            id={toleranceId}
-            type="number"
-            min="0"
-            step="any"
-            placeholder="Exact"
-            value={test.comparison?.tolerance ?? ""}
+        <div className="test-expected">
+          <JsonField
+            label="Expected output"
+            value={test.expectedText}
+            error={validation.expected}
             readOnly={readOnly}
-            onChange={(event) =>
-              onChange({
-                ...test,
-                comparison: {
-                  ...test.comparison,
-                  tolerance: event.target.value === "" ? undefined : Number(event.target.value),
-                },
-              })
-            }
+            onChange={(expectedText) => onChange({ ...test, expectedText })}
           />
         </div>
+        <details className="test-options">
+          <summary>Options{hasOptions ? " · customized" : ""}</summary>
+          <div className="test-options-content">
+            <div className="test-case-actions">
+              <label htmlFor={labelId} className="field-label">
+                Case name
+              </label>
+              <input
+                id={labelId}
+                placeholder={`Case ${index + 1}`}
+                value={test.label}
+                readOnly={readOnly}
+                onChange={(event) => onChange({ ...test, label: event.target.value })}
+              />
+              {readOnly ? null : (
+                <div className="row-actions">
+                  <button
+                    type="button"
+                    className="button button-quiet button-small"
+                    aria-label={`Move ${name} up`}
+                    title="Move up"
+                    disabled={index === 0}
+                    onClick={() => onMove(index, index - 1)}
+                  >
+                    <ArrowUp size={16} aria-hidden="true" />
+                  </button>
+                  <button
+                    type="button"
+                    className="button button-quiet button-small"
+                    aria-label={`Move ${name} down`}
+                    title="Move down"
+                    disabled={index === count - 1}
+                    onClick={() => onMove(index, index + 1)}
+                  >
+                    <ArrowDown size={16} aria-hidden="true" />
+                  </button>
+                  <button
+                    type="button"
+                    className="button button-quiet button-small"
+                    aria-label={`Duplicate ${name}`}
+                    title="Duplicate"
+                    onClick={() => onDuplicate(index)}
+                  >
+                    <Copy size={16} aria-hidden="true" />
+                  </button>
+                  <button
+                    type="button"
+                    className="button button-quiet button-small"
+                    aria-label={`Delete ${name}`}
+                    title="Delete"
+                    onClick={() => onDelete(index)}
+                  >
+                    <Trash2 size={16} aria-hidden="true" />
+                  </button>
+                </div>
+              )}
+            </div>
+            <div className="field">
+              <label htmlFor={kindId} className="field-label">
+                Test type
+              </label>
+              <select
+                id={kindId}
+                value={kind}
+                disabled={readOnly}
+                onChange={(event) =>
+                  onChange({
+                    ...test,
+                    kind: event.target.value as "function" | "class",
+                    argsText:
+                      event.target.value === "class" && test.argsText === "[]"
+                        ? JSON.stringify([[functionName], [[]]])
+                        : test.argsText,
+                    expectedText:
+                      event.target.value === "class" && test.expectedText === ""
+                        ? "[null]"
+                        : test.expectedText,
+                    compare: { kind: "return" },
+                    inputAdapters: event.target.value === "class" ? [] : test.inputAdapters,
+                    outputAdapter: event.target.value === "class" ? "plain" : test.outputAdapter,
+                  })
+                }
+              >
+                <option value="function">Function call</option>
+                <option value="class">Class method sequence</option>
+              </select>
+            </div>
+            {kind === "class" ? null : (
+              <div className="field">
+                <label htmlFor={compareId} className="field-label">
+                  Compare
+                </label>
+                <select
+                  id={compareId}
+                  value={compareValue(test.compare)}
+                  disabled={readOnly}
+                  onChange={(event) =>
+                    onChange({ ...test, compare: parseCompare(event.target.value) })
+                  }
+                >
+                  <option value="return">Return value</option>
+                  {Array.from({ length: Math.max(argCount, 1) }, (_, argument) => (
+                    <option key={argument} value={`argument-${argument}`}>
+                      Argument {argument + 1}
+                      {params[argument] === undefined ? "" : ` (${params[argument]})`} after the
+                      call
+                    </option>
+                  ))}
+                </select>
+                {validation.compare === undefined ? null : (
+                  <p className="field-error">{validation.compare}</p>
+                )}
+              </div>
+            )}
+            {kind === "class" ? null : (
+              <>
+                {Array.from({ length: argCount }, (_, argument) => (
+                  <div className="field" key={argument}>
+                    <label className="field-label" htmlFor={`${kindId}-arg-${argument}`}>
+                      Argument {argument + 1} adapter
+                    </label>
+                    <select
+                      id={`${kindId}-arg-${argument}`}
+                      value={test.inputAdapters?.[argument] ?? "plain"}
+                      disabled={readOnly}
+                      onChange={(event) => {
+                        const inputAdapters = [...(test.inputAdapters ?? [])];
+                        inputAdapters[argument] = event.target.value as NodeAdapter;
+                        onChange({ ...test, inputAdapters });
+                      }}
+                    >
+                      {adapterOptions}
+                    </select>
+                  </div>
+                ))}
+                <div className="field">
+                  <label className="field-label" htmlFor={outputId}>
+                    Result adapter
+                  </label>
+                  <select
+                    id={outputId}
+                    value={test.outputAdapter ?? "plain"}
+                    disabled={readOnly}
+                    onChange={(event) =>
+                      onChange({ ...test, outputAdapter: event.target.value as NodeAdapter })
+                    }
+                  >
+                    {adapterOptions}
+                  </select>
+                </div>
+              </>
+            )}
+            <label className="field">
+              <span className="field-label">Comparison</span>
+              <span>
+                <input
+                  type="checkbox"
+                  checked={test.comparison?.unordered ?? false}
+                  disabled={readOnly}
+                  onChange={(event) =>
+                    onChange({
+                      ...test,
+                      comparison: { ...test.comparison, unordered: event.target.checked },
+                    })
+                  }
+                />{" "}
+                Ignore outer array order
+              </span>
+            </label>
+            <div className="field">
+              <label className="field-label" htmlFor={toleranceId}>
+                Numeric tolerance (absolute)
+              </label>
+              <input
+                id={toleranceId}
+                type="number"
+                min="0"
+                step="any"
+                placeholder="Exact"
+                value={test.comparison?.tolerance ?? ""}
+                readOnly={readOnly}
+                onChange={(event) =>
+                  onChange({
+                    ...test,
+                    comparison: {
+                      ...test.comparison,
+                      tolerance: event.target.value === "" ? undefined : Number(event.target.value),
+                    },
+                  })
+                }
+              />
+            </div>
+          </div>
+        </details>
       </div>
       {validation.options === undefined ? null : (
         <p className="field-error">{validation.options}</p>
@@ -463,6 +459,8 @@ interface TestListProps {
   functionName: string;
   readOnly: boolean;
   running: boolean;
+  selectedId: string | null;
+  onSelect: (id: string) => void;
   onChange: (tests: TestCase[]) => void;
   onRunTest: (testId: string) => void;
 }
@@ -478,6 +476,8 @@ export const TestList = ({
   functionName,
   readOnly,
   running,
+  selectedId,
+  onSelect,
   onChange,
   onRunTest,
 }: TestListProps) => {
@@ -499,6 +499,7 @@ export const TestList = ({
       compare: { kind: "return" },
     };
     setFocusId(test.id);
+    onSelect(test.id);
     update([...tests, test]);
   };
 
@@ -517,12 +518,17 @@ export const TestList = ({
     const copy = { ...source, id: newId() };
     const next = [...tests];
     next.splice(index + 1, 0, copy);
+    onSelect(copy.id);
     update(next);
   };
 
   const remove = (index: number): void => {
     const removed = tests[index];
     if (removed === undefined) return;
+    if (selectedId === removed.id) {
+      const neighbor = tests[index + 1] ?? tests[index - 1];
+      if (neighbor !== undefined) onSelect(neighbor.id);
+    }
     update(tests.filter((_, position) => position !== index));
     const name = removed.label === "" ? `Test ${index + 1}` : `“${removed.label}”`;
     showToast({
@@ -543,46 +549,61 @@ export const TestList = ({
   };
 
   const full = tests.length >= MAX_TESTS_PER_WORKSPACE;
+  const selected = tests.find((test) => test.id === selectedId) ?? tests[0];
+  const selectedIndex = selected === undefined ? -1 : tests.indexOf(selected);
 
   return (
     <div className="test-list">
+      <div className="case-picker" role="group" aria-label="Test cases">
+        {tests.map((test, index) => (
+          <button
+            key={test.id}
+            type="button"
+            className={`case-tab${selected?.id === test.id ? " case-tab-active" : ""}`}
+            aria-current={selected?.id === test.id ? "true" : undefined}
+            onClick={() => onSelect(test.id)}
+          >
+            {test.label.trim() === "" ? `Case ${index + 1}` : test.label}
+          </button>
+        ))}
+        {readOnly ? null : (
+          <button
+            type="button"
+            className="case-add"
+            aria-label="Add case"
+            title="Add case"
+            onClick={add}
+            disabled={full}
+          >
+            <Plus size={18} aria-hidden="true" />
+          </button>
+        )}
+      </div>
       {tests.length === 0 ? (
-        <p className="hint">
-          No tests yet. Each test gives the function's arguments as a JSON array and the value you
-          expect back.
-        </p>
+        <p className="hint">No cases yet. Add one to enter arguments and an expected output.</p>
       ) : (
         <ol className="test-rows">
-          {tests.map((test, index) => (
+          {selected === undefined ? null : (
             <TestRow
-              key={test.id}
-              test={test}
-              index={index}
+              key={selected.id}
+              test={selected}
+              index={selectedIndex}
               count={tests.length}
               params={params}
               functionName={functionName}
               readOnly={readOnly}
               running={running}
-              autoFocus={test.id === focusId}
+              autoFocus={selected.id === focusId}
               onChange={replace}
               onRun={onRunTest}
               onMove={move}
               onDuplicate={duplicate}
               onDelete={remove}
             />
-          ))}
+          )}
         </ol>
       )}
-      {readOnly ? null : (
-        <div className="actions">
-          <button type="button" className="button" onClick={add} disabled={full}>
-            Add test
-          </button>
-          {full ? (
-            <span className="hint">The limit is {MAX_TESTS_PER_WORKSPACE} tests.</span>
-          ) : null}
-        </div>
-      )}
+      {full ? <span className="hint">The limit is {MAX_TESTS_PER_WORKSPACE} cases.</span> : null}
     </div>
   );
 };

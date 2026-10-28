@@ -80,16 +80,27 @@ const runAll = async (page: Page): Promise<string> => {
   return (await page.locator(".summary").textContent()) ?? "";
 };
 
-const rows = async (page: Page): Promise<string[]> =>
-  page.locator(".result-row").evaluateAll((elements) =>
-    elements.map((element) => {
-      const status = element.querySelector(".status")?.textContent ?? "";
-      const label = element.querySelector(".result-label")?.textContent ?? "";
-      const detail =
-        element.querySelector(".result-detail")?.textContent?.replaceAll(/\s+/g, " ").trim() ?? "";
-      return `${label}: ${status}${detail === "" ? "" : ` — ${detail.slice(0, 110)}`}`;
-    }),
-  );
+const rows = async (page: Page): Promise<string[]> => {
+  const tabs = page.locator('.case-picker[aria-label="Test results"] .case-tab');
+  const rows: string[] = [];
+  for (let index = 0; index < (await tabs.count()); index += 1) {
+    await tabs.nth(index).click();
+    const row = page.locator(".result-row");
+    const status = (await row.locator(".status").textContent()) ?? "";
+    const label = (await row.locator(".result-label").textContent()) ?? "";
+    const detail =
+      (
+        await row
+          .locator(".result-detail")
+          .textContent()
+          .catch(() => "")
+      )
+        ?.replaceAll(/\s+/g, " ")
+        .trim() ?? "";
+    rows.push(`${label}: ${status}${detail === "" ? "" : ` — ${detail.slice(0, 110)}`}`);
+  }
+  return rows;
+};
 
 const check = async (name: string, launch: () => Promise<Browser>): Promise<boolean> => {
   const browser = await launch();
@@ -104,7 +115,33 @@ const check = async (name: string, launch: () => Promise<Browser>): Promise<bool
   try {
     process.stdout.write(`\n${name}\n`);
     await importWorkspace(page, gate);
+    expect(
+      (await page.getByRole("textbox", { name: "kind =" }).inputValue()) === '"ok"',
+      "named input field",
+    );
+    const argumentColumn = await page.locator(".test-arguments").boundingBox();
+    const expectedColumn = await page.locator(".test-expected").boundingBox();
+    expect(
+      argumentColumn !== null &&
+        expectedColumn !== null &&
+        expectedColumn.x > argumentColumn.x + argumentColumn.width / 2 &&
+        Math.abs(expectedColumn.y - argumentColumn.y) < 8,
+      "arguments and expected output are side by side",
+    );
+    await page.locator('.case-picker[aria-label="Test cases"] .case-tab').nth(1).click();
+    expect(
+      (await page.getByRole("textbox", { name: "kind =" }).inputValue()) === '"wrong"',
+      "case picker changes input",
+    );
     const summary = await runAll(page);
+    const resultInputs = await page.locator(".result-inputs").boundingBox();
+    const resultOutput = await page.locator(".result-detail").boundingBox();
+    expect(
+      resultInputs !== null &&
+        resultOutput !== null &&
+        resultOutput.x > resultInputs.x + resultInputs.width / 2,
+      "result input and output are side by side",
+    );
     const results = await rows(page);
     process.stdout.write(`  summary: ${summary}\n${results.map((row) => `  ${row}`).join("\n")}\n`);
     const statusOf = (label: string) => results.find((row) => row.startsWith(`${label}:`)) ?? "";

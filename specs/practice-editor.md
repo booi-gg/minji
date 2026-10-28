@@ -51,11 +51,10 @@ Left to right: back to workspaces, title (inline edit, placeholder "Untitled"), 
 | Shortcut                  | Action                                                                                           |
 | ------------------------- | ------------------------------------------------------------------------------------------------ |
 | `Mod+Enter`               | Run all                                                                                          |
-| `Mod+Shift+Enter`         | Run the test row that has focus, or the last single-run test                                     |
+| `Mod+Shift+Enter`         | Run the focused case, or the selected case                                                       |
 | `Mod+S`                   | Format (when **Format on save** is on), then save a revision; prevents the browser's save dialog |
 | `Shift+Alt+F`             | Format with Prettier                                                                             |
 | `Mod+\`                   | Toggle the statement panel                                                                       |
-| `Alt+↑` / `Alt+↓`         | Move the focused test row                                                                        |
 | `?` (outside text fields) | Show the shortcut list                                                                           |
 
 ## Formatting

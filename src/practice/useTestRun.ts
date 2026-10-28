@@ -29,7 +29,7 @@ export interface RunView {
   outcome: RunOutcome | null;
   message: RunMessage | null;
   /** Selected tests in display order; ids without a result are still running. */
-  order: { id: string; label: string }[];
+  order: { id: string; label: string; argsText: string }[];
   results: Map<string, TestResult>;
 }
 
@@ -78,7 +78,11 @@ export const useTestRun = ({ getState, beforeRun, onLastRun }: UseTestRunOptions
     const prepared = prepareRun(workspace, tests, scope, runId);
     const order =
       prepared.kind === "ready"
-        ? prepared.selected.map((test) => ({ id: test.id, label: labelOf(test) }))
+        ? prepared.selected.map((test) => ({
+            id: test.id,
+            label: labelOf(test),
+            argsText: test.argsText,
+          }))
         : [];
     const results = new Map<string, TestResult>(
       prepared.kind === "ready" ? prepared.invalid.map((result) => [result.testId, result]) : [],
