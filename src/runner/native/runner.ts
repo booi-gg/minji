@@ -156,7 +156,8 @@ export const createNativeRunner = (options: NativeRunnerOptions = {}): Runner =>
       current.compileError(transformed.message, transformed.line, transformed.column);
       return;
     }
-    const body = buildLoaderBody(transformed.code, request.functionName);
+    const hasExpressions = request.tests.some((test) => test.kind === "expression");
+    const body = buildLoaderBody(transformed.code, request.functionName, hasExpressions);
     const element = await ensureFrame();
     onFrameMessage = (message) => handle(current, message);
     element.contentWindow?.postMessage(
@@ -169,7 +170,7 @@ export const createNativeRunner = (options: NativeRunnerOptions = {}): Runner =>
         tests: request.tests.map((test) => ({
           id: test.id,
           argsJson: test.argsJson,
-          config: guestConfigFor(test),
+          config: guestConfigFor(test, request.language),
         })),
       },
       "*",

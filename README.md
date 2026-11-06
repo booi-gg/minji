@@ -12,7 +12,7 @@ It's for people who want a personal problem set rather than a public catalog: no
 
 - **Bring your own problems.** Paste a problem copied from a web page, upload Markdown or text, or import a JSON export. The importer finds the title, starter code, function name, parameters, difficulty and example test cases, then lets you review them before saving.
 - **A familiar editor.** Monaco (the editor from VS Code) with TypeScript checking, Prettier formatting and the JetBrains Mono font. The layout follows LeetCode: statement on the left, code on top, **Testcase** and **Test Result** below.
-- **Real test cases.** One field per argument, any JSON value, in-place comparisons (an argument after the call), linked list and binary tree adapters, class method sequences, unordered and numeric-tolerance comparison. Results show input, stdout, output and expected value per case.
+- **Real test cases.** One field per argument, any JSON value, in-place comparisons (an argument after the call), linked list and binary tree adapters, call expressions such as `sum(1)(2)()`, class method sequences, unordered and numeric-tolerance comparison. Results show input, stdout, output and expected value per case.
 - **Safe, local execution.** Your code runs in your browser, inside a sandboxed iframe and a Web Worker with a strict Content Security Policy and a watchdog for infinite loops. No code is sent to a server to run.
 - **Organize.** Set a difficulty (Easy, Medium, Hard, Super hard) and tags; the problem sidebar searches, sorts by difficulty and filters by tag.
 - **Offline first.** Problems live in IndexedDB and a service worker caches the app. History keeps earlier versions of your code, with a side-by-side diff.
@@ -39,7 +39,7 @@ To run your own copy online, follow [Self-hosting on Cloudflare](docs/self-hosti
 ## Using minji
 
 - **Add a problem:** **New problem**, then start from scratch or **Import** (paste text, or upload `.md`, `.txt` or `.json`). The import rules are in [specs/workspaces-and-import.md](specs/workspaces-and-import.md).
-- **Write tests:** [Writing test cases](docs/writing-tests.md) covers function calls, in-place changes, linked lists and trees, class method sequences and comparison options.
+- **Write tests:** [Writing test cases](docs/writing-tests.md) covers function calls, call expressions, in-place changes, linked lists and trees, class method sequences and comparison options.
 - **Run:** **Run all** (Mod+Enter) runs every valid case; Mod+Shift+Enter runs the selected one.
 - **Keep your work:** problems save automatically. **History** shows earlier versions; **Export** downloads a JSON file you can import anywhere.
 

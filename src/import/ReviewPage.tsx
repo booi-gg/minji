@@ -60,7 +60,7 @@ interface ReviewState {
 const fromProblemTest = (test: DraftTest, params: string[]): ReviewTest => ({
   id: newId(),
   label: test.label,
-  namedArgs: test.kind === "class" ? null : test.args,
+  namedArgs: test.kind === undefined ? test.args : null,
   argsText: argsTextFor(test, params),
   expectedText: test.expectedText,
   compare: { kind: "return" },
@@ -184,10 +184,11 @@ export const ReviewPage = ({ entry, onBack }: { entry: ReviewEntry; onBack: () =
   const toggleInPlace = (checked: boolean): void => {
     update({
       inPlace: checked,
-      tests: state.tests.map((test) => ({
-        ...test,
-        compare: checked ? { kind: "argument", index: 0 } : { kind: "return" },
-      })),
+      tests: state.tests.map((test) =>
+        (test.kind ?? "function") === "function"
+          ? { ...test, compare: checked ? { kind: "argument", index: 0 } : { kind: "return" } }
+          : test,
+      ),
     });
   };
   const save = async (): Promise<void> => {
@@ -495,7 +496,9 @@ export const ReviewPage = ({ entry, onBack }: { entry: ReviewEntry; onBack: () =
                   </div>
                   <div className="import-field-grid">
                     <label className="field">
-                      <span className="field-label">Arguments (JSON array)</span>
+                      <span className="field-label">
+                        {test.kind === "expression" ? "Call" : "Arguments (JSON array)"}
+                      </span>
                       <textarea
                         className="json-input"
                         value={argsText}

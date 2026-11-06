@@ -20,7 +20,8 @@ export interface DraftTest {
   expectedText: string;
   expectedValid: boolean;
   kind?: TestKind;
-  classArgsText?: string;
+  /** Complete input text for tests that don't use named arguments. */
+  rawArgsText?: string;
 }
 
 export interface ImportDraft {
@@ -284,6 +285,20 @@ const parseClassInput = (input: string): { className: string; text: string } | u
   return undefined;
 };
 
+const CALL_EXPRESSION = /^(?:new\s+)?([A-Za-z_$][\w$]*)\s*\(/;
+
+/** Reads an example written as code, such as `sum(1)(2)()` or `new Counter(2).get()`. */
+const parseCallInput = (input: string): { name: string; text: string } | undefined => {
+  const text = input.trim();
+  const name = CALL_EXPRESSION.exec(text)?.[1];
+  return name === undefined || !isValidIdentifier(name) ? undefined : { name, text };
+};
+
+const draftKind = (classInput: unknown, callInput: unknown): TestKind | undefined => {
+  if (classInput !== undefined) return "class";
+  return callInput === undefined ? undefined : "expression";
+};
+
 // ---- Draft -----------------------------------------------------------------------
 
 const IN_PLACE = /in[- ]place|do not return anything|modify .* in place/i;
@@ -335,9 +350,12 @@ export const parseProblem = ({
 
   const parsedExamples = examples.map((example) => {
     const classInput = parseClassInput(example.input);
+    const callInput = classInput === undefined ? parseCallInput(example.input) : undefined;
+    const isNamedArguments = classInput === undefined && callInput === undefined;
     return {
       classInput,
-      args: classInput === undefined ? parseInput(example.input) : [],
+      callInput,
+      args: isNamedArguments ? parseInput(example.input) : [],
       expected: parseValue(example.output),
     };
   });
@@ -352,7 +370,7 @@ export const parseProblem = ({
     params = firstNames.filter((name) => isValidIdentifier(name));
   }
 
-  const tests = parsedExamples.map(({ args, expected, classInput }, index) => {
+  const tests = parsedExamples.map(({ args, expected, classInput, callInput }, index) => {
     const label = `Example ${index + 1}`;
     for (const arg of args) {
       if (arg.name !== null && params.length > 0 && !params.includes(arg.name)) {
@@ -368,14 +386,16 @@ export const parseProblem = ({
       args,
       expectedText: expected.text,
       expectedValid: expected.valid,
-      kind: classInput === undefined ? undefined : ("class" as const),
-      classArgsText: classInput?.text,
+      kind: draftKind(classInput, callInput),
+      rawArgsText: classInput?.text ?? callInput?.text,
     };
   });
 
   const functionName = isClass
     ? (firstClassInput?.className ?? className ?? DEFAULT_FUNCTION_NAME)
-    : (found?.name ?? DEFAULT_FUNCTION_NAME);
+    : (found?.name ??
+      parsedExamples.find(({ callInput }) => callInput !== undefined)?.callInput?.name ??
+      DEFAULT_FUNCTION_NAME);
   return {
     title,
     statement,
@@ -400,7 +420,7 @@ export const parseProblem = ({
  * aren't parameters go last; missing parameters become null.
  */
 export const argsTextFor = (test: DraftTest, params: readonly string[]): string => {
-  if (test.classArgsText !== undefined) return test.classArgsText;
+  if (test.rawArgsText !== undefined) return test.rawArgsText;
   const named = test.args.every((arg) => arg.name !== null);
   if (!named || params.length === 0) return `[${test.args.map((arg) => arg.text).join(", ")}]`;
   const byName = new Map(test.args.map((arg) => [arg.name, arg.text]));

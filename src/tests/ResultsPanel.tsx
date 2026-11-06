@@ -33,6 +33,7 @@ interface DetailProps {
   result: TestResult;
   functionName: string;
   timeoutMs: number;
+  isExpression: boolean;
   onGoToLine: (line: number) => void;
 }
 
@@ -75,7 +76,18 @@ const ErrorDetail = ({ result, onGoToLine }: Pick<DetailProps, "result" | "onGoT
   );
 };
 
-const ResultDetail = ({ result, functionName, timeoutMs, onGoToLine }: DetailProps) => {
+const ResultDetail = ({
+  result,
+  functionName,
+  timeoutMs,
+  isExpression,
+  onGoToLine,
+}: DetailProps) => {
+  const returnedFunction =
+    result.nonSerializable?.type === "Function" && result.nonSerializable.path === "";
+  const functionHint = isExpression
+    ? " Add the remaining calls to reach a value."
+    : " To keep calling it, choose Call expression as the test type.";
   switch (result.status) {
     case "passed":
       return (
@@ -111,6 +123,7 @@ const ResultDetail = ({ result, functionName, timeoutMs, onGoToLine }: DetailPro
           The function returned a {result.nonSerializable?.type ?? "value"}
           {result.nonSerializable?.path ? ` at ${result.nonSerializable.path}` : ""}, which can't be
           compared as JSON. Return arrays, plain objects, strings, numbers, booleans or null.
+          {returnedFunction ? functionHint : null}
         </p>
       );
     case "missing-function":
@@ -203,7 +216,8 @@ export const ResultsPanel = ({
   const line = view.message?.line;
   const selected = view.order.find(({ id }) => id === selectedId) ?? view.order[0];
   const selectedResult = selected === undefined ? undefined : view.results.get(selected.id);
-  const inputs = selected === undefined ? null : splitArguments(selected.argsText);
+  const isExpression = selected?.kind === "expression";
+  const inputs = selected === undefined || isExpression ? null : splitArguments(selected.argsText);
   const showStatus =
     selectedResult === undefined ||
     (selectedResult.status !== "passed" && selectedResult.status !== "failed");
@@ -289,6 +303,7 @@ export const ResultsPanel = ({
                 result={selectedResult}
                 functionName={functionName}
                 timeoutMs={timeoutMs}
+                isExpression={isExpression}
                 onGoToLine={onGoToLine}
               />
               {selectedResult.durationMs === null ? null : (

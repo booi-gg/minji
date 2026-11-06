@@ -43,10 +43,10 @@ interface TestCase {
   workspaceId: string;
   position: number; // 0-based, dense; rewritten on reorder
   label: string; // optional, '' when unset
-  argsText: string; // raw editor text; must parse to a JSON array to run
+  argsText: string; // raw editor text; a JSON array to run, or code for an expression test
   expectedText: string; // raw editor text; JSON plus the tags in runner.md
   compare: CompareTarget;
-  kind?: "function" | "class"; // defaults to function for older records
+  kind?: "function" | "class" | "expression"; // defaults to function for older records
   inputAdapters?: ("plain" | "linked-list" | "binary-tree")[];
   outputAdapter?: "plain" | "linked-list" | "binary-tree";
   comparison?: { unordered?: boolean; tolerance?: number };

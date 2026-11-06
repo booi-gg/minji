@@ -1,6 +1,6 @@
 # Writing test cases
 
-Open a problem and the **Testcase** tab. Select **+** to add a case, then fill in one JSON field per argument (labeled `name =`) and **Expected =**. Strings need double quotes. Hover a case and select **×** to delete it; **Options** holds its name and advanced settings. **Run all** runs every valid case (Mod+Shift+Enter runs the selected one); invalid cases show an error and are skipped. **Test Result** shows each case's input, stdout, output and expected value.
+Open a problem and the **Testcase** tab. Select **+** to add a case, pick a **Test type**, then fill in one JSON field per argument (labeled `name =`) and **Expected =**. Strings need double quotes. Hover a case and select **×** to delete it; **Options** holds its name and advanced settings. **Run all** runs every valid case (Mod+Shift+Enter runs the selected one); invalid cases show an error and are skipped. **Test Result** shows each case's input, stdout, output and expected value.
 
 ## Function calls and returned values
 
@@ -14,7 +14,21 @@ Each argument gets its own field, labelled with the parameter name from your cod
 
 A function with no parameters shows no argument fields; for `answer()` returning `42`, just enter Expected `42`. Expected can also be a JSON string, boolean, `null`, array, or object. Object key order does not matter; array order does by default.
 
-Under **Options**, leave **Test type** on **Function call** and **Compare** on **Return value** for these.
+Leave **Test type** on **Function call** and, under **Options**, **Compare** on **Return value** for these.
+
+## Call expressions
+
+When a call doesn't fit one set of arguments, set **Test type** to **Call expression** and write the call as code. It runs alongside your solution, so it can use anything the solution declares, and Expected is the final value.
+
+| Solution shape                  | Call =                                           | Expected |
+| ------------------------------- | ------------------------------------------------ | -------- |
+| Function that returns functions | `sum(1)(2)(3)()`                                 | `6`      |
+| Class with chained methods      | `new Counter(2).add(3).get()`                    | `5`      |
+| Function that takes a callback  | `apply([1, 2], (n) => n * 2)`                    | `[2, 4]` |
+| Function that takes a `Map`     | `count(new Map([["a", 1]]))`                     | `1`      |
+| Several steps                   | `(() => { const a = sum(1); return a(2)(); })()` | `3`      |
+
+If the last call still returns a function, the case shows **Can't compare**. A syntax error shows as an **Error** on that case only. Node adapters aren't used here; use `new ListNode(1)` directly when a solution takes a node.
 
 ## Functions that change an argument
 
@@ -33,7 +47,7 @@ Lists use values from head to tail. Trees use level order with `null` for missin
 
 ## Class method sequences
 
-Set the entry point (**More → Entry point**) to the class name and, under **Options**, choose **Class method sequence** as the test type. The case then shows one raw **Calls** field. For `class Counter` with `constructor(start)`, `add(amount)`, and `get()`, enter:
+Set the entry point (**More → Entry point**) to the class name and choose **Class method sequence** as the test type. The case then shows one raw **Calls** field. For `class Counter` with `constructor(start)`, `add(amount)`, and `get()`, enter:
 
 | Field    | Value                                                       |
 | -------- | ----------------------------------------------------------- |

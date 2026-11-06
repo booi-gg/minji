@@ -11,7 +11,8 @@ interface RunnerTest {
   id: string;
   argsJson: string; // JSON array text, validated by the page; parsed inside the sandbox
   capture: CompareTarget; // what to send back: the return value or args[index] after the call
-  kind?: "function" | "class";
+  kind?: "function" | "class" | "expression";
+  expression?: string; // code to evaluate in the solution's scope, for expression tests
   inputAdapters?: ("plain" | "linked-list" | "binary-tree")[];
   outputAdapter?: "plain" | "linked-list" | "binary-tree";
 }
@@ -78,13 +79,13 @@ Every run ends with exactly one `run-complete` or `crashed`. Before it come eith
 
 1. **Check limits.** The page rejects the run before calling the runner when `source`, a test's args, or the total input exceed the limits in specs/README.md.
 2. **Strip types** on the page. Run `sucrase.transform(source, { transforms })` with `transforms = ['typescript', 'imports']` for TypeScript and `['imports']` for JavaScript, `disableESTransforms: true`, `production: true`. A sucrase syntax error becomes `compile-error` with its line and column. Sucrase keeps line numbers and reports only the first error; the editor shows the rest.
-3. **Build the loader body** (`buildLoaderBody`): the transformed code followed by a return object containing the named callable and any `ListNode` or `TreeNode` constructors declared by the solution. `NAME` is the `functionName`, validated as an identifier because it is interpolated. The `imports` transform turns `export` into assignments on `exports` and `import` into `require(...)`, and adds `"use strict"`.
+3. **Build the loader body** (`buildLoaderBody`): the transformed code followed by a return object containing the named callable and any `ListNode` or `TreeNode` constructors declared by the solution. When the run has expression tests it also holds an `evaluate` function, a direct `eval` inside the loader, so an expression sees the solution's scope without its text being pasted into the body. Other runs omit it, because direct eval can stop engines optimizing that scope. `NAME` is the `functionName`, validated as an identifier because it is interpolated. The `imports` transform turns `export` into assignments on `exports` and `import` into `require(...)`, and adds `"use strict"`.
 4. **Per test**, in a fresh Worker:
    1. Evaluate the harness (`src/runner/guest.js`), which installs the console shim and `__minjiRun`.
    2. Compile the loader body with `new Function("exports", "module", "require", body)`. A `SyntaxError` here becomes `compile-error` (without a line number) and ends the run.
    3. `__minjiRun` calls the loader with a fresh `exports`/`module` and a `require` that throws; a thrown import becomes `imports-unsupported` and ends the run. Any other throw while loading becomes `threw` for that test.
-   4. No function found → `missing-function`.
-   5. Parse the args from JSON inside the Worker. For function cases, convert selected array arguments to list or tree nodes. For class cases, construct the class and call each named method in order on the same instance.
+   4. No function found → `missing-function`. Expression tests skip this check; an unknown name throws `ReferenceError` instead.
+   5. Parse the args from JSON inside the Worker. For function cases, convert selected array arguments to list or tree nodes. For class cases, construct the class and call each named method in order on the same instance. For expression cases, evaluate the expression, which is wrapped in parentheses and has its types stripped on the page. A syntax error is thrown here, so it fails that test alone.
    6. Time the call with `performance.now()`.
    7. Encode either the return value or `args[capture.index]`, and post the result as a JSON string.
 

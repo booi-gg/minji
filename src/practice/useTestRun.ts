@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { getDatabase } from "../db/database.ts";
 import { addRun, setLastRun } from "../db/workspaces.ts";
-import type { Runner, RunnerEvent } from "../runner/types.ts";
+import type { Runner, RunnerEvent, TestKind } from "../runner/types.ts";
 import { postChannelMessage } from "../shared/channel.ts";
 import { newId } from "../shared/ids.ts";
 import {
@@ -30,7 +30,7 @@ export interface RunView {
   outcome: RunOutcome | null;
   message: RunMessage | null;
   /** Selected tests in display order; ids without a result are still running. */
-  order: { id: string; label: string; argsText: string }[];
+  order: { id: string; label: string; argsText: string; kind?: TestKind }[];
   results: Map<string, TestResult>;
 }
 
@@ -83,6 +83,7 @@ export const useTestRun = ({ getState, beforeRun, onLastRun }: UseTestRunOptions
             id: test.id,
             label: labelOf(test),
             argsText: test.argsText,
+            kind: test.kind,
           }))
         : [];
     const results = new Map<string, TestResult>(

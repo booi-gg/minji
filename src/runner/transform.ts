@@ -15,6 +15,28 @@ const isSucraseSyntaxError = (error: unknown): error is SucraseSyntaxError =>
 
 const LOCATION_SUFFIX = /\s*\(\d+:\d+\)$/;
 
+const TYPE_ONLY: Transform[] = ["typescript"];
+
+/**
+ * Prepares a test's call expression for `eval`. The parentheses make `{ a: 1 }` an object
+ * and the newline lets it end in a comment. Text that doesn't parse is returned as it is,
+ * so `eval` throws and only that test fails.
+ */
+export const transformExpression = (expression: string, language: Language): string => {
+  const wrapped = `(${expression}\n)`;
+  if (language !== "typescript") return wrapped;
+  try {
+    return transform(wrapped, {
+      transforms: TYPE_ONLY,
+      disableESTransforms: true,
+      production: true,
+    }).code;
+  } catch (error) {
+    if (!isSucraseSyntaxError(error)) throw error;
+    return wrapped;
+  }
+};
+
 /**
  * Strips TypeScript types and turns `import`/`export` into CommonJS so the result can run
  * as a classic script. Sucrase keeps line numbers, so errors and stacks still point at the

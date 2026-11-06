@@ -86,7 +86,13 @@ export const isWorkspaceDoc = (value: unknown): value is WorkspaceDoc => {
       return false;
     const validAdapter = (adapter: unknown): boolean =>
       adapter === "plain" || adapter === "linked-list" || adapter === "binary-tree";
-    if (test.kind !== undefined && test.kind !== "function" && test.kind !== "class") return false;
+    if (
+      test.kind !== undefined &&
+      test.kind !== "function" &&
+      test.kind !== "class" &&
+      test.kind !== "expression"
+    )
+      return false;
     if (
       test.inputAdapters !== undefined &&
       (!Array.isArray(test.inputAdapters) || !test.inputAdapters.every(validAdapter))

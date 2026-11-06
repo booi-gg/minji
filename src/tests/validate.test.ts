@@ -19,6 +19,21 @@ it("accepts a valid case", () => {
   });
 });
 
+it("validates call expressions", () => {
+  const expression = (argsText: string) => ({
+    ...test(argsText, "6"),
+    kind: "expression" as const,
+  });
+  expect(validateTest(expression("sum(1)(2)(3)()"), ["first"], "sum")).toEqual({ valid: true });
+  expect(validateTest(expression("  ")).args).toContain("Enter the call");
+  expect(
+    validateTest({ ...expression("sum()"), compare: { kind: "argument", index: 0 } }).compare,
+  ).toContain("final value");
+  expect(validateTest({ ...expression("sum()"), outputAdapter: "linked-list" }).options).toContain(
+    "Node adapters",
+  );
+});
+
 it("validates node adapters and class call sequences", () => {
   expect(
     validateTest({

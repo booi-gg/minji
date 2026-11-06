@@ -51,3 +51,23 @@ it("treats eval and anonymous frames as top-level code", () => {
 it("returns nothing for missing stacks", () => {
   expect(userFrames(undefined)).toEqual([]);
 });
+
+it("drops the frames of a call expression and keeps the solution's", () => {
+  const onmessage = "eval at self.onmessage (blob:http://x/1:350:12)";
+  const v8 = [
+    "RangeError: no",
+    `    at bad (${onmessage}, <anonymous>:3:9)`,
+    `    at eval (eval at __minjiEvaluate (${onmessage}, <anonymous>:16:40), <anonymous>:4:1)`,
+    `    at __minjiEvaluate (${onmessage}, <anonymous>:16:40)`,
+  ].join("\n");
+  expect(userFrames(v8)).toEqual([{ name: "bad", line: 1, column: 9 }]);
+
+  const spiderMonkey = [
+    "bad@blob:http://x/1 line 350 > Function:3:9",
+    "@blob:http://x/1 line 350 > Function line 16 > eval:4:1",
+    "__minjiEvaluate@blob:http://x/1 line 350 > Function:16:40",
+  ].join("\n");
+  expect(userFrames(spiderMonkey)).toEqual([{ name: "bad", line: 1, column: 9 }]);
+
+  expect(userFrames("bad@\n__minjiEvaluate@")).toEqual([{ name: "bad" }]);
+});

@@ -31,6 +31,7 @@ interface CaseTest {
   args: unknown[] | string;
   capture?: CompareTarget;
   kind?: TestKind;
+  expression?: string;
   inputAdapters?: NodeAdapter[];
   outputAdapter?: NodeAdapter;
 }
@@ -65,6 +66,7 @@ const toRequest = (input: CaseRequest): RunRequest => {
       argsJson: typeof test.args === "string" ? test.args : JSON.stringify(test.args),
       capture: test.capture ?? { kind: "return" },
       kind: test.kind,
+      expression: test.expression,
       inputAdapters: test.inputAdapters,
       outputAdapter: test.outputAdapter,
     })),
@@ -179,6 +181,20 @@ describe("native runner", () => {
       ],
     });
     expect(valueOf(sequence)).toEqual([null, null, 4]);
+  });
+
+  it("runs call expressions in the solution's scope and isolates a bad one", async () => {
+    const run = await execute(runner, {
+      source: "const add = (a: number) => (b: number) => a + b;",
+      functionName: "add",
+      language: "typescript",
+      tests: [
+        { args: [], kind: "expression", expression: "add(1 as number)(2)" },
+        { args: [], kind: "expression", expression: "add(1" },
+      ],
+    });
+    expect(valueOf(run, 0)).toBe(3);
+    expect(run.results[1]).toMatchObject({ kind: "threw", error: { name: "SyntaxError" } });
   });
 
   it("runs TypeScript and records cold and warm times", async () => {

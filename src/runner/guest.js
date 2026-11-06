@@ -425,10 +425,12 @@
     state.consoleTruncated = false;
 
     var fn;
+    var evaluate;
     try {
       var exportsObject = {};
       var loaded = load(exportsObject, { exports: exportsObject }, requireShim);
       fn = loaded.callable;
+      evaluate = loaded.evaluate;
       userListNode = loaded.listNode || ListNode;
       userTreeNode = loaded.treeNode || TreeNode;
     } catch (error) {
@@ -437,7 +439,9 @@
       }
       return finish({ kind: "threw", phase: "load", error: errorInfo(error) });
     }
-    if (typeof fn !== "function") return finish({ kind: "missing-function" });
+    if (config.kind !== "expression" && typeof fn !== "function") {
+      return finish({ kind: "missing-function" });
+    }
 
     var args;
     try {
@@ -458,6 +462,8 @@
     try {
       if (config.kind === "class") {
         returned = runClass(fn, args);
+      } else if (config.kind === "expression") {
+        returned = evaluate(config.expression);
       } else {
         for (var i = 0; i < args.length; i += 1)
           args[i] = adaptInput(args[i], config.inputAdapters && config.inputAdapters[i]);
@@ -469,9 +475,9 @@
     var durationMs = now() - start;
 
     var target =
-      config.kind !== "class" && config.captureIndex >= 0 ? args[config.captureIndex] : returned;
+      config.kind === "function" && config.captureIndex >= 0 ? args[config.captureIndex] : returned;
     try {
-      if (config.kind !== "class") target = adaptOutput(target, config.outputAdapter);
+      if (config.kind === "function") target = adaptOutput(target, config.outputAdapter);
       var value = encode(target, config.maxResultSize);
       return finish({ kind: "returned", value: value, durationMs: durationMs });
     } catch (failure) {

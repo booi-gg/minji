@@ -111,11 +111,13 @@ export const prepareRun = (
     }
     inputBytes += byteLength(test.argsText);
     expected.set(test.id, JSON.parse(test.expectedText) as Encoded);
+    const isExpression = test.kind === "expression";
     runnable.push({
       id: test.id,
-      argsJson: test.argsText,
+      argsJson: isExpression ? "[]" : test.argsText,
       capture: test.compare,
       kind: test.kind,
+      expression: isExpression ? test.argsText : undefined,
       inputAdapters: test.inputAdapters,
       outputAdapter: test.outputAdapter,
     });

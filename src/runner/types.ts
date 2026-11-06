@@ -3,7 +3,7 @@
 export type Language = "javascript" | "typescript";
 
 export type CompareTarget = { kind: "return" } | { kind: "argument"; index: number };
-export type TestKind = "function" | "class";
+export type TestKind = "function" | "class" | "expression";
 export type NodeAdapter = "plain" | "linked-list" | "binary-tree";
 export interface ComparisonOptions {
   unordered?: boolean;
@@ -19,6 +19,8 @@ export interface RunnerTest {
   argsJson: string;
   capture: CompareTarget;
   kind?: TestKind;
+  /** Code to evaluate in the solution's scope, for `expression` tests. */
+  expression?: string;
   inputAdapters?: NodeAdapter[];
   outputAdapter?: NodeAdapter;
 }

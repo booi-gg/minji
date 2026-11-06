@@ -61,9 +61,12 @@ export const validateTest = (
   const result: TestValidation = { valid: true };
   let parsedArgs: unknown[] | undefined;
   let parsedExpected: unknown;
+  const kind = test.kind ?? "function";
 
   if (byteLength(test.argsText) > MAX_TEST_INPUT_BYTES) {
     result.args = "This input is larger than the 8 MB limit.";
+  } else if (kind === "expression") {
+    if (test.argsText.trim() === "") result.args = "Enter the call to run, e.g. sum(1)(2)().";
   } else {
     const error = parseError(test.argsText);
     if (error !== undefined) {
@@ -80,8 +83,10 @@ export const validateTest = (
     }
   }
 
-  const kind = test.kind ?? "function";
-  if (kind !== "function" && kind !== "class") result.options = "Unknown test type.";
+  if (kind !== "function" && kind !== "class" && kind !== "expression")
+    result.options = "Unknown test type.";
+  if (kind === "expression" && test.compare.kind !== "return")
+    result.compare = "Call expressions compare the final value.";
   if (kind === "class" && parsedArgs !== undefined) {
     const [methods, inputs] = parsedArgs;
     const validMethods =
@@ -115,7 +120,7 @@ export const validateTest = (
   )
     result.options = "Unknown node adapter.";
   if (
-    kind === "class" &&
+    kind !== "function" &&
     (adapters.some((adapter) => adapter !== "plain") || (test.outputAdapter ?? "plain") !== "plain")
   )
     result.options = "Node adapters are for function tests.";

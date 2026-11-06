@@ -1,12 +1,12 @@
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { ArrowDown, ArrowUp, Copy, Plus, X } from "lucide-react";
-import type { CompareTarget, NodeAdapter } from "../runner/types.ts";
+import type { CompareTarget, NodeAdapter, TestKind } from "../runner/types.ts";
 import { ConfirmDialog } from "../shared/ConfirmDialog.tsx";
 import { newId } from "../shared/ids.ts";
 import { MAX_TESTS_PER_WORKSPACE } from "../shared/limits.ts";
 import { useToast } from "../shared/toast.tsx";
 import type { TestCase } from "../workspaces/model.ts";
-import { joinArguments, splitArguments } from "./arguments.ts";
+import { argsTextForKind, joinArguments, splitArguments } from "./arguments.ts";
 import { validateTest, type TestValidation } from "./validate.ts";
 
 const LARGE_TEXT_CHARS = 100_000;
@@ -32,6 +32,12 @@ const parseCompare = (value: string): CompareTarget => {
   return value === "return" || !Number.isInteger(index)
     ? { kind: "return" }
     : { kind: "argument", index };
+};
+
+const RAW_INPUT_LABELS: Record<TestKind, string> = {
+  function: "Arguments",
+  class: "Calls",
+  expression: "Call =",
 };
 
 interface JsonFieldProps {
@@ -171,7 +177,6 @@ const TestRow = ({
       : null;
   const visibleArgumentCount = Math.max(params.length, argumentParts?.length ?? 0);
   const hasOptions =
-    kind === "class" ||
     test.compare.kind !== "return" ||
     test.inputAdapters?.some((adapter) => adapter !== "plain") === true ||
     (test.outputAdapter !== undefined && test.outputAdapter !== "plain") ||
@@ -188,10 +193,42 @@ const TestRow = ({
   return (
     <li className="test-row" data-test-id={test.id} aria-label={name}>
       <div className="test-fields">
+        <div className="field">
+          <label htmlFor={kindId} className="field-label">
+            Test type
+          </label>
+          <select
+            id={kindId}
+            value={kind}
+            disabled={readOnly}
+            onChange={(event) => {
+              const nextKind = event.target.value as TestKind;
+              onChange({
+                ...test,
+                kind: nextKind,
+                argsText: argsTextForKind(test, nextKind, functionName),
+                expectedText:
+                  nextKind === "class" && test.expectedText === "" ? "[null]" : test.expectedText,
+                compare: { kind: "return" },
+                inputAdapters: nextKind === "function" ? test.inputAdapters : [],
+                outputAdapter: nextKind === "function" ? test.outputAdapter : "plain",
+              });
+            }}
+          >
+            <option value="function">Function call</option>
+            <option value="expression">Call expression</option>
+            <option value="class">Class method sequence</option>
+          </select>
+        </div>
         <div className="test-arguments">
           {argumentParts === null ? (
             <JsonField
-              label={kind === "class" ? "Calls" : "Arguments"}
+              label={RAW_INPUT_LABELS[kind]}
+              hint={
+                kind === "expression"
+                  ? `Written as code, e.g. ${functionName}(1)(2)() or new Thing().run()`
+                  : undefined
+              }
               value={test.argsText}
               error={validation.args}
               readOnly={readOnly}
@@ -277,37 +314,7 @@ const TestRow = ({
                 </div>
               )}
             </div>
-            <div className="field">
-              <label htmlFor={kindId} className="field-label">
-                Test type
-              </label>
-              <select
-                id={kindId}
-                value={kind}
-                disabled={readOnly}
-                onChange={(event) =>
-                  onChange({
-                    ...test,
-                    kind: event.target.value as "function" | "class",
-                    argsText:
-                      event.target.value === "class" && test.argsText === "[]"
-                        ? JSON.stringify([[functionName], [[]]])
-                        : test.argsText,
-                    expectedText:
-                      event.target.value === "class" && test.expectedText === ""
-                        ? "[null]"
-                        : test.expectedText,
-                    compare: { kind: "return" },
-                    inputAdapters: event.target.value === "class" ? [] : test.inputAdapters,
-                    outputAdapter: event.target.value === "class" ? "plain" : test.outputAdapter,
-                  })
-                }
-              >
-                <option value="function">Function call</option>
-                <option value="class">Class method sequence</option>
-              </select>
-            </div>
-            {kind === "class" ? null : (
+            {kind !== "function" ? null : (
               <div className="field">
                 <label htmlFor={compareId} className="field-label">
                   Compare
@@ -334,7 +341,7 @@ const TestRow = ({
                 )}
               </div>
             )}
-            {kind === "class" ? null : (
+            {kind !== "function" ? null : (
               <>
                 {Array.from({ length: argCount }, (_, argument) => (
                   <div className="field" key={argument}>

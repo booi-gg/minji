@@ -157,7 +157,7 @@ const testOf = (value: unknown): ExportedTest | undefined => {
     args: value.args === undefined ? "[]" : value.args,
     expected: value.expected === undefined ? "" : value.expected,
     compare: compareOf(value.compare),
-    kind: value.kind === "class" ? "class" : "function",
+    kind: value.kind === "class" || value.kind === "expression" ? value.kind : "function",
     inputAdapters: Array.isArray(value.inputAdapters)
       ? value.inputAdapters.map((adapter) =>
           adapter === "linked-list" || adapter === "binary-tree" ? adapter : "plain",

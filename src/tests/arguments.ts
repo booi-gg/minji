@@ -1,3 +1,5 @@
+import type { TestKind } from "../runner/types.ts";
+
 /** Split a stored argument array into editable JSON fragments without changing their formatting. */
 export const splitArguments = (text: string): string[] | null => {
   const trimmed = text.trim();
@@ -38,3 +40,19 @@ export const splitArguments = (text: string): string[] | null => {
 };
 
 export const joinArguments = (parts: readonly string[]): string => `[${parts.join(", ")}]`;
+
+/**
+ * The input to show after changing a case's test type. Function arguments become a call;
+ * text that doesn't fit the new type stays, so switching back doesn't lose it.
+ */
+export const argsTextForKind = (
+  test: { argsText: string; kind?: TestKind },
+  kind: TestKind,
+  functionName: string,
+): string => {
+  if (kind === "class" && test.argsText === "[]") return JSON.stringify([[functionName], [[]]]);
+  if (kind !== "expression") return test.argsText;
+  if (test.kind === "class") return `new ${functionName}()`;
+  const parts = splitArguments(test.argsText);
+  return parts === null ? test.argsText : `${functionName}(${parts.join(", ")})`;
+};

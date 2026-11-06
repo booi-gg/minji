@@ -19,7 +19,7 @@ Writes one file that minji's **Import** screen turns into a problem with starter
 
 ## Values
 
-Inputs and outputs are JSON: strings in double quotes, `true`/`false`/`null`, arrays in brackets. Multiple arguments are `name = value` pairs separated by commas, named exactly as the starter code's parameters.
+Inputs and outputs are JSON: strings in double quotes, `true`/`false`/`null`, arrays in brackets. Multiple arguments are `name = value` pairs separated by commas, named exactly as the starter code's parameters. When a call doesn't fit that shape, write it as code: `Input: sum(1)(2)(3)()`.
 
 ## Markdown template
 
@@ -103,8 +103,9 @@ The first line is the title (a leading `125. ` is dropped). A line that is only 
 - `args` is the array of all arguments in parameter order: `[[2, 7, 11, 15], 9]` for `(nums, target)`.
 - A string in `args` or `expected` is raw editor text, not a value. An answer that is itself a string is written with its quotes escaped: `"expected": "\"abc\""`. A string `args` value is how to make a deliberately broken case: `"args": "[1,"`.
 - For in-place problems add `"compare": { "kind": "argument", "index": 0 }` to each test to compare the first argument after the call.
+- For a call written as code add `"kind": "expression"` and put the code in `args`: `"args": "sum(1)(2)(3)()"`.
 - Several problems go in one `workspaces` array; Import then offers a checklist.
 
 ## Rules beyond these templates
 
-The parser's full rules (titles, examples, in-place detection, class method sequences) live in `specs/workspaces-and-import.md` and `specs/test-cases.md`; the JSON format lives in `specs/data-model.md`, "Export format".
+The parser's full rules (titles, examples, in-place detection, call expressions, class method sequences) live in `specs/workspaces-and-import.md` and `specs/test-cases.md`; the JSON format lives in `specs/data-model.md`, "Export format".

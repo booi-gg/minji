@@ -28,7 +28,7 @@ const fromText = (text: string, format: "markdown" | "text"): Summary => {
     tests: draft.tests.map((test) => {
       const argsText = argsTextFor(test, draft.params);
       const validation = validateTest(
-        { argsText, expectedText: test.expectedText, compare: { kind: "return" } },
+        { argsText, expectedText: test.expectedText, compare: { kind: "return" }, kind: test.kind },
         draft.params,
         draft.functionName,
       );

@@ -58,6 +58,27 @@ describe("pasted text", () => {
       ['[["MinStack","push","getMin"],[[],[3],[]]]', "[null,null,3]"],
     ]);
   });
+  it("imports call-shaped examples as call expressions", () => {
+    const draft = text(
+      'Curried Sum\nExample 1:\nInput: sum(1)(2)(3)()\nOutput: 6\nExample 2:\nInput: sum("a, b")()\nOutput: "a, b"',
+    );
+    expect(draft.functionName).toBe("sum");
+    expect(draft.tests.map((test) => test.kind)).toEqual(["expression", "expression"]);
+    expect(testRows(draft)).toEqual([
+      ["sum(1)(2)(3)()", "6"],
+      ['sum("a, b")()', '"a, b"'],
+    ]);
+    expect(draft.warnings).toEqual([]);
+  });
+  it("keeps the starter's parameters for call expressions", () => {
+    const draft = text(
+      "Curried Sum\nExample 1:\nInput: new Counter(2).get()\nOutput: 2",
+      "function sum(first) {}",
+    );
+    expect(draft.functionName).toBe("sum");
+    expect(draft.params).toEqual(["first"]);
+    expect(draft.tests[0]?.kind).toBe("expression");
+  });
   it("keeps a function target when starter code also declares a node class", () => {
     const draft = text(
       "Reverse List\nExample 1:\nInput: head = [1,2]\nOutput: [2,1]",

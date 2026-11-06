@@ -2,9 +2,11 @@
 
 ## Authoring
 
-The **Testcase** tab has a **Case 1 / Case 2 / … / +** picker in `position` order and shows one selected case. Hovering a case shows **×** to delete it (not on the last case). Function tests show one JSON field per argument, labeled `name =` with the parameter name when known, followed by **Expected =**, all in one column. The fields edit the existing `argsText` JSON array; no data migration is needed. Cases with unsplittable argument text and class method sequences show a raw JSON field.
+The **Testcase** tab has a **Case 1 / Case 2 / … / +** picker in `position` order and shows one selected case. Hovering a case shows **×** to delete it (not on the last case). **Test type** comes first. Function tests show one JSON field per argument, labeled `name =` with the parameter name when known, followed by **Expected =**, all in one column. The fields edit the existing `argsText` JSON array; no data migration is needed. Cases with unsplittable argument text and class method sequences show a raw JSON field. Call expressions show one **Call =** field holding code.
 
-Cases run with **Run all** (or Mod+Shift+Enter for the selected case). **Options** contains its name, move/duplicate controls, test type, compare target, input and result adapters, unordered comparison, and numeric tolerance. The summary marks customized options. A class case uses `[["ClassName","method"],[[],[args]]]` and compares the full result sequence.
+Cases run with **Run all** (or Mod+Shift+Enter for the selected case). **Options** contains its name, move/duplicate controls, compare target, input and result adapters, unordered comparison, and numeric tolerance. The summary marks customized options. A class case uses `[["ClassName","method"],[[],[args]]]` and compares the full result sequence.
+
+A **call expression** stores one JavaScript or TypeScript expression in `argsText`, such as `sum(1)(2)(3)()` or `new Counter(2).add(3).get()`, and compares its final value. It runs in the solution's scope, so it can use anything the solution declares, plus `ListNode`, `TreeNode` and values JSON can't express (`new Map()`, callbacks). Choosing it on a function case writes the existing arguments as a call. Text that doesn't fit the new type stays in the field and shows as invalid, so switching back loses nothing.
 
 - **Add case** appends a case with `argsText: '[]'` and `expectedText: ''`, selects it, and focuses its first argument when present. It is disabled at `MAX_TESTS_PER_WORKSPACE`.
 - **Delete** selects a neighboring case and shows an **Undo** toast for 5 seconds. Moving rewrites positions densely in one transaction.
@@ -22,10 +24,12 @@ Validation runs 300 ms after typing stops. Messages appear under the field, exce
 | Expected text is empty or not JSON          | `Expected value isn't valid JSON: <parser message>`                              |
 | Expected contains an unknown `$minji` tag   | `Unknown special value "<tag>". Use undefined, NaN, Infinity, -Infinity or -0.`  |
 | Compare argument index ≥ arguments length   | `There is no argument <n> to compare.`                                           |
+| Call expression is empty                    | `Enter the call to run, e.g. sum(1)(2)().`                                       |
+| Call expression compares an argument        | `Call expressions compare the final value.`                                      |
 | Arguments over `MAX_TEST_INPUT_BYTES`       | `This input is larger than the 8 MB limit.`                                      |
 | Argument count differs from `params` length | Warning only: `Expected 2 arguments (nums, target), found 3.`                    |
 
-Invalid tests are skipped when running and reported with status `invalid-test`. Warnings don't block a run.
+Call expressions aren't parsed here. A syntax error reports `error` when the case runs and doesn't affect other cases. Invalid tests are skipped when running and reported with status `invalid-test`. Warnings don't block a run.
 
 ## Comparison
 
@@ -39,7 +43,7 @@ Invalid tests are skipped when running and reported with status `invalid-test`. 
 - Different JSON types are never equal (`1` vs `"1"`, `[]` vs `{}`, `null` vs `undefined`).
 - `path` names the first difference: `''` for the root, then `[3]`, `.name`, or `["key with spaces"]` segments, e.g. `[2].next`. A length mismatch reports the array's own path and the UI says "length 4, expected 5".
 
-Class cases construct a fresh instance and call methods in sequence. `undefined` method results become `null`. Node adapters convert JSON arrays to nodes before function calls and convert the selected result back to arrays before encoding.
+Class cases construct a fresh instance and call methods in sequence. `undefined` method results become `null`. Call expressions compare the expression's value and don't use node adapters. Node adapters convert JSON arrays to nodes before function calls and convert the selected result back to arrays before encoding.
 
 ## Statuses
 
@@ -82,20 +86,20 @@ interface TestResult {
 
 The page maps each `RawTestResult` from the runner: `returned` becomes `passed` or `failed` by comparison, `threw` becomes `error`, and the other kinds keep their name.
 
-| Status             | Row badge      | Detail text                                                                                                                                      |
-| ------------------ | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `passed`           | Passed         | Selected case input, expected output, and actual output.                                                                                         |
-| `failed`           | Failed         | Selected case input, expected output, and actual output, with the first differing path.                                                          |
-| `error`            | Error          | `<name>: <message>` and the stack with harness frames removed and line numbers mapped to the user's source when possible.                        |
-| `timeout`          | Timed out      | `Stopped after 2 s. Look for an infinite loop or a slower-than-expected algorithm.`                                                              |
-| `non-serializable` | Can't compare  | `The function returned a <type> at <path>, which can't be compared as JSON. Return arrays, plain objects, strings, numbers, booleans or null.`   |
-| `missing-function` | No function    | `No function named "<name>" was found. Check the entry point in More.`                                                                           |
-| `stack-overflow`   | Stack overflow | `Maximum call stack size exceeded. Browsers allow only a few thousand nested calls here, so check the base case or switch to an explicit stack.` |
-| `memory-limit`     | Out of memory  | `The test ran out of memory.`                                                                                                                    |
-| `output-too-large` | Too large      | `The return value is larger than the 8 MB limit.`                                                                                                |
-| `invalid-test`     | Invalid test   | The validation message.                                                                                                                          |
-| `stopped`          | Stopped        | `The run was stopped.`                                                                                                                           |
-| `crashed`          | Runner crashed | `The runner stopped responding and was restarted.`                                                                                               |
+| Status             | Row badge      | Detail text                                                                                                                                                                                                                                                                                                  |
+| ------------------ | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `passed`           | Passed         | Selected case input, expected output, and actual output.                                                                                                                                                                                                                                                     |
+| `failed`           | Failed         | Selected case input, expected output, and actual output, with the first differing path.                                                                                                                                                                                                                      |
+| `error`            | Error          | `<name>: <message>` and the stack with harness frames removed and line numbers mapped to the user's source when possible.                                                                                                                                                                                    |
+| `timeout`          | Timed out      | `Stopped after 2 s. Look for an infinite loop or a slower-than-expected algorithm.`                                                                                                                                                                                                                          |
+| `non-serializable` | Can't compare  | `The function returned a <type> at <path>, which can't be compared as JSON. Return arrays, plain objects, strings, numbers, booleans or null.` A returned function adds `To keep calling it, choose Call expression as the test type.`, or `Add the remaining calls to reach a value.` on a call expression. |
+| `missing-function` | No function    | `No function named "<name>" was found. Check the entry point in More.`                                                                                                                                                                                                                                       |
+| `stack-overflow`   | Stack overflow | `Maximum call stack size exceeded. Browsers allow only a few thousand nested calls here, so check the base case or switch to an explicit stack.`                                                                                                                                                             |
+| `memory-limit`     | Out of memory  | `The test ran out of memory.`                                                                                                                                                                                                                                                                                |
+| `output-too-large` | Too large      | `The return value is larger than the 8 MB limit.`                                                                                                                                                                                                                                                            |
+| `invalid-test`     | Invalid test   | The validation message.                                                                                                                                                                                                                                                                                      |
+| `stopped`          | Stopped        | `The run was stopped.`                                                                                                                                                                                                                                                                                       |
+| `crashed`          | Runner crashed | `The runner stopped responding and was restarted.`                                                                                                                                                                                                                                                           |
 
 Run-level outcomes replace the per-test list with one message:
 

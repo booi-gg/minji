@@ -97,7 +97,8 @@ Sources, in order: the **Starter code** textarea; else the first fenced code blo
 3. **Input** is split on top-level commas, ignoring commas inside brackets, braces or quotes. Each part is `name = value`, or a bare value when there is a single argument.
 4. Each value is parsed with `JSON.parse`. If that fails, it is retried with single-quoted strings converted to double-quoted. If that fails too, the raw text is kept and the test is marked invalid on the review screen.
 5. **Output** is parsed the same way into `expectedText`.
-6. Argument order: with confirmed `params`, arguments are ordered by them, and unknown names produce the warning `Example 2 has an argument "k" that isn't a parameter.` Without, the order of the names in the first example becomes `params`, and `paramsConfirmed` is `false`.
+6. An input that starts as a call, such as `sum(1)(2)()` or `new Counter(2).get()`, becomes a call expression test with the text unchanged. Without starter code, the name in the first such example becomes `functionName`.
+7. Argument order: with confirmed `params`, arguments are ordered by them, and unknown names produce the warning `Example 2 has an argument "k" that isn't a parameter.` Without, the order of the names in the first example becomes `params`, and `paramsConfirmed` is `false`.
 
 ### Difficulty
 

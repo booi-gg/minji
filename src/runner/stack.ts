@@ -5,6 +5,9 @@
 
 const LINES_BEFORE_BODY = 2;
 
+/** Names the harness function that evaluates a test's call expression. */
+export const EVALUATE_FRAME = "__minjiEvaluate";
+
 export interface StackFrame {
   /** Function name, or undefined for top-level code. */
   name: string | undefined;
@@ -36,6 +39,8 @@ export const userFrames = (stack: string | undefined): StackFrame[] => {
   if (stack === undefined) return [];
   const frames: StackFrame[] = [];
   for (const line of stack.split("\n")) {
+    // Lines in an expression's own frames count from the expression, not the user's source.
+    if (line.includes(EVALUATE_FRAME)) continue;
     const v8 = V8_FRAME.exec(line);
     if (v8 !== null) {
       frames.push(located(v8[1], v8[2] ?? "0", v8[3] ?? "0"));

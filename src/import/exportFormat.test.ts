@@ -82,6 +82,17 @@ describe("export", () => {
 });
 
 describe("import", () => {
+  it("preserves call expressions through export and import", () => {
+    const original = sampleBundle();
+    original.tests[0] = { ...original.tests[0], kind: "expression", argsText: "sum(1)(2)()" };
+    const parsed = parseExportFile(JSON.stringify(toExportFile([original], NOW)));
+    if (!parsed.ok || parsed.workspaces[0] === undefined) throw new Error("Import failed");
+    expect(toBundle(parsed.workspaces[0], NOW).tests[0]).toMatchObject({
+      kind: "expression",
+      argsText: "sum(1)(2)()",
+    });
+  });
+
   it("preserves class, adapter, and comparison settings through export and import", () => {
     const original = sampleBundle();
     original.tests[0] = {

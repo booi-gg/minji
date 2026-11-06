@@ -44,6 +44,17 @@ const result = (status: TestResult["status"], label = "Test 1"): TestResult => (
 });
 
 describe("prepareRun", () => {
+  it("sends a call expression as code, not as JSON arguments", () => {
+    const prepared = prepareRun(
+      workspace,
+      [{ ...test(0, "sum(1)()", "1"), kind: "expression" }],
+      { kind: "all" },
+      "run",
+    );
+    if (prepared.kind !== "ready") throw new Error("Expected a ready run");
+    expect(prepared.request.tests[0]).toMatchObject({ argsJson: "[]", expression: "sum(1)()" });
+  });
+
   it("builds a request from valid tests and reports invalid ones without running them", () => {
     const tests = [test(0, "[[2,7], 9]", "[0,1]"), test(1, "[1,", "0", "broken")];
     const prepared = prepareRun(workspace, tests, { kind: "all" }, "run-1");

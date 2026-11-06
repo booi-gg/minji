@@ -28,23 +28,29 @@ const runGuest = (
     capture?: CompareTarget;
     language?: Language;
     kind?: TestKind;
+    expression?: string;
     inputAdapters?: NodeAdapter[];
     outputAdapter?: NodeAdapter;
   } = {},
 ): GuestOutput => {
   const transformed = transformSource(source, options.language ?? "javascript");
   if (!transformed.ok) throw new Error(transformed.message);
-  const config = guestConfigFor({
-    id: "t",
-    argsJson: "",
-    capture: options.capture ?? { kind: "return" },
-    kind: options.kind,
-    inputAdapters: options.inputAdapters,
-    outputAdapter: options.outputAdapter,
-  });
+  const language = options.language ?? "javascript";
+  const config = guestConfigFor(
+    {
+      id: "t",
+      argsJson: "",
+      capture: options.capture ?? { kind: "return" },
+      kind: options.kind,
+      expression: options.expression,
+      inputAdapters: options.inputAdapters,
+      outputAdapter: options.outputAdapter,
+    },
+    language,
+  );
   const context = vm.createContext({
     __args: JSON.stringify(args),
-    __body: buildLoaderBody(transformed.code, functionName),
+    __body: buildLoaderBody(transformed.code, functionName, options.kind === "expression"),
     __config: config,
   });
   vm.runInContext(guestSource, context);
@@ -139,6 +145,90 @@ describe("structured test modes", () => {
       kind: "threw",
       error: { name: "TypeError", message: "Invalid or cyclic linked list" },
     });
+  });
+});
+
+describe("call expressions", () => {
+  const curriedSum = `function sum(first) {
+    let total = first;
+
+    function add(next) {
+      if (next === undefined) {
+        return total;
+      }
+
+      total += next;
+      return add;
+    }
+
+    return add;
+  }`;
+  const evaluate = (
+    source: string,
+    expression: string,
+    language: "javascript" | "typescript" = "javascript",
+  ): GuestOutput => runGuest(source, "solve", [], { kind: "expression", expression, language });
+
+  it("runs chained calls and compares the final value", () => {
+    expect(valueOf(evaluate(curriedSum, "sum(1)(2)(3)()"))).toBe(6);
+  });
+
+  it("reaches classes, constants and helpers declared in the solution", () => {
+    const source =
+      "const STEP = 2; const twice = (n) => n * STEP; class Counter { constructor(n) { this.n = n; } add(n) { this.n += n; return this; } get() { return this.n; } }";
+    expect(valueOf(evaluate(source, "new Counter(twice(1)).add(STEP).get()"))).toBe(4);
+  });
+
+  it("passes values JSON can't express", () => {
+    const source = "function count(map, pick) { return pick(map.size); }";
+    expect(valueOf(evaluate(source, 'count(new Map([["a", 1]]), (n) => n + 1)'))).toBe(2);
+  });
+
+  it("supplies the node constructors", () => {
+    const source = "function head(node) { return node.val; }";
+    expect(valueOf(evaluate(source, "head(new ListNode(7))"))).toBe(7);
+  });
+
+  it("strips TypeScript from the expression", () => {
+    const source = "function id<T>(value: T): T { return value; }";
+    expect(valueOf(evaluate(source, "id<number>(1 as number)", "typescript"))).toBe(1);
+  });
+
+  it("treats braces as an object and allows a trailing comment", () => {
+    expect(valueOf(evaluate("", "{ a: 1 } // shape"))).toEqual({ a: 1 });
+  });
+
+  it("doesn't need a function with the entry point's name", () => {
+    expect(valueOf(evaluate("function other() { return 1; }", "other()"))).toBe(1);
+  });
+
+  it("fails only this test on a syntax error", () => {
+    expect(evaluate(curriedSum, "sum(1")).toMatchObject({
+      kind: "threw",
+      error: { name: "SyntaxError" },
+    });
+    expect(evaluate("function id(v: number) { return v; }", "id(1", "typescript")).toMatchObject({
+      kind: "threw",
+      error: { name: "SyntaxError" },
+    });
+  });
+
+  it("reports a thrown error", () => {
+    expect(evaluate("function bad() { throw new RangeError('no'); }", "bad()")).toMatchObject({
+      kind: "threw",
+      error: { name: "RangeError", message: "no" },
+    });
+  });
+
+  it("reports an expression that stops on a function", () => {
+    expect(evaluate(curriedSum, "sum(1)(2)")).toMatchObject({
+      kind: "non-serializable",
+      type: "Function",
+    });
+  });
+
+  it("leaves the loader without eval for other test types", () => {
+    expect(buildLoaderBody("", "solve")).not.toContain("eval");
   });
 });
 
