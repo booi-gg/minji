@@ -19,6 +19,7 @@ export interface CodeEditorHandle {
 export interface EditorCommands {
   save: () => void;
   toggleStatement: () => void;
+  toggleLanguage: () => void;
   runAll: () => void;
   runFocusedTest: () => void;
 }
@@ -95,6 +96,9 @@ export const CodeEditor = ({
     );
     editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Backslash, () =>
       commandsRef.current.toggleStatement(),
+    );
+    editor.addCommand(monaco.KeyMod.Shift | monaco.KeyMod.Alt | monaco.KeyCode.KeyL, () =>
+      commandsRef.current.toggleLanguage(),
     );
     const changes = editor.onDidChangeModelContent(() => {
       onChangeRef.current(editor.getValue());

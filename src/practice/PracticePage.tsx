@@ -71,6 +71,11 @@ type PhoneTab = "statement" | "code" | "tests" | "results";
 
 const isMacPlatform = /Mac|iPhone|iPad/.test(navigator.platform);
 
+const LANGUAGE_NAMES: Record<Language, string> = {
+  javascript: "JavaScript",
+  typescript: "TypeScript",
+};
+
 const failureText = (prefix: string, failure: FormatFailure): string =>
   failure.line === undefined
     ? `${prefix}: ${failure.message}`
@@ -79,6 +84,10 @@ const failureText = (prefix: string, failure: FormatFailure): string =>
 const isTypingTarget = (target: EventTarget | null): boolean =>
   target instanceof HTMLElement &&
   (target.isContentEditable || target.closest("input, textarea, select, .monaco-editor") !== null);
+
+/** Uses the physical key because Option changes `event.key` on macOS. AltGr reports Ctrl+Alt. */
+const isLanguageShortcut = (event: KeyboardEvent): boolean =>
+  event.shiftKey && event.altKey && !event.ctrlKey && !event.metaKey && event.code === "KeyL";
 
 interface TabItem<T extends string> {
   id: T;
@@ -337,6 +346,14 @@ const Practice = ({ initial, sidebarOpen, onToggleSidebar }: PracticeProps) => {
     edit({ language });
   };
 
+  const toggleLanguage = (): void => {
+    if (readOnly) return;
+    const language =
+      latest.current.workspace.language === "typescript" ? "javascript" : "typescript";
+    changeLanguage(language);
+    showToast({ message: `Switched to ${LANGUAGE_NAMES[language]}` });
+  };
+
   /** Snapshot of the current code in History. */
   const snapshot = async (reason: Revision["reason"]): Promise<{ added: boolean; id: string }> => {
     const { workspace: current } = latest.current;
@@ -469,8 +486,14 @@ const Practice = ({ initial, sidebarOpen, onToggleSidebar }: PracticeProps) => {
 
   // Shortcuts that also work outside the editor. Monaco handles its own copies and
   // marks those events as handled.
-  const shortcuts = useRef({ saveRevision, toggleStatement, startRun, runFocusedTest });
-  shortcuts.current = { saveRevision, toggleStatement, startRun, runFocusedTest };
+  const shortcuts = useRef({
+    saveRevision,
+    toggleStatement,
+    toggleLanguage,
+    startRun,
+    runFocusedTest,
+  });
+  shortcuts.current = { saveRevision, toggleStatement, toggleLanguage, startRun, runFocusedTest };
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent): void => {
       if (event.defaultPrevented) return;
@@ -485,6 +508,9 @@ const Practice = ({ initial, sidebarOpen, onToggleSidebar }: PracticeProps) => {
       } else if (mod && event.key === "\\") {
         event.preventDefault();
         shortcuts.current.toggleStatement();
+      } else if (isLanguageShortcut(event)) {
+        event.preventDefault();
+        shortcuts.current.toggleLanguage();
       } else if (event.key === "?" && !isTypingTarget(event.target)) {
         event.preventDefault();
         setDialog("shortcuts");
@@ -518,6 +544,7 @@ const Practice = ({ initial, sidebarOpen, onToggleSidebar }: PracticeProps) => {
         commands={{
           save: () => void saveRevision(),
           toggleStatement,
+          toggleLanguage,
           runAll: () => startRun({ kind: "all" }),
           runFocusedTest,
         }}

@@ -8,6 +8,7 @@ const SHORTCUTS: [string, string][] = [
   [`${MOD}+Shift+Enter`, "Run the focused test, or the last one run on its own"],
   [`${MOD}+S`, "Format (when Format on save is on) and save a revision"],
   ["Shift+Alt+F", "Format with Prettier"],
+  ["Shift+Alt+L", "Switch between JavaScript and TypeScript"],
   [`${MOD}+\\`, "Show or hide the statement panel"],
   ["Alt+↑ / Alt+↓", "Move the focused test"],
   ["?", "Show this list"],

@@ -291,6 +291,8 @@ export const Toolbar = ({
           id={languageId}
           value={workspace.language}
           disabled={readOnly}
+          aria-keyshortcuts="Shift+Alt+L"
+          data-tooltip="Switch language (Shift+Alt+L)"
           onChange={(event) => onLanguageChange(event.target.value as Language)}
         >
           <option value="typescript">TypeScript</option>

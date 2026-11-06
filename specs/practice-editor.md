@@ -65,6 +65,7 @@ From 768 px up, a 240 px **Problems** sidebar sits left of the toolbar and panel
 | `Mod+Shift+Enter`         | Run the focused case, or the selected case                                                       |
 | `Mod+S`                   | Format (when **Format on save** is on), then save a revision; prevents the browser's save dialog |
 | `Shift+Alt+F`             | Format with Prettier                                                                             |
+| `Shift+Alt+L`             | Switch between JavaScript and TypeScript, and show a toast; ignored when read-only               |
 | `Mod+\`                   | Toggle the statement panel                                                                       |
 | `?` (outside text fields) | Show the shortcut list                                                                           |
 
